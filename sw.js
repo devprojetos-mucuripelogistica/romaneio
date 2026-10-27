@@ -1,8 +1,8 @@
 /* Romaneio Digital – service worker
  * Guarda a "casca" do app no celular para abrir rápido.
  * As chamadas para o Apps Script (dados) sempre vão para a internet. */
-const VERSAO = 'romaneio-v4';
-const CASCA = ['./', './index.html', './config.js', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
+const VERSAO = 'romaneio-v6';
+const CASCA = ['./', './index.html', './config.js', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png', './icons/favicon-32.png'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(VERSAO).then((c) => c.addAll(CASCA)).then(() => self.skipWaiting()));
