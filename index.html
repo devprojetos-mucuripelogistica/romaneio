@@ -50,15 +50,19 @@ input::placeholder{color:var(--muted)}
 
 /* ---------- App do motorista ---------- */
 .m-app{max-width:520px;margin:0 auto;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;background:var(--bg)}
-.m-head{position:sticky;top:0;z-index:5;height:60px;flex-shrink:0;background:var(--header);border-bottom:3px solid var(--accent);color:#fff;display:flex;align-items:center;gap:6px;padding:0 10px 0 6px;padding-top:env(safe-area-inset-top)}
+.m-head{position:sticky;top:0;z-index:5;height:calc(60px + env(safe-area-inset-top));flex-shrink:0;background:var(--header);border-bottom:3px solid var(--accent);color:#fff;display:flex;align-items:center;gap:6px;padding:0 10px 0 6px;padding-top:env(safe-area-inset-top)}
 .m-head h1{flex:1;margin:0 0 0 8px;font-family:'Exo 2',sans-serif;font-style:italic;font-size:19px;font-weight:800;letter-spacing:.4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ic-btn{width:44px;height:44px;border-radius:22px;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.08);color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative}
 .ic-btn.plain{border:0;background:transparent}
 .badge{position:absolute;top:-3px;right:-3px;min-width:18px;height:18px;border-radius:9px;background:var(--warn);color:#0B2238;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 4px}
 .m-body{flex:1;padding:14px 16px 16px;display:flex;flex-direction:column;gap:12px}
-.m-foot{position:sticky;bottom:0;z-index:4;background:var(--surface);border-top:1px solid var(--line);padding:12px 16px calc(14px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:8px}
-.tabs{position:sticky;bottom:0;z-index:5;height:62px;background:var(--surface);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);padding-bottom:env(safe-area-inset-bottom)}
-.tabs button{border:0;background:transparent;color:var(--muted);font-size:10px;font-weight:700;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border-top:3px solid transparent}
+.m-app.tt{--tabsH:calc(62px + env(safe-area-inset-bottom))}
+.m-app.tt > .m-foot{padding-bottom:14px}
+.m-foot{position:sticky;bottom:var(--tabsH,0px);z-index:4;background:var(--surface);border-top:1px solid var(--line);padding:12px 16px calc(14px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:8px}
+.tabs{position:sticky;bottom:0;z-index:5;height:calc(62px + env(safe-area-inset-bottom));background:var(--surface);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,minmax(0,1fr));padding-bottom:env(safe-area-inset-bottom)}
+.tabs button{min-width:0;padding:0 1px;border:0;background:transparent;color:var(--muted);font-size:10px;font-weight:700;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border-top:3px solid transparent}
+.tabs button span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media (max-width: 370px){.tabs button{font-size:8.5px;letter-spacing:-.1px}}
 .tabs button.on{color:var(--ink);font-weight:800;border-top-color:var(--accent)}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px}
 .dark-card{background:#0B3D61;color:#fff;border-radius:14px;padding:14px}
@@ -120,7 +124,7 @@ input::placeholder{color:var(--muted)}
 .seg{display:grid;gap:4px;padding:3px;border-radius:10px;background:var(--chip)}
 .seg button{height:40px;border-radius:8px;border:0;background:transparent;color:var(--muted);font-size:13px;font-weight:700}
 .seg button.on{background:var(--surface);color:var(--ink);font-weight:800;box-shadow:0 1px 2px rgba(0,0,0,.15)}
-.login-hero{background:var(--header);color:#fff;min-height:260px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;position:relative}
+.login-hero{background:var(--header);color:#fff;min-height:260px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;padding-top:calc(24px + env(safe-area-inset-top));position:relative}
 .login-sheet{flex:1;background:var(--surface);border-radius:24px 24px 0 0;margin-top:-20px;padding:26px 20px 24px;display:flex;flex-direction:column;gap:16px}
 
 /* ---------- Gestão ---------- */
@@ -189,7 +193,7 @@ table.g tr.sobra td{background:#FDF0EA}
 .modal{background:var(--surface);color:var(--ink);width:100%;max-width:520px;border-radius:20px 20px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:12px;max-height:90vh;overflow:auto}
 .modal.gm{background:#fff;color:#0B3D61;border-radius:16px;margin:auto;align-self:center}
 .full{position:fixed;inset:0;z-index:45;background:#525659;display:flex;flex-direction:column}
-.full .bar{height:56px;background:#0B3D61;color:#fff;display:flex;align-items:center;gap:8px;padding:0 12px;flex-shrink:0}
+.full .bar{height:calc(56px + env(safe-area-inset-top));padding-top:env(safe-area-inset-top)!important;background:#0B3D61;color:#fff;display:flex;align-items:center;gap:8px;padding:0 12px;flex-shrink:0}
 .full .bar b{flex:1;font-size:14px}
 .full iframe{flex:1;width:100%;max-width:900px;margin:12px auto;border:0;background:#fff;box-shadow:0 4px 20px rgba(0,0,0,.4)}
 
@@ -214,6 +218,7 @@ body{font-feature-settings:"tnum" 1}
   .m-head h1{font-size:20px;margin-left:4px}
   .hd-logo{display:block;height:30px;width:auto;margin:0 6px 0 4px;padding-right:16px;border-right:1px solid rgba(255,255,255,.25)}
   .m-body{padding:28px 32px;gap:14px}
+  .m-app.tt{--tabsH:0px}
   .m-foot{position:static;padding:16px 32px 20px;flex-direction:row;flex-wrap:wrap;align-items:center}
   .m-foot > .btn{flex:0 1 auto;width:auto;min-width:300px;padding:0 28px}
   .m-foot > .row2{display:flex;gap:10px}
@@ -300,7 +305,7 @@ table.g tbody tr:not(.aj):not(.dif):not(.falta):not(.sobra):not(.day):hover td{b
 .g-radio:hover:not(.on){border-color:#9FB0BF}
 @media (max-width: 960px){
   .g-app{grid-template-columns:1fr}
-  .g-side{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;gap:12px;padding:12px 14px}
+  .g-side{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;gap:12px;padding:12px 14px;padding-top:calc(12px + env(safe-area-inset-top))}
   .g-side > div:first-child img{width:120px!important}
   .g-side > div:first-child span{display:none}
   .g-side nav{flex-direction:row;overflow-x:auto;order:3;flex-basis:100%;gap:4px}
@@ -352,7 +357,7 @@ function transporte(nome, token, args) {
     return enviarPost(nome, token, args);
   });
 }
-var APP_VERSAO = '27.10-h';
+var APP_VERSAO = '27.10-i';
 // aceita o link normal (/macros/s/…/exec) e o de conta Google Workspace (/a/macros/dominio/s/…/exec)
 function linkValido(u) { return /^https:\/\/script\.google\.com\/(a\/macros\/[^\/]+|macros)\/s\/[^\/]+\/exec\/?$/.test(String(u || '').trim()); }
 function lerConfigAtual() {
@@ -482,7 +487,10 @@ function ir(tela, p) { S.tela = tela; S.p = p || {}; render(); window.scrollTo(0
 function render() {
   var t = TELAS[S.tela];
   if (!t) return;
-  document.getElementById('app').innerHTML = t();
+  var app = document.getElementById('app');
+  app.innerHTML = t();
+  var m = app.querySelector('.m-app');
+  if (m) m.classList.toggle('tt', !!app.querySelector('.m-app > .tabs'));
   if (t.depois) t.depois();
   if (ls('rd_voz') === 'auto' && FALAS[S.tela]) falar(typeof FALAS[S.tela] === 'function' ? FALAS[S.tela]() : FALAS[S.tela]);
 }
@@ -505,7 +513,7 @@ function cab(titulo, opts) {
   return '<header class="m-head">' + esq + '<img class="hd-logo" src="' + LOGO_NEG + '" alt="Mucuripe Logística">' + '<h1>' + esc(titulo) + '</h1>' + sino + '<button class="ic-btn" data-a="falar" aria-label="Ouvir as instruções">' + I.voz + '</button></header>';
 }
 function tabs(on) {
-  var b = function (t, ic, n) { return '<button class="' + (on === t ? 'on' : '') + '" data-a="nav" data-t="' + t + '">' + ic + n + '</button>'; };
+  var b = function (t, ic, n) { return '<button class="' + (on === t ? 'on' : '') + '" data-a="nav" data-t="' + t + '">' + ic + '<span>' + n + '</span></button>'; };
   return '<nav class="tabs">' + b('hoje', I.casa, 'Hoje') + b('producao', I.cal, 'Produção') + b('combustivel', I.bomba, 'Combustível') + b('desempenho', I.graf, 'Desempenho') + b('perfil', I.user, 'Perfil') + '</nav>';
 }
 ACOES.nav = function (d) {
