@@ -343,10 +343,26 @@ function transporte(nome, token, args) {
         .api(nome, token, args);
     });
   }
-  if (!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec/.test(API_URL)) return Promise.reject(new Error('App sem configuração: falta o link do Apps Script no arquivo config.js.'));
-  return fetch(API_URL, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ nome: nome, token: token, args: args }) })
+  if (linkValido(API_URL)) return enviarPost(nome, token, args);
+  // link parece faltando: relê o config.js direto do GitHub (sem cópia guardada) antes de reclamar
+  return lerConfigAtual().then(function (url) {
+    if (!linkValido(url)) throw new Error('App sem configuração: o link do Apps Script no config.js não foi encontrado ou está incompleto. [versão ' + APP_VERSAO + ' · lido: "' + String(url || 'nada').slice(0, 48) + '"]');
+    API_URL = url;
+    return enviarPost(nome, token, args);
+  });
+}
+var APP_VERSAO = '27.10-c';
+// aceita o link normal (/macros/s/…/exec) e o de conta Google Workspace (/a/macros/dominio/s/…/exec)
+function linkValido(u) { return /^https:\/\/script\.google\.com\/(a\/macros\/[^\/]+|macros)\/s\/[^\/]+\/exec\/?$/.test(String(u || '').trim()); }
+function lerConfigAtual() {
+  return fetch('config.js?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; })
+    .then(function (t) { var m = String(t).match(/ROMANEIO_API\s*=\s*['"`]([^'"`]+)['"`]/); return m ? m[1].trim() : ''; })
+    .catch(function () { return ''; });
+}
+function enviarPost(nome, token, args) {
+  return fetch(String(API_URL).trim(), { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ nome: nome, token: token, args: args }) })
     .then(function (r) { if (!r.ok) throw new Error('O servidor não respondeu (' + r.status + '). Tente de novo.'); return r.text(); },
-      function () { throw new Error('Sem internet. Confira a conexão e tente de novo.'); });
+      function () { throw new Error('Não consegui falar com o Apps Script. Confira a internet. Se a internet estiver ok, confira se a implantação está como "Qualquer pessoa". [versão ' + APP_VERSAO + ']'); });
 }
 function call(nome, args, quieto) {
   if (!quieto) carregando(true);
@@ -528,7 +544,7 @@ TELAS.login = function () {
     '<div style="display:flex;flex-direction:column;gap:6px"><label class="lbl" for="pin">Senha (4 números)</label><input id="pin" class="field" type="password" inputmode="numeric" maxlength="4" autocomplete="current-password" placeholder="••••" style="letter-spacing:10px;text-align:center;font-size:24px"></div>' +
     '<button class="btn" data-a="entrar">ENTRAR ' + I.seta + '</button>' + bannerInstalar() + '<div style="flex:1"></div>' +
     '<button class="btn out sm" data-a="esqueci" data-t="MOTORISTA">ESQUECI MINHA SENHA</button>' +
-    '<div style="text-align:center;font-size:13px;color:var(--muted)"><a href="#" data-a="nav" data-t="glogin" style="display:inline-block;padding:10px;font-weight:700">Acesso da gestão</a></div></div></div>';
+    '<div style="text-align:center;font-size:13px;color:var(--muted)"><a href="#" data-a="nav" data-t="glogin" style="display:inline-block;padding:10px;font-weight:700">Acesso da gestão</a><div style="font-size:10px;opacity:.7">versão ' + APP_VERSAO + '</div></div></div></div>';
 };
 /** Formata enquanto digita: 000.000.000-00 */
 function fmtCpf(txt) {
