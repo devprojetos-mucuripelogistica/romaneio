@@ -1,17 +1,9 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+<base target="_top">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0B3D61">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Romaneio">
-<link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<script src="config.js"></script>
 <title>Romaneio Digital – Mucuripe</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@1,700;1,800&family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -343,11 +335,26 @@ function transporte(nome, token, args) {
         .api(nome, token, args);
     });
   }
-  // aceita o link normal (/macros/s/…/exec) e o de conta Google Workspace (/a/macros/dominio/s/…/exec)
-  if (!/^https:\/\/script\.google\.com\/(a\/macros\/[^\/]+|macros)\/s\/[^\/]+\/exec\/?$/.test(String(API_URL).trim())) return Promise.reject(new Error('App sem configuração: falta o link do Apps Script no arquivo config.js.'));
+  if (linkValido(API_URL)) return enviarPost(nome, token, args);
+  // link parece faltando: relê o config.js direto do GitHub (sem cópia guardada) antes de reclamar
+  return lerConfigAtual().then(function (url) {
+    if (!linkValido(url)) throw new Error('App sem configuração: o link do Apps Script no config.js não foi encontrado ou está incompleto. [versão ' + APP_VERSAO + ' · lido: "' + String(url || 'nada').slice(0, 48) + '"]');
+    API_URL = url;
+    return enviarPost(nome, token, args);
+  });
+}
+var APP_VERSAO = '27.10-d';
+// aceita o link normal (/macros/s/…/exec) e o de conta Google Workspace (/a/macros/dominio/s/…/exec)
+function linkValido(u) { return /^https:\/\/script\.google\.com\/(a\/macros\/[^\/]+|macros)\/s\/[^\/]+\/exec\/?$/.test(String(u || '').trim()); }
+function lerConfigAtual() {
+  return fetch('config.js?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; })
+    .then(function (t) { var m = String(t).match(/ROMANEIO_API\s*=\s*['"`]([^'"`]+)['"`]/); return m ? m[1].trim() : ''; })
+    .catch(function () { return ''; });
+}
+function enviarPost(nome, token, args) {
   return fetch(String(API_URL).trim(), { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ nome: nome, token: token, args: args }) })
     .then(function (r) { if (!r.ok) throw new Error('O servidor não respondeu (' + r.status + '). Tente de novo.'); return r.text(); },
-      function () { throw new Error('Sem internet. Confira a conexão e tente de novo.'); });
+      function () { throw new Error('Não consegui falar com o Apps Script. Confira a internet. Se a internet estiver ok, confira se a implantação está como "Qualquer pessoa". [versão ' + APP_VERSAO + ']'); });
 }
 function call(nome, args, quieto) {
   if (!quieto) carregando(true);
@@ -529,7 +536,7 @@ TELAS.login = function () {
     '<div style="display:flex;flex-direction:column;gap:6px"><label class="lbl" for="pin">Senha (4 números)</label><input id="pin" class="field" type="password" inputmode="numeric" maxlength="4" autocomplete="current-password" placeholder="••••" style="letter-spacing:10px;text-align:center;font-size:24px"></div>' +
     '<button class="btn" data-a="entrar">ENTRAR ' + I.seta + '</button>' + bannerInstalar() + '<div style="flex:1"></div>' +
     '<button class="btn out sm" data-a="esqueci" data-t="MOTORISTA">ESQUECI MINHA SENHA</button>' +
-    '<div style="text-align:center;font-size:13px;color:var(--muted)"><a href="#" data-a="nav" data-t="glogin" style="display:inline-block;padding:10px;font-weight:700">Acesso da gestão</a></div></div></div>';
+    '<div style="text-align:center;font-size:13px;color:var(--muted)"><a href="#" data-a="nav" data-t="glogin" style="display:inline-block;padding:10px;font-weight:700">Acesso da gestão</a><div style="font-size:10px;opacity:.7">versão ' + APP_VERSAO + '</div></div></div></div>';
 };
 /** Formata enquanto digita: 000.000.000-00 */
 function fmtCpf(txt) {
@@ -961,6 +968,8 @@ ACOES.finalizar = function () {
 /* ---------- Foto (só câmera, na hora) ----------
  * 1º tenta abrir a câmera ao vivo dentro do app (não existe opção de galeria).
  * Se o celular não deixar, usa a câmera do sistema e recusa foto que não seja de agora. */
+/* Fotos leves: 1280 px no lado maior e compressão 0,7 (KM e número continuam legíveis, ~metade do espaço no Drive). */
+var FOTO_MAX_PX = 1280, FOTO_QUALIDADE = 0.7;
 function tirarFoto(titulo, cb) {
   var md = navigator.mediaDevices;
   if (md && md.getUserMedia) {
@@ -982,10 +991,10 @@ function abrirVisor(titulo, stream, cb) {
     var b = e.target.closest('[data-v]'); if (!b) return;
     if (b.dataset.v === 'cancelar') return fechar();
     if (!video.videoWidth) return;
-    var r = Math.min(1, 1600 / Math.max(video.videoWidth, video.videoHeight)), c = document.createElement('canvas');
+    var r = Math.min(1, FOTO_MAX_PX / Math.max(video.videoWidth, video.videoHeight)), c = document.createElement('canvas');
     c.width = Math.round(video.videoWidth * r); c.height = Math.round(video.videoHeight * r);
     c.getContext('2d').drawImage(video, 0, 0, c.width, c.height);
-    var url = c.toDataURL('image/jpeg', 0.8); fechar(); cb(url);
+    var url = c.toDataURL('image/jpeg', FOTO_QUALIDADE); fechar(); cb(url);
   });
 }
 function fotoPelaCameraDoSistema(cb) {
@@ -993,7 +1002,7 @@ function fotoPelaCameraDoSistema(cb) {
   c.onchange = function () {
     var f = c.files && c.files[0]; if (!f) return;
     if (!f.lastModified || Date.now() - f.lastModified > 2 * 60 * 1000) { toast('Essa foto não é de agora. Tire a foto pela câmera, na hora.', true); return; }
-    reduzirImagem(f, 1600, cb);
+    reduzirImagem(f, FOTO_MAX_PX, cb);
   };
   c.click();
 }
@@ -1012,7 +1021,7 @@ function reduzirImagem(file, max, cb) {
   img.onload = function () {
     var r = Math.min(1, max / Math.max(img.width, img.height)), c = document.createElement('canvas');
     c.width = Math.round(img.width * r); c.height = Math.round(img.height * r);
-    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url); cb(c.toDataURL('image/jpeg', 0.78));
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url); cb(c.toDataURL('image/jpeg', FOTO_QUALIDADE));
   };
   img.onerror = function () { toast('Não consegui abrir a foto.', true); };
   img.src = url;
@@ -1321,7 +1330,7 @@ ACOES.gBuscar = function () {
   call('gPainel', { de: p.de, ate: p.ate, vinculo: S.G.vinc, nome: S.G.nome }).then(function (r) {
     var t = r.totais;
     document.getElementById('pKpis').innerHTML = '<div class="g-kpi"><span>Motoristas com produção</span><b>' + t.motoristas + '</b></div><div class="g-kpi"><span>Lançamentos</span><b>' + t.lancamentos + '</b></div><div class="g-kpi navy"><span>Valor total do período</span><b>' + brl(t.valor) + '</b></div><div class="g-kpi warn"><span>Valores ajustados pelo auditor</span><b>' + t.ajustes + '</b></div>';
-    document.getElementById('pTit').textContent = dBrA(p.de) + ' a ' + dBrA(p.ate) + ' · ' + r.linhas.length + ' linha(s)';
+    document.getElementById('pTit').textContent = dBrA(p.de) + ' a ' + dBrA(p.ate) + ' · ' + r.linhas.length + ' linha(s)' + (r.arquivadoAntes && p.de < r.arquivadoAntes ? ' · inclui meses do Histórico' : '');
     document.getElementById('pBody').innerHTML = r.linhas.length ? r.linhas.map(function (g) {
       return '<tr><td><b>' + esc(g.nome) + '</b>' + (g.doisVinculos ? '<div><span class="g-chip" style="background:#FFF6E6;color:#8A5300;margin-top:3px">TROCOU P/ VEÍCULO DA CASA</span></div>' : '') + '</td><td><span class="g-chip" style="background:' + (g.vinculo === 'AGREGADO' ? '#F1F4D6;color:#4A5200' : '#E8F2FA;color:#145A90') + '">' + g.vinculo + '</span></td>' +
         '<td class="n">' + g.batendo[0] + ' · ' + br(g.batendo[1]) + '</td><td class="n">' + g.cheio[0] + ' · ' + br(g.cheio[1]) + '</td><td class="n">' + g.vazio[0] + ' · ' + br(g.vazio[1]) + '</td><td class="n"><b>' + g.total[0] + '</b></td><td class="n"><b>' + br(g.total[1]) + '</b></td>' +
@@ -1697,7 +1706,7 @@ ACOES.kmNovaFoto = function () {
   var f = document.getElementById('arquivo'); f.accept = 'image/*'; f.value = '';
   f.onchange = function () {
     if (!f.files[0]) return;
-    reduzirImagem(f.files[0], 1600, function (u) {
+    reduzirImagem(f.files[0], FOTO_MAX_PX, function (u) {
       S.G.kmEd.foto = u;
       var b = document.getElementById('fotoBox'); if (b) b.innerHTML = '<img src="' + u + '" alt="Nova foto" style="width:100%;max-height:50vh;object-fit:contain;border-radius:10px;background:#000"><div style="font-size:11px;color:#8A5300;margin-top:4px">Nova foto (ainda não salva)</div>';
       document.getElementById('kmNovaFotoBtn').textContent = 'Trocar de novo';
@@ -1769,9 +1778,6 @@ if (window.matchMedia) { try { window.matchMedia('(prefers-color-scheme: dark)')
     if (r.tipo === 'GESTAO') { S.G.user = r; ir('gpainel'); gPreCarregar(); } else carregarEstado();
   }).catch(function () { ir(gestao ? 'glogin' : 'login'); });
 })();
-</script>
-<script>
-if ('serviceWorker' in navigator) { window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () { }); }); }
 </script>
 </body>
 </html>
