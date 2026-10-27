@@ -357,7 +357,7 @@ function transporte(nome, token, args) {
     return enviarPost(nome, token, args);
   });
 }
-var APP_VERSAO = '27.10-i';
+var APP_VERSAO = '27.10-j';
 // aceita o link normal (/macros/s/…/exec) e o de conta Google Workspace (/a/macros/dominio/s/…/exec)
 function linkValido(u) { return /^https:\/\/script\.google\.com\/(a\/macros\/[^\/]+|macros)\/s\/[^\/]+\/exec\/?$/.test(String(u || '').trim()); }
 function lerConfigAtual() {
@@ -702,7 +702,7 @@ function itemHtml(l) {
   var ic = l.categoria === 'CONTEINER' ? '<div class="ico-sq" style="width:38px;height:38px;border-radius:10px;background:#0B3D61;color:#fff">' + I.cont + '</div>'
     : '<div class="ico-sq" style="width:38px;height:38px;border-radius:10px;background:var(--accentSoft);color:var(--accentText)">' + I.relogio + '</div>';
   var t1 = l.categoria === 'CONTEINER' ? l.conteiner : l.tipo_extra;
-  var t2 = l.categoria === 'CONTEINER' ? l.origem + ' → ' + l.destino : (l.origem || '');
+  var t2 = l.destino ? l.origem + ' → ' + l.destino : (l.origem || '');
   var t3 = (l.categoria === 'CONTEINER' ? l.tamanho + ' · ' + l.carga + ' · ' : '') + hh(l.inicio) + ' – ' + hh(l.fim);
   var virou = l.fim && l.fim.slice(0, 10) > l.data_operacional ? '<span class="chip blue" style="align-self:flex-start;margin-top:2px;font-size:10px">TERMINOU ' + dBr(l.fim) + ' · CONTA PARA ' + dBr(l.data_operacional) + '</span>' : '';
   return '<button class="item' + (l.ajustado ? ' aj' : '') + '" data-a="verLanc" data-id="' + l.id + '">' + ic + '<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><div class="t1">' + esc(t1) + '</div><div class="t2">' + esc(t2) + '</div><div class="t3">' + esc(t3) + '</div>' + virou + '</div><span class="v">' + brl(l.valor_final) + '</span></button>';
@@ -789,16 +789,19 @@ function telaInicioSemOperacao() {
     '<div class="card" style="display:flex;align-items:center;gap:12px"><div style="width:48px;height:48px;border-radius:24px;background:#0B3D61;color:#B6C54C;display:flex;align-items:center;justify-content:center;font-weight:800">' + esc(iniciais(m.nome)) + '</div>' +
     '<div style="display:flex;flex-direction:column;gap:3px"><b style="font-size:17px">Olá, ' + esc(nome) + '</b><span style="font-size:13px;color:var(--muted)">' + dow(e.hoje) + ' · ' + dBrA(e.hoje) + '</span></div></div>' +
     '<div class="card" style="display:flex;flex-direction:column;gap:6px"><span style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;color:var(--muted)"><span style="width:8px;height:8px;border-radius:4px;background:var(--muted)"></span>NENHUMA OPERAÇÃO ABERTA</span>' +
-    '<span style="font-size:14px;color:var(--ink2);line-height:1.45">Para lançar viagens e custos extras, primeiro abra a operação do dia.</span></div>' +
+    '<span style="font-size:14px;color:var(--ink2);line-height:1.45">Para lançar viagens e custos extras, primeiro abra a operação do dia. <b>Abastecimento pode ser lançado a qualquer hora.</b></span></div>' +
     (u ? '<div class="card" style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div style="display:flex;flex-direction:column;gap:2px"><span class="lbl">Folha encerrada hoje</span><b style="font-size:17px">' + dow(u.data_operacional) + ' · ' + dBr(u.data_operacional) + '</b><span style="font-size:12px;color:var(--muted)">' + hh(u.aberta_em) + ' até ' + hh(u.encerrada_em) + ' · ' + u.qtd + ' lançamento(s)</span></div><b style="font-size:17px">' + brl(u.total) + '</b></div>' : '') +
     '<div class="row2"><button class="opt col" style="min-height:96px;gap:6px" data-a="nav" data-t="producao">' + I.cal + '<b style="font-size:13px">MINHA PRODUÇÃO</b></button>' +
     '<button class="opt col" style="min-height:96px;gap:6px" data-a="nav" data-t="desempenho">' + I.graf + '<b style="font-size:13px">DESEMPENHO</b></button></div>' +
+    '<button class="btn out" style="border-color:#E8A33D;color:var(--warnText)" data-a="iniciarWiz" data-c="ABAST">' + I.bomba + ' LANÇAR ABASTECIMENTO</button>' +
     '</main><div class="m-foot"><button class="btn" data-a="nav" data-t="abrir">' + I.seta + ' ABRIR OPERAÇÃO</button></div>' + tabs('hoje') + '</div>';
 }
 ACOES.verAbast = function (d) {
-  var x = (S.est.abastecimentos || []).filter(function (a) { return a.id === d.id; })[0]; if (!x) return;
-  abrirModal('<b style="font-size:17px">Abastecimento · ' + br(x.litros) + ' L</b><div style="font-size:14px;line-height:1.6;color:var(--ink2)">' + hh(x.registrado_em) + ' · veículo ' + esc(x.placa) + '<br>R$ ' + x.preco.toFixed(3).replace('.', ',') + ' por litro<br><b style="color:var(--ink);font-size:18px">' + brl(x.valor) + '</b></div>' +
-    '<button class="btn out sm" data-a="apagarAbast" data-id="' + x.id + '" style="border-color:var(--pin);color:var(--pin)">APAGAR ESTE ABASTECIMENTO</button><button class="btn sm" data-a="fecharModal">FECHAR</button>');
+  var x = (S.p.abs || []).concat(S.est.abastecimentos || []).filter(function (a) { return a.id === d.id; })[0]; if (!x) return;
+  var podeApagar = String(x.registrado_em).slice(0, 10) === S.est.hoje || (S.est.operacao && x.operacao_id === S.est.operacao.id);
+  abrirModal('<b style="font-size:17px">Abastecimento · ' + br(x.litros) + ' L</b><div style="font-size:14px;line-height:1.6;color:var(--ink2)">' + dBr(x.data_operacional) + ' ' + hh(x.registrado_em) + ' · veículo ' + esc(x.placa) + '<br>R$ ' + x.preco.toFixed(3).replace('.', ',') + ' por litro<br><b style="color:var(--ink);font-size:18px">' + brl(x.valor) + '</b></div>' +
+    (podeApagar ? '<button class="btn out sm" data-a="apagarAbast" data-id="' + x.id + '" style="border-color:var(--pin);color:var(--pin)">APAGAR ESTE ABASTECIMENTO</button>' : '<div style="font-size:12px;color:var(--muted)">Só dá para apagar abastecimentos lançados hoje. Se estiver errado, fale com o escritório.</div>') +
+    '<button class="btn sm" data-a="fecharModal">FECHAR</button>');
 };
 ACOES.apagarAbast = function (d) {
   if (!confirm('Apagar este abastecimento?')) return;
@@ -808,7 +811,7 @@ ACOES.apagarAbast = function (d) {
 ACOES.verLanc = function (d) {
   var l = S.est.lancamentos.filter(function (x) { return x.id === d.id; })[0]; if (!l) return;
   abrirModal('<b style="font-size:17px">' + esc(l.categoria === 'CONTEINER' ? l.conteiner : l.tipo_extra) + '</b>' +
-    '<div style="font-size:14px;line-height:1.6;color:var(--ink2)">' + (l.categoria === 'CONTEINER' ? esc(l.origem) + ' → ' + esc(l.destino) + '<br>' + l.tamanho + ' pés · ' + l.carga + '<br>' : '') +
+    '<div style="font-size:14px;line-height:1.6;color:var(--ink2)">' + (l.categoria === 'CONTEINER' ? esc(l.origem) + ' → ' + esc(l.destino) + '<br>' + l.tamanho + ' pés · ' + l.carga + '<br>' : l.destino ? esc(l.origem) + ' → ' + esc(l.destino) + '<br>' : '') +
     hh(l.inicio) + ' (' + dBr(l.inicio) + ') até ' + hh(l.fim) + ' (' + dBr(l.fim) + ')<br>Veículo ' + esc(l.placa) + ' · pago como ' + l.pagamento.toLowerCase() + '<br><b style="color:var(--ink);font-size:18px">' + brl(l.valor_final) + '</b></div>' +
     '<button class="btn out sm" data-a="apagarLanc" data-id="' + l.id + '" style="border-color:var(--pin);color:var(--pin)">APAGAR ESTE LANÇAMENTO</button><button class="btn sm" data-a="fecharModal">FECHAR</button>');
 };
@@ -833,13 +836,32 @@ TELAS.novo = function () {
 var PASSOS = { CONTEINER: ['num', 'origem', 'destino', 'tam', 'carga', 'hora', 'valor', 'rev'], EXTRA: ['tipo', 'hora', 'valor', 'rev'] };
 ACOES.iniciarWiz = function (d) {
   var agora = new Date(), hm = pad(agora.getHours()) + ':' + pad(agora.getMinutes());
-  S.W = { categoria: d.c, i: 0, conteiner: '', foto_id: '', origem: '', destino: '', tamanho: '', carga: '', tipo_extra: '', ini: hm, fim: '', cents: '', litros: '', thumb: '' };
+  S.W = { categoria: d.c, i: 0, conteiner: '', foto_id: '', origem: '', destino: '', tamanho: '', carga: '', tipo_extra: '', ini: hm, fim: '', cents: '', litros: '', thumb: '', placa: '', meiaNoite: false };
+  if (d.c === 'ABAST' && !S.est.operacao) {
+    S.W.escolheVeic = true;
+    return call('veiculosAbast', {}).then(function (l) {
+      S.W.veics = l;
+      if (l.length === 1) S.W.placa = l[0].placa;
+      else { var p = l.filter(function (v) { return v.proprio; })[0]; if (p && S.est.motorista.vinculo === 'AGREGADO') S.W.placa = p.placa; }
+      ir('wiz');
+    }).catch(falha);
+  }
   ir('wiz');
 };
+function comTrajeto(t) { return (S.est.extrasComTrajeto || ['BATENDO']).indexOf(t) >= 0; }
+/** Abastecimento: cupom obrigatório, menos para agregado no próprio cavalo. */
+function abastExigeCupom() {
+  var e = S.est;
+  if (e.operacao && !S.W.escolheVeic) return e.exigeCupom;
+  var m = e.motorista;
+  return !(m.vinculo === 'AGREGADO' && S.W.placa && S.W.placa === String(m.placa_propria || '').toUpperCase());
+}
 function listaPassos() {
-  if (S.W.categoria === 'ABAST') return S.est.exigeCupom ? ['cupom', 'litros', 'valor', 'rev'] : ['litros', 'valor', 'rev'];
+  if (S.W.categoria === 'ABAST') return (S.W.escolheVeic ? ['veic'] : []).concat(abastExigeCupom() ? ['cupom'] : []).concat(['litros', 'valor', 'rev']);
+  if (S.W.categoria === 'EXTRA' && comTrajeto(S.W.tipo_extra)) return ['tipo', 'origem', 'destino', 'hora', 'valor', 'rev'];
   return PASSOS[S.W.categoria];
 }
+function diaWiz() { return S.est.operacao ? S.est.operacao.data_operacional : S.est.hoje; }
 function passo() { return listaPassos()[S.W.i]; }
 function irPasso(i) { S.W.i = i; ir('wiz'); }
 function progresso() {
@@ -847,7 +869,7 @@ function progresso() {
   if (i >= n) return '';
   var segs = ''; for (var k = 0; k < n; k++) segs += '<span class="' + (k < i ? 'd' : k === i ? 'c' : '') + '"></span>';
   var ref = S.W.categoria === 'CONTEINER' ? (S.W.conteiner || '') : S.W.categoria === 'ABAST' ? (+S.W.litros > 0 ? br(+S.W.litros / 100) + ' L' : '') : (S.W.tipo_extra || '');
-  return '<div class="prog"><div class="t"><span style="color:var(--muted)">PASSO ' + (i + 1) + ' DE ' + n + (ref && i > 0 ? ' · ' + esc(ref) : '') + '</span><span style="color:var(--blueText)">DIA ' + dBr(S.est.operacao.data_operacional) + '</span></div><div class="segs" style="grid-template-columns:repeat(' + n + ',1fr)">' + segs + '</div></div>';
+  return '<div class="prog"><div class="t"><span style="color:var(--muted)">PASSO ' + (i + 1) + ' DE ' + n + (ref && i > 0 ? ' · ' + esc(ref) : '') + '</span><span style="color:var(--blueText)">DIA ' + dBr(diaWiz()) + '</span></div><div class="segs" style="grid-template-columns:repeat(' + n + ',1fr)">' + segs + '</div></div>';
 }
 function rodapeWiz(okLabel, okAcao, desab) {
   return '<div class="m-foot"><div class="wiz-foot"><button class="back" data-a="wizVoltar" aria-label="Passo anterior">' + I.voltar + '</button><button class="btn" id="btnOk" data-a="' + (okAcao || 'wizProx') + '"' + (desab ? ' disabled' : '') + '>' + (okLabel || 'PRÓXIMO') + ' ' + I.seta + '</button></div></div>';
@@ -860,21 +882,43 @@ ACOES.wizProx = function () {
   if (p === 'tam' && !W.tamanho) return toast('Escolha 20 ou 40.', true);
   if (p === 'carga' && !W.carga) return toast('Escolha cheio ou vazio.', true);
   if (p === 'tipo' && !W.tipo_extra) return toast('Escolha o custo extra.', true);
-  if (p === 'hora') { W.ini = document.getElementById('hIni').value; W.fim = document.getElementById('hFim').value; if (!W.ini || !W.fim) return toast('Preencha os dois horários.', true); }
+  if (p === 'hora') {
+    W.ini = document.getElementById('hIni').value; W.fim = document.getElementById('hFim').value;
+    if (!W.ini || !W.fim) return toast('Preencha os dois horários.', true);
+    var nomes = rotHora();
+    if (W.fim === W.ini) { falar('O horário de ' + nomes[1].toLowerCase() + ' não pode ser igual ao de ' + nomes[0].toLowerCase() + '.'); return toast(nomes[1] + ' não pode ser igual a ' + nomes[0] + '.', true); }
+    if (W.fim < W.ini && !W.meiaNoite) return perguntarMeiaNoite(nomes);
+  }
+  if (p === 'veic' && !W.placa) return toast('Escolha o veículo que você abasteceu.', true);
   if (p === 'valor' && !(+W.cents > 0)) return toast('Digite o valor.', true);
   if (p === 'cupom' && !W.foto_id) return toast('Tire a foto do cupom.', true);
   if (p === 'litros' && !(+W.litros > 0)) return toast('Digite quantos litros.', true);
   irPasso(W.i + 1);
 };
+/** Nome das duas caixas de hora: SAÍDA/CHEGADA (contêiner e batendo) ou COMEÇOU/TERMINOU. */
+function rotHora() { var W = S.W; return W.categoria === 'CONTEINER' || comTrajeto(W.tipo_extra) ? ['SAÍDA', 'CHEGADA'] : ['COMEÇOU', 'TERMINOU']; }
+/** Chegada antes da saída: só aceita se o motorista confirmar que passou da meia-noite. */
+function perguntarMeiaNoite(n) {
+  var W = S.W;
+  falar('O horário de ' + n[1].toLowerCase() + ' está antes do horário de ' + n[0].toLowerCase() + '. Confira.');
+  abrirModal('<b style="font-size:18px;color:var(--warnText)">Confira os horários</b>' +
+    '<div style="font-size:15px;line-height:1.5"><b>' + n[0] + ': ' + esc(W.ini) + '</b><br><b>' + n[1] + ': ' + esc(W.fim) + '</b><br>O horário de ' + n[1] + ' está <b>antes</b> do horário de ' + n[0] + '.</div>' +
+    '<button class="btn" data-a="fecharModal">' + I.lapis + ' CORRIGIR O HORÁRIO</button>' +
+    '<button class="btn out sm" data-a="meiaNoiteSim">PASSOU DA MEIA-NOITE (' + n[1] + ' NO DIA SEGUINTE)</button>');
+}
+ACOES.meiaNoiteSim = function () { fecharModal(); S.W.meiaNoite = true; irPasso(S.W.i + 1); };
 function datasHorario() { // regra: depois da meia-noite continua no mesmo dia operacional
-  var op = S.est.operacao, base = op.data_operacional, abertura = hh(op.aberta_em);
+  var op = S.est.operacao;
+  if (!op) return { ini: '', fim: '', dIni: S.est.hoje, dFim: S.est.hoje };   // abastecimento sem operação
+  var base = op.data_operacional, abertura = hh(op.aberta_em);
   var virou = hojeIso() > base; // já passou da meia-noite desde a abertura
   var dIni = virou && S.W.ini && S.W.ini < abertura ? addDia(base, 1) : base;
-  var dFim = S.W.fim && S.W.fim < S.W.ini ? addDia(dIni, 1) : dIni;
+  var dFim = S.W.fim && S.W.fim < S.W.ini && S.W.meiaNoite ? addDia(dIni, 1) : dIni;
   return { ini: dIni + ' ' + S.W.ini, fim: dFim + ' ' + S.W.fim, dIni: dIni, dFim: dFim };
 }
 
 var FALA_PASSO = {
+  veic: 'Qual veículo você abasteceu?',
   num: 'Digite o número do contêiner como está na porta.',
   origem: 'De onde saiu? Digite o nome do cliente ou do lugar.',
   destino: 'Para onde vai? Digite o nome do cliente ou do lugar.',
@@ -917,10 +961,15 @@ TELAS.wiz = function () {
       return '<button class="opt' + (W.tipo_extra === t ? ' on' : '') + '" style="min-height:64px" data-a="escW" data-k="tipo_extra" data-v="' + t + '"><div class="ico-sq" style="background:var(--accentSoft);color:var(--accentText)">' + I.relogio + '</div><b style="flex:1;font-size:17px">' + t + '</b>' + (W.tipo_extra === t ? I.ok : '') + '</button>';
     }).join('');
   } else if (p === 'hora') {
-    var dh = datasHorario(), c = W.categoria === 'CONTEINER';
+    var dh = datasHorario(), rh = rotHora(), c = rh[0] === 'SAÍDA';
     corpo = '<h2 class="q">' + (c ? 'Que horas saiu e que horas chegou?' : 'Que horas começou e terminou?') + '</h2>' +
-      caixaHora('hIni', c ? 'SAÍDA' : 'COMEÇOU', W.ini, dh.dIni) + caixaHora('hFim', c ? 'CHEGADA' : 'TERMINOU', W.fim, dh.dFim) +
+      caixaHora('hIni', rh[0], W.ini, dh.dIni) + caixaHora('hFim', rh[1], W.fim, dh.dFim) +
       '<div id="horaInfo">' + infoHora(dh) + '</div>';
+  } else if (p === 'veic') {
+    corpo = '<h2 class="q">Qual veículo você abasteceu?</h2><div class="info">' + I.info + '<span>Você está sem operação aberta. Pode lançar o abastecimento assim mesmo.</span></div>' +
+      (W.veics || []).map(function (v) {
+        return '<button class="opt' + (W.placa === v.placa ? ' on' : '') + '" style="min-height:64px" data-a="escW" data-k="placa" data-v="' + esc(v.placa) + '"><span class="plate">' + esc(v.placa) + '</span><span style="flex:1;display:flex;flex-direction:column;gap:2px;min-width:0"><b style="font-size:15px">' + esc(v.proprio ? 'MEU CAVALO' : (v.frota || 'VEÍCULO DA EMPRESA')) + '</b>' + (v.descricao && !v.proprio ? '<span style="font-size:12px;color:var(--muted)">' + esc(v.descricao) + '</span>' : '') + '</span>' + (W.placa === v.placa ? I.ok : '') + '</button>';
+      }).join('');
   } else if (p === 'cupom') {
     corpo = '<h2 class="q">Tire a foto do cupom</h2><div class="info">' + I.info + '<span>Mostre o cupom inteiro, com o <b>valor</b> e os <b>litros</b> bem nítidos. Só foto na hora.</span></div>' +
       (W.thumb ? '<img src="' + W.thumb + '" alt="Foto do cupom" style="width:100%;max-height:340px;object-fit:contain;border-radius:12px;background:#000"><button class="btn out sm" data-a="fotoCupom">' + I.camera.replace(/40/g, '18') + ' TIRAR A FOTO DE NOVO</button>'
@@ -942,12 +991,13 @@ TELAS.wiz = function () {
     if (W.categoria === 'CONTEINER') linhas = [['CONTÊINER', W.conteiner, 0], ['ORIGEM', W.origem, 1], ['DESTINO', W.destino, 2], ['TAMANHO', W.tamanho + ' PÉS', 3], ['CARGA', W.carga, 4], ['HORÁRIOS', W.ini + ' → ' + W.fim, 5], ['VALOR', brl(+W.cents / 100), 6]];
     else if (W.categoria === 'ABAST') {
       var lp = listaPassos(), li = +W.litros / 100, vl = +W.cents / 100;
-      linhas = (lp.indexOf('cupom') >= 0 ? [['CUPOM', W.foto_id ? 'Foto tirada ✓' : 'Falta a foto', lp.indexOf('cupom')]] : [])
+      linhas = (lp.indexOf('veic') >= 0 ? [['VEÍCULO', W.placa, lp.indexOf('veic')]] : []).concat(lp.indexOf('cupom') >= 0 ? [['CUPOM', W.foto_id ? 'Foto tirada ✓' : 'Falta a foto', lp.indexOf('cupom')]] : [])
         .concat([['LITROS', br(li) + ' L', lp.indexOf('litros')], ['VALOR', brl(vl), lp.indexOf('valor')], ['PREÇO POR LITRO', li > 0 ? 'R$ ' + (vl / li).toFixed(3).replace('.', ',') : '–', -1]]);
     }
+    else if (comTrajeto(W.tipo_extra)) linhas = [['TIPO', W.tipo_extra, 0], ['ORIGEM', W.origem, 1], ['DESTINO', W.destino, 2], ['HORÁRIOS', W.ini + ' → ' + W.fim, 3], ['VALOR', brl(+W.cents / 100), 4]];
     else linhas = [['TIPO', W.tipo_extra, 0], ['HORÁRIOS', W.ini + ' → ' + W.fim, 1], ['VALOR', brl(+W.cents / 100), 2]];
-    corpo = '<div style="display:flex;justify-content:space-between;align-items:center"><h2 class="q">Está tudo certo?</h2><span class="chip blue">DIA ' + dBr(S.est.operacao.data_operacional) + '</span></div><div class="card" style="padding:0;overflow:hidden">' +
-      linhas.map(function (l) { return '<div style="display:flex;align-items:center;gap:12px;padding:11px 14px;border-bottom:1px solid var(--line)"><div style="flex:1;display:flex;flex-direction:column;gap:2px"><span class="lbl" style="font-size:11px">' + l[0] + '</span><b style="font-size:16px">' + esc(l[1]) + '</b>' + (l[0] === 'HORÁRIOS' && d2.dFim !== S.est.operacao.data_operacional ? '<span style="font-size:12px;color:var(--blueText);font-weight:700">Termina em ' + dBr(d2.dFim) + ' · conta para ' + dBr(S.est.operacao.data_operacional) + '</span>' : '') + '</div>' + (l[2] >= 0 ? '<button class="btn out sm" style="width:auto;padding:0 12px;height:40px;font-size:12px" data-a="irPasso" data-i="' + l[2] + '">ALTERAR</button>' : '') + '</div>'; }).join('') +
+    corpo = '<div style="display:flex;justify-content:space-between;align-items:center"><h2 class="q">Está tudo certo?</h2><span class="chip blue">DIA ' + dBr(diaWiz()) + '</span></div><div class="card" style="padding:0;overflow:hidden">' +
+      linhas.map(function (l) { return '<div style="display:flex;align-items:center;gap:12px;padding:11px 14px;border-bottom:1px solid var(--line)"><div style="flex:1;display:flex;flex-direction:column;gap:2px"><span class="lbl" style="font-size:11px">' + l[0] + '</span><b style="font-size:16px">' + esc(l[1]) + '</b>' + (l[0] === 'HORÁRIOS' && d2.dFim !== diaWiz() ? '<span style="font-size:12px;color:var(--blueText);font-weight:700">Termina em ' + dBr(d2.dFim) + ' · conta para ' + dBr(diaWiz()) + '</span>' : '') + '</div>' + (l[2] >= 0 ? '<button class="btn out sm" style="width:auto;padding:0 12px;height:40px;font-size:12px" data-a="irPasso" data-i="' + l[2] + '">ALTERAR</button>' : '') + '</div>'; }).join('') +
       '</div>';
     rod = '<div class="m-foot"><button class="btn lime" data-a="finalizar">' + I.ok + ' FINALIZAR ' + (W.categoria === 'CONTEINER' ? 'VIAGEM' : W.categoria === 'ABAST' ? 'ABASTECIMENTO' : 'LANÇAMENTO') + '</button><span style="text-align:center;font-size:12px;color:var(--muted)">Depois de salvar, você volta para a tela inicial.</span></div>';
   }
@@ -967,7 +1017,8 @@ function caixaHora(id, rot, val, data) {
     '<div class="timebox"><input type="time" id="' + id + '" value="' + esc(val) + '" data-i="mudaHora"><button class="btn out sm" style="width:auto;padding:0 14px;height:64px" data-a="agora" data-id="' + id + '">AGORA</button></div></div>';
 }
 function infoHora(dh) {
-  var op = S.est.operacao;
+  var op = S.est.operacao, W = S.W, n = rotHora();
+  if (W.ini && W.fim && W.fim <= W.ini && !W.meiaNoite) return '<div class="info" style="background:var(--warnSoft);color:var(--warnText);border-color:#E8A33D">' + I.info + '<span><b>' + n[1] + '</b> precisa ser depois de <b>' + n[0] + '</b>. Confira os horários.</span></div>';
   if (dh.dFim !== op.data_operacional || dh.dIni !== op.data_operacional) return '<div class="info">' + I.info + '<span>Passou da meia-noite. Continua contando para <b>' + dBr(op.data_operacional) + '</b>, o dia em que você abriu a operação.</span></div>';
   return '';
 }
@@ -997,7 +1048,7 @@ ACOES.usarSug = function (d, el) {
 ACOES.escW = function (d) { S.W[d.k] = d.v; ir('wiz'); };
 ACOES.irPasso = function (d) { irPasso(+d.i); };
 ACOES.mudaHora = function () {
-  S.W.ini = document.getElementById('hIni').value; S.W.fim = document.getElementById('hFim').value;
+  S.W.ini = document.getElementById('hIni').value; S.W.fim = document.getElementById('hFim').value; S.W.meiaNoite = false;
   var dh = datasHorario(); document.getElementById('hIniD').textContent = dBr(dh.dIni); document.getElementById('hFimD').textContent = dBr(dh.dFim);
   document.getElementById('horaInfo').innerHTML = infoHora(dh);
 };
@@ -1020,13 +1071,14 @@ ACOES.fotoCupom = function () {
   });
 };
 ACOES.finalizar = function () {
-  var W = S.W, dh = datasHorario();
+  var W = S.W;
   if (W.categoria === 'ABAST') {
-    return call('salvarAbastecimento', { litros: +W.litros / 100, valor: +W.cents / 100, foto_id: W.foto_id }).then(function (est) {
+    return call('salvarAbastecimento', { litros: +W.litros / 100, valor: +W.cents / 100, foto_id: abastExigeCupom() ? W.foto_id : '', placa: W.escolheVeic ? W.placa : '' }).then(function (est) {
       S.W = null; toast('Abastecimento salvo!'); falar('Abastecimento salvo.'); aplicarEstado(est, 'combustivel');
     }).catch(falha);
   }
-  var dados = { categoria: W.categoria, conteiner: W.conteiner, foto_id: W.foto_id, origem: W.origem, destino: W.destino, tamanho: W.tamanho, carga: W.carga, tipo_extra: W.tipo_extra, inicio: dh.ini, fim: dh.fim, valor: +W.cents / 100 };
+  var dh = datasHorario(), traj = W.categoria === 'CONTEINER' || comTrajeto(W.tipo_extra);
+  var dados = { categoria: W.categoria, conteiner: W.conteiner, foto_id: W.foto_id, origem: traj ? W.origem : '', destino: traj ? W.destino : '', tamanho: W.tamanho, carga: W.carga, tipo_extra: W.tipo_extra, inicio: dh.ini, fim: dh.fim, valor: +W.cents / 100 };
   call('salvarLancamento', dados).then(function (est) { S.W = null; toast('Lançamento salvo!'); falar('Lançamento salvo.'); aplicarEstado(est, 'hoje'); }).catch(falha);
 };
 
@@ -1177,24 +1229,38 @@ TELAS.desempenho.depois = function () {
 };
 
 /* ---------- Combustível (aba própria) ---------- */
-FALAS.combustivel = function () { return S.est.operacao ? 'Para lançar um abastecimento, toque em novo abastecimento.' : 'Para lançar um abastecimento, primeiro abra a operação do dia.'; };
 TELAS.combustivel = function () {
-  var e = S.est, op = e.operacao, ab = e.abastecimentos || [], ag = e.motorista.vinculo === 'AGREGADO';
+  var e = S.est, op = e.operacao, ag = e.motorista.vinculo === 'AGREGADO';
   var q = S.p.q || (S.p.q = quinzenaAtual());
-  var topo = op
-    ? '<button class="btn" style="background:#E8A33D;color:#3D2600" data-a="iniciarWiz" data-c="ABAST">' + I.bomba + ' NOVO ABASTECIMENTO</button>' +
-      '<div style="font-size:12px;color:var(--muted);text-align:center">' + (e.exigeCupom ? 'Você vai tirar a foto do cupom, digitar os litros e o valor.' : 'Você vai digitar os litros e o valor.') + '</div>'
-    : '<div class="card" style="display:flex;flex-direction:column;gap:10px"><span style="font-weight:700">Nenhuma operação aberta</span><span style="font-size:13px;color:var(--ink2)">Para lançar um abastecimento, primeiro abra a operação do dia.</span><button class="btn out sm" data-a="nav" data-t="abrir">' + I.seta + ' ABRIR OPERAÇÃO</button></div>';
-  var hoje = ab.length ? '<div style="display:flex;flex-direction:column;gap:8px"><div style="display:flex;justify-content:space-between;align-items:baseline"><span class="lbl">Lançados hoje</span><span style="font-size:12px;font-weight:700;color:var(--warnText)">' + br(ab.reduce(function (s, x) { return s + x.litros; }, 0)) + ' L · ' + brl(ab.reduce(function (s, x) { return s + x.valor; }, 0)) + '</span></div>' +
-    ab.map(function (x) { return '<button class="item" data-a="verAbast" data-id="' + x.id + '"><div class="ico-sq" style="width:38px;height:38px;border-radius:10px;background:var(--warnSoft);color:var(--warnText)">' + I.bomba + '</div><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><div class="t1">' + br(x.litros) + ' L</div><div class="t3">' + hh(x.registrado_em) + ' · ' + esc(x.placa) + (x.foto_id ? ' · cupom ✓' : '') + '</div></div><span class="v">' + brl(x.valor) + '</span></button>'; }).join('') + '</div>' : (op ? '<div class="empty" style="padding:16px">Nenhum abastecimento lançado hoje.</div>' : '');
-  var quinzena = ag ? '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px"><button class="ic-btn" style="color:var(--ink);border-color:var(--line);background:var(--surface)" data-a="mesComb" data-d="-1" aria-label="Mês anterior">' + I.voltar + '</button><b style="font-size:16px">' + MESES[q.mes - 1] + ' ' + q.ano + '</b><button class="ic-btn" style="color:var(--ink);border-color:var(--line);background:var(--surface);transform:scaleX(-1)" data-a="mesComb" data-d="1" aria-label="Próximo mês">' + I.voltar + '</button></div>' +
-    '<div class="seg" style="grid-template-columns:1fr 1fr"><button class="' + (q.q === 1 ? 'on' : '') + '" data-a="qComb" data-q="1">1ª QUINZENA</button><button class="' + (q.q === 2 ? 'on' : '') + '" data-a="qComb" data-q="2">2ª QUINZENA</button></div><div id="combAg"><div class="empty">Carregando…</div></div>' : '';
-  return '<div class="m-app">' + cab('COMBUSTÍVEL') + '<main class="m-body">' + topo + hoje + quinzena + '</main>' + tabs('combustivel') + '</div>';
+  var dica = op ? (e.exigeCupom ? 'Você vai tirar a foto do cupom, digitar os litros e o valor.' : 'Você vai digitar os litros e o valor.')
+    : 'Pode lançar mesmo sem operação aberta. Você escolhe o veículo que abasteceu.';
+  var topo = '<button class="btn" style="background:#E8A33D;color:#3D2600" data-a="iniciarWiz" data-c="ABAST">' + I.bomba + ' NOVO ABASTECIMENTO</button>' +
+    '<div style="font-size:12px;color:var(--muted);text-align:center">' + dica + '</div>';
+  var periodo = '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px"><button class="ic-btn" style="color:var(--ink);border-color:var(--line);background:var(--surface)" data-a="mesComb" data-d="-1" aria-label="Mês anterior">' + I.voltar + '</button><b style="font-size:16px">' + MESES[q.mes - 1] + ' ' + q.ano + '</b><button class="ic-btn" style="color:var(--ink);border-color:var(--line);background:var(--surface);transform:scaleX(-1)" data-a="mesComb" data-d="1" aria-label="Próximo mês">' + I.voltar + '</button></div>' +
+    '<div class="seg" style="grid-template-columns:1fr 1fr"><button class="' + (q.q === 1 ? 'on' : '') + '" data-a="qComb" data-q="1">1ª QUINZENA</button><button class="' + (q.q === 2 ? 'on' : '') + '" data-a="qComb" data-q="2">2ª QUINZENA</button></div>';
+  return '<div class="m-app">' + cab('COMBUSTÍVEL') + '<main class="m-body">' + topo + periodo + (ag ? '<div id="combAg"></div>' : '') + '<div id="combLista"><div class="empty">Carregando…</div></div></main>' + tabs('combustivel') + '</div>';
 };
+FALAS.combustivel = 'Seus abastecimentos. Para lançar um novo, toque em novo abastecimento.';
+/** Todos os abastecimentos da quinzena, por dia. Só os lançados hoje podem ser apagados. */
+function listaAbastHtml(abs) {
+  if (!abs.length) return '<div class="empty">Nenhum abastecimento nesta quinzena.</div>';
+  var dias = {}, ordem = [];
+  abs.forEach(function (x) { if (!dias[x.data_operacional]) { dias[x.data_operacional] = []; ordem.push(x.data_operacional); } dias[x.data_operacional].push(x); });
+  ordem.sort().reverse();
+  var tl = abs.reduce(function (s, x) { return s + x.litros; }, 0), tv = abs.reduce(function (s, x) { return s + x.valor; }, 0);
+  return '<div class="card" style="display:flex;justify-content:space-between;align-items:center;gap:8px"><div style="display:flex;flex-direction:column;gap:2px"><span class="lbl">Abastecido na quinzena</span><span style="font-size:12px;color:var(--muted)">' + abs.length + ' abastecimento(s) · ' + br(tl) + ' L</span></div><b style="font-size:20px;color:var(--warnText)">' + brl(tv) + '</b></div>' +
+    ordem.map(function (d) {
+      var l = dias[d];
+      return '<div style="display:flex;flex-direction:column;gap:8px"><div style="display:flex;justify-content:space-between;align-items:baseline"><span class="lbl">' + dow(d) + ' · ' + dBr(d) + (d === S.est.hoje ? ' · HOJE' : '') + '</span><span style="font-size:12px;font-weight:700;color:var(--warnText)">' + brl(l.reduce(function (s, x) { return s + x.valor; }, 0)) + '</span></div>' +
+        l.map(function (x) { return '<button class="item" data-a="verAbast" data-id="' + x.id + '"><div class="ico-sq" style="width:38px;height:38px;border-radius:10px;background:var(--warnSoft);color:var(--warnText)">' + I.bomba + '</div><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><div class="t1">' + br(x.litros) + ' L</div><div class="t3">' + hh(x.registrado_em) + ' · ' + esc(x.placa) + (x.foto_id ? ' · cupom ✓' : '') + '</div></div><span class="v">' + brl(x.valor) + '</span></button>'; }).join('') + '</div>';
+    }).join('');
+}
 TELAS.combustivel.depois = function () {
-  if (S.est.motorista.vinculo !== 'AGREGADO') return;
   var q = S.p.q;
   call('combustivelMotorista', { ano: q.ano, mes: q.mes, quinzena: q.q }, true).then(function (r) {
+    S.p.abs = r.abastecimentos;
+    var lista = document.getElementById('combLista'); if (!lista) return;
+    lista.innerHTML = listaAbastHtml(r.abastecimentos);
     var box = document.getElementById('combAg'); if (!box || !r.agregado) return;
     var t = r.totais, cor = function (v) { return v < 0 ? 'color:#F27C4B' : 'color:#B6C54C'; };
     box.innerHTML = '<div class="dark-card" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px">' +
@@ -1202,8 +1268,8 @@ TELAS.combustivel.depois = function () {
       '<div><span style="font-size:10px;font-weight:800;color:#C9D6E2">ABASTECIDO</span><br><b style="font-size:16px;color:#F4C57E">' + brl(t.abastecido) + '</b><br><span style="font-size:11px;color:#C9D6E2">' + br(t.litros) + ' L</span></div>' +
       '<div><span style="font-size:10px;font-weight:800;color:#C9D6E2">LÍQUIDO</span><br><b style="font-size:18px;' + cor(t.liquido) + '">' + brl(t.liquido) + '</b></div></div>' +
       (r.dias.length ? '<div class="card" style="padding:0;overflow:hidden"><div style="display:grid;grid-template-columns:58px 1fr 1fr 1fr;gap:6px;padding:9px 12px;background:var(--surface2);font-size:10px;font-weight:800;color:var(--muted)"><span>DIA</span><span style="text-align:right">PRODUZIDO</span><span style="text-align:right">ABASTECIDO</span><span style="text-align:right">LÍQUIDO</span></div>' +
-        r.dias.map(function (d) { return '<div style="display:grid;grid-template-columns:58px 1fr 1fr 1fr;gap:6px;padding:10px 12px;border-top:1px solid var(--line);font-size:13px;align-items:center"><span><b>' + d.data.slice(8) + '</b> <span style="font-size:10px;color:var(--muted)">' + dow(d.data) + '</span></span><span style="text-align:right">' + br(d.produzido) + '</span><span style="text-align:right;color:var(--warnText)">' + br(d.abastecido) + '</span><b style="text-align:right;' + (d.liquido < 0 ? 'color:var(--pin)' : '') + '">' + br(d.liquido) + '</b></div>'; }).join('') + '</div>' : '<div class="empty">Nada nesta quinzena.</div>') +
-      '<div style="font-size:11px;color:var(--muted);margin-top:8px">Conta só o que foi feito e abastecido no seu cavalo (pago como agregado).</div>';
+        r.dias.map(function (d) { return '<div style="display:grid;grid-template-columns:58px 1fr 1fr 1fr;gap:6px;padding:10px 12px;border-top:1px solid var(--line);font-size:13px;align-items:center"><span><b>' + d.data.slice(8) + '</b> <span style="font-size:10px;color:var(--muted)">' + dow(d.data) + '</span></span><span style="text-align:right">' + br(d.produzido) + '</span><span style="text-align:right;color:var(--warnText)">' + br(d.abastecido) + '</span><b style="text-align:right;' + (d.liquido < 0 ? 'color:var(--pin)' : '') + '">' + br(d.liquido) + '</b></div>'; }).join('') + '</div>' : '') +
+      '<div style="font-size:11px;color:var(--muted);margin:8px 0 4px">Produzido x abastecido conta só o que foi feito e abastecido no seu cavalo (pago como agregado).</div>';
   }).catch(falha);
 };
 ACOES.qComb = function (d) { S.p.q.q = +d.q; render(); };
@@ -1220,7 +1286,7 @@ TELAS.avisos.depois = function () {
       var l = a.lancamento;
       if (a.tipo === 'AJUSTE' && l) {
         return '<div class="card" style="padding:0;overflow:hidden;border:2px solid var(--warn)"><div style="background:var(--warnSoft);padding:12px 14px;display:flex;align-items:center;gap:10px"><div class="ico-sq" style="width:38px;height:38px;border-radius:19px;background:#E8A33D;color:#3D2600">' + I.lapis + '</div><div style="display:flex;flex-direction:column"><b style="font-size:15px;color:var(--warnText)">SUA VIAGEM TEVE AJUSTE</b><span style="font-size:12px;font-weight:600;color:var(--warnText)">Dia ' + dBr(l.data_operacional) + ' · ' + esc(a.data.slice(8, 10) + '/' + a.data.slice(5, 7) + ' ' + a.data.slice(11)) + (a.lido ? '' : ' · NOVO') + '</span></div></div>' +
-          '<div style="padding:12px 14px;display:flex;flex-direction:column;gap:10px"><div style="display:flex;flex-direction:column;gap:2px"><b>' + esc(l.categoria === 'CONTEINER' ? l.conteiner : l.tipo_extra) + '</b><span style="font-size:13px;color:var(--ink2)">' + esc(l.categoria === 'CONTEINER' ? l.origem + ' → ' + l.destino : '') + '</span></div>' +
+          '<div style="padding:12px 14px;display:flex;flex-direction:column;gap:10px"><div style="display:flex;flex-direction:column;gap:2px"><b>' + esc(l.categoria === 'CONTEINER' ? l.conteiner : l.tipo_extra) + '</b><span style="font-size:13px;color:var(--ink2)">' + esc(l.destino ? l.origem + ' → ' + l.destino : '') + '</span></div>' +
           '<div style="display:grid;grid-template-columns:1fr 24px 1fr;align-items:center;gap:6px"><div style="border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--surface2)"><div style="font-size:10px;font-weight:800;color:var(--muted)">VOCÊ LANÇOU</div><b style="font-size:18px;color:var(--muted);text-decoration:line-through">' + brl(a.valor_anterior !== null ? a.valor_anterior : l.valor_lancado) + '</b></div><span style="color:var(--warnText)">' + I.seta + '</span><div style="border:2px solid var(--warn);border-radius:10px;padding:8px 10px;background:var(--warnSoft)"><div style="font-size:10px;font-weight:800;color:var(--warnText)">VALOR AJUSTADO</div><b style="font-size:18px;color:var(--warnText)">' + brl(l.valor_final) + '</b></div></div>' +
           (l.ajuste ? '<div style="font-size:12px;color:var(--ink2);border-top:1px solid var(--line);padding-top:8px"><b>Ajustado por:</b> ' + esc(l.ajuste.por) + (l.ajuste.obs ? '<br><b>Observação:</b> ' + esc(l.ajuste.obs) : '') + '</div>' : '') + '</div></div>';
       }
@@ -1456,7 +1522,7 @@ ACOES.gDet = function () {
           (d.aberto ? '<div style="padding:10px 14px;background:#F7F9FA;border-bottom:1px solid #DCE2E8;font-size:13px;color:#3E4A55">Dia ainda em aberto. Os valores podem ser ajustados depois que o motorista encerrar o dia.</div>' : '') +
           '<div class="g-scroll"><table class="g" style="min-width:900px"><thead><tr><th>Tipo</th><th>Contêiner / descrição</th><th>Origem → destino</th><th>Tam.</th><th>Carga</th><th>Início</th><th>Fim</th><th>Pago como</th><th class="n">Lançado</th><th class="n">Valor final</th><th></th></tr></thead><tbody>' +
           d.linhas.map(function (l) {
-            return '<tr class="' + (l.ajustado ? 'aj' : '') + '"><td><span class="g-chip" style="background:' + (l.categoria === 'EXTRA' ? '#F1F4D6;color:#4A5200' : '#E8F2FA;color:#145A90') + '">' + (l.categoria === 'EXTRA' ? 'EXTRA' : 'CONTÊINER') + '</span></td><td><b>' + esc(l.conteiner || l.tipo_extra) + '</b></td><td>' + esc(l.categoria === 'CONTEINER' ? l.origem + ' → ' + l.destino : l.origem) + '</td><td>' + esc(l.tamanho || '–') + '</td><td>' + esc(l.carga || '–') + '</td><td>' + hh(l.inicio) + '</td><td>' + hh(l.fim) + (l.fim.slice(0, 10) > l.data_operacional ? ' (' + dBr(l.fim) + ')' : '') + '</td><td>' + l.pagamento + '</td>' +
+            return '<tr class="' + (l.ajustado ? 'aj' : '') + '"><td><span class="g-chip" style="background:' + (l.categoria === 'EXTRA' ? '#F1F4D6;color:#4A5200' : '#E8F2FA;color:#145A90') + '">' + (l.categoria === 'EXTRA' ? 'EXTRA' : 'CONTÊINER') + '</span></td><td><b>' + esc(l.conteiner || l.tipo_extra) + '</b></td><td>' + esc(l.destino ? l.origem + ' → ' + l.destino : l.origem) + '</td><td>' + esc(l.tamanho || '–') + '</td><td>' + esc(l.carga || '–') + '</td><td>' + hh(l.inicio) + '</td><td>' + hh(l.fim) + (l.fim.slice(0, 10) > l.data_operacional ? ' (' + dBr(l.fim) + ')' : '') + '</td><td>' + l.pagamento + '</td>' +
               '<td class="n" style="' + (l.ajustado ? 'text-decoration:line-through;color:#5B6773' : '') + '">' + br(l.valor_lancado) + '</td><td class="n"><b style="' + (l.ajustado ? 'color:#8A5300' : '') + '">' + br(l.valor_final) + '</b>' + (l.ajuste ? '<div style="font-size:10px;color:#8A5300">' + esc(l.ajuste.por) + ' · ' + esc(l.ajuste.em) + '</div>' : '') + '</td>' +
               '<td>' + (!master() ? '' : d.aberto ? '<span style="font-size:11px;color:#5B6773">Bloqueado</span>' : '<button class="g-btn sm out" data-a="gAjustar" data-id="' + l.id + '" data-v="' + l.valor_final + '">' + I.lapis + ' Ajustar</button>') + '</td></tr>';
           }).join('') + '</tbody></table></div></section>';
@@ -1941,9 +2007,10 @@ TELAS.grel = function () {
   return gLayout('grel', '<div><h1 class="g-h1">RELATÓRIOS</h1><div class="g-sub">Escolha o tipo de relatório, o período e o formato.</div></div>' +
     '<section class="g-card" style="display:flex;flex-direction:column;gap:12px"><b>1. Qual relatório?</b><div style="display:flex;flex-wrap:wrap;gap:12px">' +
     rd('geral', 'Relatório geral', 'Todos os motoristas no período, um por linha, com Batendo, Cheio, Vazio e Valor total. Mesmo modelo do relatório da ModallPort.') +
-    rd('individual', 'Relatório individual', 'Um motorista: todas as operações dia a dia, com subtotal por dia, resumo por tipo e total do período.') + '</div></section>' +
+    rd('individual', 'Relatório individual', 'Um motorista: todas as operações dia a dia, com subtotal por dia, resumo por tipo e total do período.') +
+    rd('combustivel', 'Abastecimento x produção', 'Por motorista: litros e valor abastecido, preço médio, produção do período, quanto do produzido foi para combustível e o líquido do agregado.') + '</div></section>' +
     '<section class="g-card" style="display:flex;flex-direction:column;gap:12px"><b>2. Filtros</b><div class="g-grid">' + periodoCampos('r') +
-    (R.tipo === 'geral' ? '<div class="g-f wide"><span class="l">Vínculo</span><div class="g-seg">' + vs + '</div></div>' : '<div class="g-f"><label for="rMot">Motorista</label><span id="rMotBox">' + selMotorista('rMot', S.G.motId) + '</span></div>') + '</div></section>' +
+    (R.tipo !== 'individual' ? '<div class="g-f wide"><span class="l">Vínculo</span><div class="g-seg">' + vs + '</div></div>' : '<div class="g-f"><label for="rMot">Motorista</label><span id="rMotBox">' + selMotorista('rMot', S.G.motId) + '</span></div>') + '</div></section>' +
     '<section class="g-card" style="display:flex;flex-direction:column;gap:12px"><b>3. Formato</b><div style="display:flex;flex-wrap:wrap;gap:10px">' + fm('pdf', 'PDF · para imprimir') + fm('xlsx', 'EXCEL · para conferir') + '</div>' +
     '<div style="display:flex;flex-wrap:wrap;gap:10px"><button class="g-btn out" data-a="relGerar" data-modo="html">' + I.cheia + ' Ver em tela cheia</button><button class="g-btn" data-a="relGerar" data-modo="baixar">' + I.baixar + ' Baixar</button></div></section>');
 };
