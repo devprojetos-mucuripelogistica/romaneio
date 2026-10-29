@@ -165,6 +165,40 @@ table.g tr.aj td{background:#FFF1DA}
 table.g tr.dif td{background:#FFF6E6}
 table.g tr.falta td{background:#EEF5FC}
 table.g tr.sobra td{background:#FDF0EA}
+.msel{position:relative}
+.msel-l{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:30;background:#fff;border:1px solid #CED7DF;border-radius:10px;box-shadow:0 10px 28px rgba(11,61,97,.18);max-height:300px;overflow:auto;padding:4px}
+.msel-l button{display:flex;width:100%;align-items:center;gap:8px;text-align:left;border:0;background:transparent;padding:9px 10px;border-radius:8px;font-size:13px;color:#0B3D61}
+.msel-l button:hover,.msel-l button.on{background:#EEF4F9}
+.msel-l .vz{padding:10px;font-size:12px;color:#5B6773}
+.msel .x{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:26px;height:26px;border:0;border-radius:13px;background:#EEF1F4;color:#3E4A55;font-size:15px;line-height:1;display:flex;align-items:center;justify-content:center}
+.mapa{border-collapse:separate;border-spacing:0;font-size:12px;min-width:100%}
+.mapa th,.mapa td{border-bottom:1px solid #E3E8EC;border-right:1px solid #EEF1F4;padding:0;height:34px;text-align:right;white-space:nowrap}
+.mapa thead th{position:sticky;top:0;z-index:3;background:#F6F8FA;font-size:10.5px;color:#5B6773;padding:6px 6px;text-align:center;line-height:1.2}
+.mapa thead th.dom{background:#EDF0F3}
+.mapa .nm{position:sticky;left:0;z-index:2;background:#fff;text-align:left;padding:0 10px;min-width:230px;max-width:260px;overflow:hidden;text-overflow:ellipsis;font-weight:700}
+.mapa thead .nm{z-index:4;background:#F6F8FA}
+.mapa .nº{width:34px;text-align:center;color:#5B6773}
+.mapa td.c{min-width:64px;padding:0 6px;cursor:pointer}
+.mapa td.c.ok{background:#E3F2D3;color:#2F5A0F;font-weight:700}
+.mapa td.c.conf{background:#8FD16A;color:#173A05;font-weight:800}
+.mapa td.c.conf::before{content:'✓ ';font-weight:900}
+.mapa td.c.alt{background:#F8C08A;color:#5A2A00;font-weight:800}
+.mapa td.c.outra{background:#FFF1A8;color:#5C4A00;font-weight:700}
+.mapa td.c.aberto{background:#D2EEFB;color:#0F5675;font-weight:700}
+.mapa td.c.falta{background:#FBE7E0}
+.mapa td.c.dom{background:#F1F3F5}
+.mapa td.c.fut{background:#fff;cursor:default}
+.mapa td.c:hover:not(.fut){outline:2px solid #0B3D61;outline-offset:-2px}
+.mapa tr.grp td{background:#0B3D61;color:#fff;font-weight:800;text-align:left;padding:0 10px;height:30px;letter-spacing:.5px}
+.mapa tr.grp td.nm{background:#0B3D61;color:#fff}
+.mapa tr.tt td{background:#F2F5F8;font-weight:800;padding:0 6px}
+.mapa tr.tt td.nm{background:#F2F5F8}
+.mapa tr.tg td{background:#E3EAF1;font-weight:800;padding:0 6px;font-size:12.5px}
+.mapa tr.tg td.nm{background:#E3EAF1}
+.mapa td.tot{background:#F7F9FA;font-weight:800;padding:0 8px;min-width:90px}
+.mapa td.dias{text-align:center;color:#3E4A55;min-width:46px}
+.leg{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#3E4A55}
+.leg i{display:inline-block;width:14px;height:14px;border-radius:4px;border:1px solid rgba(0,0,0,.08)}
 .g-chip{display:inline-block;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:800;white-space:nowrap}
 .st-OK{background:#F1F4D6;color:#4A5200}.st-SO_POSTO{background:#1C75BB;color:#fff}.st-SO_APP{background:#C2410C;color:#fff}.st-VALOR_DIFERENTE{background:#E8A33D;color:#3D2600}.st-FALTA_SISTEMA{background:#1C75BB;color:#fff}.st-A_MAIS_SISTEMA{background:#C2410C;color:#fff}
 .g-tabs{display:flex;gap:4px;border-bottom:1px solid #DCE2E8}
@@ -191,6 +225,7 @@ table.g tr.sobra td{background:#FDF0EA}
 #toast.erro{background:#8A1C0C}
 .modal-bg{position:fixed;inset:0;z-index:40;background:rgba(9,20,29,.55);display:flex;align-items:flex-end;justify-content:center}
 .modal{background:var(--surface);color:var(--ink);width:100%;max-width:520px;border-radius:20px 20px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:12px;max-height:90vh;overflow:auto}
+.modal.gm.larga{max-width:1120px!important;width:100%}
 .modal.gm{background:#fff;color:#0B3D61;border-radius:16px;margin:auto;align-self:center}
 .full{position:fixed;inset:0;z-index:45;background:#525659;display:flex;flex-direction:column}
 .full .bar{height:calc(56px + env(safe-area-inset-top));padding-top:env(safe-area-inset-top)!important;background:#0B3D61;color:#fff;display:flex;align-items:center;gap:8px;padding:0 12px;flex-shrink:0}
@@ -357,7 +392,7 @@ function transporte(nome, token, args) {
     return enviarPost(nome, token, args);
   });
 }
-var APP_VERSAO = '27.10-j';
+var APP_VERSAO = '29.10-a';
 // aceita o link normal (/macros/s/…/exec) e o de conta Google Workspace (/a/macros/dominio/s/…/exec)
 function linkValido(u) { return /^https:\/\/script\.google\.com\/(a\/macros\/[^\/]+|macros)\/s\/[^\/]+\/exec\/?$/.test(String(u || '').trim()); }
 function lerConfigAtual() {
@@ -524,7 +559,7 @@ ACOES.nav = function (d) {
 };
 ACOES.falar = function () { var f = FALAS[S.tela]; falar(typeof f === 'function' ? f() : (f || document.querySelector('h1') && document.querySelector('h1').textContent), true); };
 
-function abrirModal(html) { var gm = S.tela && S.tela.charAt(0) === 'g' ? ' gm' : ''; document.getElementById('layer').innerHTML = '<div class="modal-bg" data-a="fecharModalFundo" style="' + (gm ? 'align-items:center;padding:16px' : '') + '"><div class="modal' + gm + '" role="dialog" aria-modal="true">' + html + '</div></div>'; }
+function abrirModal(html, cls) { var gm = (S.tela && S.tela.charAt(0) === 'g' ? ' gm' : '') + (cls ? ' ' + cls : ''); document.getElementById('layer').innerHTML = '<div class="modal-bg" data-a="fecharModalFundo" style="' + (gm ? 'align-items:center;padding:16px' : '') + '"><div class="modal' + gm + '" role="dialog" aria-modal="true">' + html + '</div></div>'; }
 function fecharModal() { document.getElementById('layer').innerHTML = ''; }
 ACOES.fecharModal = fecharModal;
 ACOES.fecharModalFundo = function (d, el, e) { if (e.target === el) fecharModal(); };
@@ -1283,7 +1318,17 @@ TELAS.avisos.depois = function () {
     var box = document.getElementById('avisos'); if (!box) return;
     if (!lista.length) { box.innerHTML = '<div class="empty">Nenhum aviso.</div>'; return; }
     box.innerHTML = lista.map(function (a) {
-      var l = a.lancamento;
+      var l = a.lancamento, det = a.detalhe;
+      var dataAv = esc(a.data.slice(8, 10) + '/' + a.data.slice(5, 7) + ' ' + a.data.slice(11)) + (a.lido ? '' : ' · NOVO');
+      if (det && det.alteracoes && det.alteracoes.length) {
+        var tit = a.tipo === 'KM' ? 'SEU KM FOI CORRIGIDO' : 'SUA VIAGEM FOI CORRIGIDA';
+        return '<div class="card" style="padding:0;overflow:hidden;border:2px solid var(--warn)"><div style="background:var(--warnSoft);padding:12px 14px;display:flex;align-items:center;gap:10px"><div class="ico-sq" style="width:38px;height:38px;border-radius:19px;background:#E8A33D;color:#3D2600">' + I.lapis + '</div><div style="display:flex;flex-direction:column"><b style="font-size:15px;color:var(--warnText)">' + tit + '</b><span style="font-size:12px;font-weight:600;color:var(--warnText)">' + (l ? 'Dia ' + dBr(l.data_operacional) + ' · ' : '') + dataAv + '</span></div></div>' +
+          '<div style="padding:12px 14px;display:flex;flex-direction:column;gap:8px">' + (l ? '<div style="display:flex;flex-direction:column;gap:2px"><b>' + esc(l.categoria === 'CONTEINER' ? l.conteiner : l.tipo_extra) + '</b><span style="font-size:13px;color:var(--ink2)">' + esc(l.destino ? l.origem + ' → ' + l.destino : '') + '</span></div>' : '<div style="font-size:13px;color:var(--ink2)">' + esc(a.mensagem.split(' · ').slice(0, 2).join(' · ')) + '</div>') +
+          '<div style="display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;overflow:hidden">' + det.alteracoes.map(function (x) {
+            return '<div style="display:grid;grid-template-columns:92px 1fr;gap:8px;padding:8px 10px;border-top:1px solid var(--line);font-size:13px;align-items:center"><span style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase">' + esc(x.campo) + '</span><span><span style="color:var(--muted);text-decoration:line-through">' + esc(String(x.de || '–')) + '</span> → <b style="color:var(--warnText)">' + esc(String(x.para || '–')) + '</b></span></div>';
+          }).join('').replace('border-top:1px solid var(--line);', '') + '</div>' +
+          '<div style="font-size:12px;color:var(--ink2)"><b>Alterado por:</b> ' + esc(det.por || '') + (det.obs ? '<br><b>' + (a.tipo === 'KM' ? 'Motivo' : 'Observação') + ':</b> ' + esc(det.obs) : '') + '</div></div></div>';
+      }
       if (a.tipo === 'AJUSTE' && l) {
         return '<div class="card" style="padding:0;overflow:hidden;border:2px solid var(--warn)"><div style="background:var(--warnSoft);padding:12px 14px;display:flex;align-items:center;gap:10px"><div class="ico-sq" style="width:38px;height:38px;border-radius:19px;background:#E8A33D;color:#3D2600">' + I.lapis + '</div><div style="display:flex;flex-direction:column"><b style="font-size:15px;color:var(--warnText)">SUA VIAGEM TEVE AJUSTE</b><span style="font-size:12px;font-weight:600;color:var(--warnText)">Dia ' + dBr(l.data_operacional) + ' · ' + esc(a.data.slice(8, 10) + '/' + a.data.slice(5, 7) + ' ' + a.data.slice(11)) + (a.lido ? '' : ' · NOVO') + '</span></div></div>' +
           '<div style="padding:12px 14px;display:flex;flex-direction:column;gap:10px"><div style="display:flex;flex-direction:column;gap:2px"><b>' + esc(l.categoria === 'CONTEINER' ? l.conteiner : l.tipo_extra) + '</b><span style="font-size:13px;color:var(--ink2)">' + esc(l.destino ? l.origem + ' → ' + l.destino : '') + '</span></div>' +
@@ -1438,6 +1483,7 @@ function gLayout(ativo, conteudo) {
   var u = S.G.user || {};
   var IG = {
     gpainel: '<path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>',
+    gmapa: '<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 4v17M13 9v12M18 9v12"/>',
     gconf: '<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>',
     gdetalhe: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
     gkm: '<circle cx="12" cy="13" r="8"/><path d="M12 13l4-3M12 5v1M5 13h1M18 13h1"/>',
@@ -1447,12 +1493,15 @@ function gLayout(ativo, conteudo) {
   };
   var b = function (t, n) { return '<button class="' + (ativo === t ? 'on' : '') + '" data-a="gNav" data-t="' + t + '"' + (ativo === t ? ' aria-current="page"' : '') + '><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + IG[t] + '</svg>' + n + '</button>'; };
   return '<div class="g-app"><aside class="g-side"><div style="display:flex;flex-direction:column;gap:8px;padding:0 8px"><img src="' + LOGO_NEG + '" alt="Mucuripe Logística" style="width:168px;height:auto"><span style="font-family:\'Exo 2\',sans-serif;font-style:italic;font-weight:800;font-size:12px;letter-spacing:2px;color:#B6C54C">ROMANEIO DIGITAL</span></div>' +
-    '<nav aria-label="Menu da gestão"><span class="g-sec">OPERAÇÃO</span>' + b('gpainel', 'Produção') + b('gconf', 'Conferência') + b('gdetalhe', 'Ajustes de valor') + b('gkm', 'Registro de KM') + b('gcomb', 'Combustível') +
+    '<nav aria-label="Menu da gestão"><span class="g-sec">OPERAÇÃO</span>' + b('gpainel', 'Produção') + b('gmapa', 'Mapa produtivo') + b('gconf', 'Conferência') + b('gdetalhe', 'Ajustes') + b('gkm', 'Registro de KM') + b('gcomb', 'Combustível') +
     '<span class="g-sec">ADMINISTRAÇÃO</span>' + b('gcad', 'Cadastros') + b('grel', 'Relatórios') + '</nav><div style="flex:1"></div>' +
     '<div style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;background:rgba(255,255,255,.08)"><div style="width:34px;height:34px;border-radius:17px;background:#B6C54C;color:#0B3D61;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px">' + esc(iniciais(u.nome || u.usuario) || 'U') + '</div><div style="flex:1;display:flex;flex-direction:column"><b style="font-size:13px">' + esc(String(u.nome || u.usuario || '').split(' ')[0]) + '</b><span style="font-size:10px;font-weight:800;color:#B6C54C;letter-spacing:1px">PERFIL ' + esc(u.perfil || '') + '</span></div><button class="g-btn sm out" style="background:transparent;color:#fff;border-color:rgba(255,255,255,.4)" data-a="gSair">Sair</button></div></aside>' +
     '<main class="g-main"><div class="g-wrap">' + conteudo + '</div></main></div>';
 }
-ACOES.gNav = function (d) { ir(d.t); };
+ACOES.gNav = function (d) {
+  if (d.t === 'gconf') limparConferencia();   // a conferência sempre abre vazia
+  ir(d.t);
+};
 ACOES.gSair = function () { call('sair').finally(function () { ls('rd_token', null); S.token = null; ir('glogin'); }); };
 function master() { return S.G.user && S.G.user.perfil === 'MASTER'; }
 function gPeriodoPadrao() { if (!S.G.per) { var q = quinzenaAtual(); S.G.per = periodoQ(q.ano, q.mes, q.q); } return S.G.per; }
@@ -1460,9 +1509,45 @@ function gMotoristasCache() { return S.G.mots ? Promise.resolve(S.G.mots) : call
 function gVeiculosCache() { return S.G.veis ? Promise.resolve(S.G.veis) : call('gVeiculos', {}, true).then(function (l) { S.G.veis = l; return l; }); }
 /** Logo depois do login, busca por trás as listas que as telas usam. */
 function gPreCarregar() { gMotoristasCache().catch(function () { }); gVeiculosCache().catch(function () { }); }
+/** Campo de pesquisa de motorista (nome ou CPF). O id guarda o motorista escolhido, como antes. */
 function selMotorista(id, sel) {
-  return '<select id="' + id + '" class="g-in"><option value="">Escolha o motorista…</option>' + (S.G.mots || []).map(function (m) { return '<option value="' + m.id + '"' + (m.id === sel ? ' selected' : '') + '>' + esc(m.nome) + ' · ' + m.vinculo + '</option>'; }).join('') + '</select>';
+  var m = (S.G.mots || []).filter(function (x) { return x.id === sel; })[0];
+  return '<div class="msel"><input type="hidden" id="' + id + '" value="' + esc(m ? m.id : '') + '">' +
+    '<input class="g-in" id="' + id + 'Q" data-i="mBusca" data-for="' + id + '" autocomplete="off" placeholder="Escolha o motorista…" value="' + esc(m ? m.nome : '') + '" style="padding-right:36px">' +
+    (m ? '<button class="x" data-a="mLimpar" data-for="' + id + '" aria-label="Limpar motorista">×</button>' : '') +
+    '<div class="msel-l hidden" id="' + id + 'L"></div></div>';
 }
+var MSEL_CB = {};   // MSEL_CB[id] = function (motoristaId) chamada quando escolhe ou limpa
+function mselLista(id, txt) {
+  var box = document.getElementById(id + 'L'); if (!box) return;
+  var t = String(txt || '').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim(), dig = t.replace(/\D/g, '');
+  var l = (S.G.mots || []).filter(function (m) {
+    if (!t) return true;
+    var n = String(m.nome).toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    return n.indexOf(t) >= 0 || (dig.length >= 3 && String(m.cpf || '').replace(/\D/g, '').indexOf(dig) >= 0);
+  }).slice(0, 40);
+  box.innerHTML = l.length ? l.map(function (m) { return '<button data-a="mEsc" data-for="' + id + '" data-id="' + m.id + '"><b style="flex:1">' + esc(m.nome) + '</b><span class="g-chip" style="background:#E8F2FA;color:#145A90">' + m.vinculo + '</span>' + (m.ativo === false ? '<span class="g-chip" style="background:#EEF1F4;color:#5B6773">INATIVO</span>' : '') + '</button>'; }).join('') : '<div class="vz">Nenhum motorista com esse nome ou CPF.</div>';
+  box.classList.remove('hidden');
+}
+ACOES.mBusca = function (d, el) {
+  var h = document.getElementById(d.for);
+  if (h && h.value) { h.value = ''; if (MSEL_CB[d.for]) MSEL_CB[d.for](''); }
+  mselLista(d.for, el.value);
+};
+ACOES.mEsc = function (d) {
+  var m = (S.G.mots || []).filter(function (x) { return x.id === d.id; })[0]; if (!m) return;
+  var box = document.getElementById(d.for).parentNode, ph = document.getElementById(d.for + 'Q').placeholder;
+  box.outerHTML = selMotorista(d.for, m.id).replace('Escolha o motorista…', ph);
+  if (MSEL_CB[d.for]) MSEL_CB[d.for](m.id);
+};
+ACOES.mLimpar = function (d) {
+  var box = document.getElementById(d.for).parentNode, ph = document.getElementById(d.for + 'Q').placeholder;
+  box.outerHTML = selMotorista(d.for, '').replace('Escolha o motorista…', ph);
+  var q = document.getElementById(d.for + 'Q'); if (q) q.focus();
+  if (MSEL_CB[d.for]) MSEL_CB[d.for]('');
+};
+document.addEventListener('focusin', function (e) { var el = e.target; if (el && el.dataset && el.dataset.i === 'mBusca' && !document.getElementById(el.dataset.for).value) mselLista(el.dataset.for, el.value); });
+document.addEventListener('mousedown', function (e) { if (!e.target.closest || e.target.closest('.msel')) return; document.querySelectorAll('.msel-l').forEach(function (b) { b.classList.add('hidden'); }); });
 function periodoCampos(pref) {
   var p = gPeriodoPadrao();
   return '<div class="g-f"><label for="' + pref + 'De">De (data operacional)</label><input id="' + pref + 'De" type="date" class="g-in" value="' + p.de + '"></div><div class="g-f"><label for="' + pref + 'Ate">Até</label><input id="' + pref + 'Ate" type="date" class="g-in" value="' + p.ate + '"></div>';
@@ -1473,36 +1558,135 @@ function lerPeriodo(pref) { S.G.per = { de: document.getElementById(pref + 'De')
 TELAS.gpainel = function () {
   S.G.vinc = S.G.vinc || 'TODOS';
   var seg = ['TODOS', 'AVULSO', 'CLT', 'AGREGADO'].map(function (v) { return '<button class="' + (S.G.vinc === v ? 'on' : '') + '" data-a="gVinc" data-v="' + v + '">' + v + '</button>'; }).join('');
-  return gLayout('gpainel', '<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px"><div><h1 class="g-h1">PRODUÇÃO DOS MOTORISTAS</h1><div class="g-sub">Cada lançamento conta para o dia em que o motorista abriu a operação.</div></div>' +
-    '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="g-btn out" data-a="gRelRapido" data-f="xlsx">' + I.baixar + ' Excel geral</button><button class="g-btn" data-a="gRelRapido" data-f="html">' + I.cheia + ' Relatório geral</button></div></div>' +
-    '<section class="g-card g-grid"><div class="g-f"><label for="pNome">Motorista</label><input id="pNome" class="g-in" placeholder="Buscar por nome ou CPF" value="' + esc(S.G.nome || '') + '"></div>' + periodoCampos('p') +
-    '<div class="g-f wide"><span class="l">Vínculo</span><div class="g-seg">' + seg + '</div></div><div><button class="g-btn" data-a="gBuscar">Buscar</button></div></section>' +
-    '<section class="g-kpis" id="pKpis"></section><section class="g-tablebox"><div class="hd"><b id="pTit">Carregando…</b></div><div class="g-scroll"><table class="g"><thead><tr><th>Motorista</th><th>Vínculo</th><th class="n">Batendo</th><th class="n">Cheio</th><th class="n">Vazio</th><th class="n">Total</th><th class="n">Valor total</th><th>Ajustes</th><th>Ações</th></tr></thead><tbody id="pBody"></tbody></table></div></section>');
+  return gLayout('gpainel', '<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px"><div><h1 class="g-h1">PRODUÇÃO DOS MOTORISTAS</h1><div class="g-sub">Produção agrupada por dia. Clique no dia para ver cada motorista. Escolha um motorista para ver só a produção dele, dia a dia.</div></div>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap" id="pBtns"></div></div>' +
+    '<section class="g-card g-grid"><div class="g-f"><label for="pMotQ">Motorista</label><span id="pMotBox">' + selMotorista('pMot', S.G.pMot).replace('Escolha o motorista…', 'Todos (busque por nome ou CPF)') + '</span></div>' + periodoCampos('p') +
+    '<div class="g-f wide" id="pVincBox"><span class="l">Vínculo</span><div class="g-seg">' + seg + '</div></div><div><button class="g-btn" data-a="gBuscar">Buscar</button></div></section>' +
+    '<section class="g-kpis" id="pKpis"></section><div id="pRes"><div class="g-card" style="text-align:center;color:#5B6773">Carregando…</div></div>');
 };
-TELAS.gpainel.depois = function () { ACOES.gBuscar(); };
+TELAS.gpainel.depois = function () {
+  MSEL_CB.pMot = function (id) { S.G.pMot = id; S.G.pAberto = {}; ACOES.gBuscar(); };
+  gMotoristasCache().then(function () { var b = document.getElementById('pMotBox'); if (b && !document.getElementById('pMotQ').value) b.innerHTML = selMotorista('pMot', S.G.pMot).replace('Escolha o motorista…', 'Todos (busque por nome ou CPF)'); });
+  ACOES.gBuscar();
+};
 ACOES.gVinc = function (d) { S.G.vinc = d.v; document.querySelectorAll('[data-a="gVinc"]').forEach(function (b) { b.classList.toggle('on', b.dataset.v === d.v); }); ACOES.gBuscar(); };
+function chipConf(st, por) {
+  if (st === 'OK') return '<span class="g-chip" style="background:#3F8F1F;color:#fff" title="' + esc(por || '') + '">✓ CONFERIDO</span>';
+  if (st === 'ALTERADO') return '<span class="g-chip" style="background:#F8C08A;color:#5A2A00" title="Mudou depois da confirmação · ' + esc(por || '') + '">ALTERADO APÓS CONFERIR</span>';
+  return '';
+}
+/** Confirma (ou desfaz) que a produção do motorista no dia foi conferida. */
+ACOES.confDia = function (d) {
+  call('gConfirmar', { motorista_id: d.id, data: d.d, origem: S.tela === 'gmapa' ? 'MAPA' : 'PRODUCAO' }).then(function () { toast('Produção do dia confirmada.'); depoisConfirmar(d); }).catch(falha);
+};
+ACOES.desconfDia = function (d) {
+  if (!confirm('Desfazer a confirmação deste dia?')) return;
+  call('gDesconfirmar', { motorista_id: d.id, data: d.d }).then(function () { toast('Confirmação desfeita.'); depoisConfirmar(d); }).catch(falha);
+};
+function depoisConfirmar(d) {
+  if (document.querySelector('.modal')) ACOES.pVerDia({ id: d.id, d: d.d });
+  if (S.tela === 'gmapa') ACOES.mpBuscar(); else if (S.tela === 'gpainel') ACOES.gBuscar();
+}
+function regLanc(l) { (S.G.lancs = S.G.lancs || {})[l.id] = l; }
+var chipVinc = function (v) { return '<span class="g-chip" style="background:' + (v === 'AGREGADO' ? '#F1F4D6;color:#4A5200' : v === 'CLT' ? '#EDE9FB;color:#4B3A99' : '#E8F2FA;color:#145A90') + '">' + v + '</span>'; };
+var cv = function (x) { return x[0] ? x[0] + ' · ' + br(x[1]) : '<span style="color:#9AA5AF">–</span>'; };
 ACOES.gBuscar = function () {
-  var p = lerPeriodo('p'); S.G.nome = document.getElementById('pNome').value;
-  call('gPainel', { de: p.de, ate: p.ate, vinculo: S.G.vinc, nome: S.G.nome }).then(function (r) {
+  var p = lerPeriodo('p'), mid = (document.getElementById('pMot') || {}).value || '';
+  S.G.pMot = mid; S.G.pAberto = S.G.pAberto || {};
+  var vb = document.getElementById('pVincBox'); if (vb) vb.style.display = mid ? 'none' : '';
+  if (mid) return buscarPainelMotorista(mid, p);
+  document.getElementById('pBtns').innerHTML = '<button class="g-btn out" data-a="gRelRapido" data-f="xlsx">' + I.baixar + ' Excel geral</button><button class="g-btn" data-a="gRelRapido" data-f="html">' + I.cheia + ' Relatório geral</button>';
+  call('gProducaoDias', { de: p.de, ate: p.ate, vinculo: S.G.vinc }).then(function (r) {
+    S.G.pDias = r;
     var t = r.totais;
-    document.getElementById('pKpis').innerHTML = '<div class="g-kpi"><span>Motoristas com produção</span><b>' + t.motoristas + '</b></div><div class="g-kpi"><span>Lançamentos</span><b>' + t.lancamentos + '</b></div><div class="g-kpi navy"><span>Valor total do período</span><b>' + brl(t.valor) + '</b></div><div class="g-kpi warn"><span>Valores ajustados pelo auditor</span><b>' + t.ajustes + '</b></div>';
-    document.getElementById('pTit').textContent = dBrA(p.de) + ' a ' + dBrA(p.ate) + ' · ' + r.linhas.length + ' linha(s)' + (r.arquivadoAntes && p.de < r.arquivadoAntes ? ' · inclui meses do Histórico' : '');
-    document.getElementById('pBody').innerHTML = r.linhas.length ? r.linhas.map(function (g) {
-      return '<tr><td><b>' + esc(g.nome) + '</b>' + (g.doisVinculos ? '<div><span class="g-chip" style="background:#FFF6E6;color:#8A5300;margin-top:3px">TROCOU P/ VEÍCULO DA CASA</span></div>' : '') + '</td><td><span class="g-chip" style="background:' + (g.vinculo === 'AGREGADO' ? '#F1F4D6;color:#4A5200' : '#E8F2FA;color:#145A90') + '">' + g.vinculo + '</span></td>' +
-        '<td class="n">' + g.batendo[0] + ' · ' + br(g.batendo[1]) + '</td><td class="n">' + g.cheio[0] + ' · ' + br(g.cheio[1]) + '</td><td class="n">' + g.vazio[0] + ' · ' + br(g.vazio[1]) + '</td><td class="n"><b>' + g.total[0] + '</b></td><td class="n"><b>' + br(g.total[1]) + '</b></td>' +
-        '<td>' + (g.ajustes ? '<span class="g-chip" style="background:#E8A33D;color:#3D2600">' + g.ajustes + '</span>' : '–') + '</td>' +
-        '<td style="white-space:nowrap"><button class="g-btn sm" data-a="gVer" data-id="' + g.motorista_id + '">Ver</button> <button class="g-btn sm out" data-a="gConfDe" data-id="' + g.motorista_id + '">Conferir</button> <button class="g-btn sm out" data-a="gIndiv" data-id="' + g.motorista_id + '" data-f="xlsx">XLS</button> <button class="g-btn sm out" data-a="gIndiv" data-id="' + g.motorista_id + '" data-f="pdf">PDF</button></td></tr>';
-    }).join('') : '<tr><td colspan="9" style="text-align:center;color:#5B6773;padding:24px">Nada encontrado nesse filtro.</td></tr>';
+    document.getElementById('pKpis').innerHTML = '<div class="g-kpi"><span>Dias com produção</span><b>' + t.dias + '</b></div><div class="g-kpi"><span>Motoristas com produção</span><b>' + t.motoristas + '</b></div><div class="g-kpi"><span>Lançamentos</span><b>' + t.lancamentos + '</b></div><div class="g-kpi navy"><span>Valor total do período</span><b>' + brl(t.valor) + '</b></div><div class="g-kpi warn"><span>Ajustados pelo auditor</span><b>' + t.ajustes + '</b></div>';
+    desenharPainelDias();
   }).catch(falha);
 };
+function desenharPainelDias() {
+  var r = S.G.pDias, p = S.G.per, box = document.getElementById('pRes'); if (!box || !r) return;
+  var todosAbertos = r.dias.length && r.dias.every(function (d) { return S.G.pAberto[d.data]; });
+  box.innerHTML = '<section class="g-tablebox"><div class="hd"><b>' + dBrA(p.de) + ' a ' + dBrA(p.ate) + ' · ' + r.dias.length + ' dia(s)' + (r.arquivadoAntes && p.de < r.arquivadoAntes ? ' · inclui meses do Histórico' : '') + '</b>' +
+    (r.dias.length ? '<button class="g-btn sm out" data-a="pTodos">' + (todosAbertos ? 'Recolher todos' : 'Abrir todos os dias') + '</button>' : '') + '</div>' +
+    '<div class="g-scroll"><table class="g" style="min-width:960px"><thead><tr><th style="width:34px"></th><th>Dia</th><th class="n">Motoristas</th><th class="n">Batendo</th><th class="n">Cheio</th><th class="n">Vazio</th><th class="n">Lançamentos</th><th class="n">Valor</th><th>Ajustes</th><th>Ações</th></tr></thead><tbody>' +
+    (r.dias.length ? r.dias.map(function (d) {
+      var ab = S.G.pAberto[d.data];
+      var linha = '<tr class="dia-p" data-a="pDia" data-d="' + d.data + '" style="cursor:pointer"><td style="text-align:center;color:#5B6773">' + (ab ? '▾' : '▸') + '</td><td><b>' + dow(d.data) + ' · ' + dBrA(d.data) + '</b>' + (d.abertos ? ' <span class="g-chip" style="background:#D2EEFB;color:#0F5675">' + d.abertos + ' EM ABERTO</span>' : '') + '</td>' +
+        '<td class="n"><b>' + d.qtdMotoristas + '</b><div style="font-size:10.5px;font-weight:700;color:' + (d.conferidos === d.qtdMotoristas ? '#3F8F1F' : '#8A5300') + '">' + d.conferidos + ' conferido(s)</div></td><td class="n">' + cv(d.batendo) + '</td><td class="n">' + cv(d.cheio) + '</td><td class="n">' + cv(d.vazio) + '</td><td class="n">' + d.total[0] + '</td><td class="n"><b>' + br(d.total[1]) + '</b></td>' +
+        '<td>' + (d.ajustes ? '<span class="g-chip" style="background:#E8A33D;color:#3D2600">' + d.ajustes + '</span>' : '–') + '</td><td><span style="font-size:12px;color:#145A90;font-weight:700">' + (ab ? 'Fechar' : 'Ver motoristas') + '</span></td></tr>';
+      if (!ab) return linha;
+      return linha + d.motoristas.map(function (g) {
+        return '<tr style="background:#FAFBFC"><td></td><td style="padding-left:22px"><b>' + esc(g.nome) + '</b> ' + chipVinc(g.vinculo) + (g.cadastro && g.cadastro !== g.vinculo ? ' <span class="g-chip" style="background:#FFF1A8;color:#5C4A00">CADASTRO ' + g.cadastro + '</span>' : '') + (g.aberto ? ' <span class="g-chip" style="background:#D2EEFB;color:#0F5675">DIA ABERTO</span>' : '') + ' ' + chipConf(g.conferido, g.confPor) + '</td><td></td>' +
+          '<td class="n">' + cv(g.batendo) + '</td><td class="n">' + cv(g.cheio) + '</td><td class="n">' + cv(g.vazio) + '</td><td class="n">' + g.total[0] + '</td><td class="n"><b>' + br(g.total[1]) + '</b></td>' +
+          '<td>' + (g.ajustes ? '<span class="g-chip" style="background:#E8A33D;color:#3D2600">' + g.ajustes + '</span>' : '–') + '</td>' +
+          '<td style="white-space:nowrap"><button class="g-btn sm" data-a="pVerDia" data-id="' + g.motorista_id + '" data-d="' + d.data + '">Ver / ajustar</button> <button class="g-btn sm out" data-a="pDoMot" data-id="' + g.motorista_id + '">Só ele</button></td></tr>';
+      }).join('');
+    }).join('') : '<tr><td colspan="10" style="text-align:center;color:#5B6773;padding:24px">Nada encontrado nesse filtro.</td></tr>') + '</tbody></table></div></section>';
+}
+ACOES.pDia = function (d) { S.G.pAberto[d.d] = !S.G.pAberto[d.d]; desenharPainelDias(); };
+ACOES.pTodos = function () { var r = S.G.pDias, todos = r.dias.every(function (d) { return S.G.pAberto[d.data]; }); r.dias.forEach(function (d) { S.G.pAberto[d.data] = !todos; }); desenharPainelDias(); };
+ACOES.pDoMot = function (d) { S.G.pMot = d.id; S.G.pMotAberto = {}; render(); };
+/** Lançamentos de um motorista num dia, com ajuste de qualquer campo. */
+ACOES.pVerDia = function (d) {
+  call('gDetalhe', { motorista_id: d.id, de: d.d, ate: d.d }).then(function (r) {
+    S.G.extras = r.extras; S.G.extrasTraj = r.extrasComTrajeto;
+    S.G.modalDia = { motorista_id: d.id, data: d.d };
+    var dia = r.dias[0];
+    if (!dia) return toast('Nenhum lançamento nesse dia.', true);
+    var linhas = [], tot = 0, aberto = false;
+    r.dias.forEach(function (x) { x.linhas.forEach(function (l) { regLanc(l); linhas.push(l); }); tot += x.total; if (x.aberto) aberto = true; });
+    var junto = { linhas: linhas.sort(function (a, b) { return a.inicio < b.inicio ? -1 : 1; }), aberto: aberto };
+    var conf = !master() ? chipConf(dia.conferido, dia.confPor)
+      : dia.conferido === 'OK' ? chipConf('OK', dia.confPor) + ' <span style="font-size:11px;color:#5B6773">' + esc(dia.confPor) + '</span> <button class="g-btn sm out" data-a="desconfDia" data-id="' + d.id + '" data-d="' + d.d + '">Desfazer</button>'
+      : aberto ? '<span style="font-size:12px;color:#5B6773">Dia em aberto: confirme depois que o motorista encerrar.</span>'
+      : (dia.conferido === 'ALTERADO' ? chipConf('ALTERADO', dia.confPor) + ' ' : '') + '<button class="g-btn sm lime" data-a="confDia" data-id="' + d.id + '" data-d="' + d.d + '">' + I.ok + ' Confirmar produção conferida</button>';
+    abrirModal('<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div><b style="font-size:17px">' + esc(r.motorista.nome) + '</b><div style="font-size:12px;color:#5B6773">' + dow(dia.data) + ' ' + dBrA(dia.data) + ' · ' + esc(dia.placas) + ' · ' + linhas.length + ' lançamento(s) · <b>' + brl(tot) + '</b></div></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">' + conf + '<button class="g-btn sm out" data-a="fecharModal">Fechar</button></div></div>' +
+      '<div class="g-scroll" style="max-height:60vh">' + tabelaLancs(junto, { compacta: true }) + '</div>', 'larga');
+  }).catch(falha);
+};
+/** Tabela de lançamentos de um dia (usada em Ajustes de valor, no painel e na janela do dia). */
+function tabelaLancs(d, o) {
+  o = o || {};
+  return '<table class="g" style="min-width:' + (o.compacta ? '100%' : '900px') + '"><thead><tr><th>Tipo</th><th>Contêiner / descrição</th><th>Origem → destino</th><th>Tam.</th><th>Carga</th><th>Início</th><th>Fim</th><th>Pago como</th><th class="n">Lançado</th><th class="n">Valor final</th><th></th></tr></thead><tbody>' +
+    d.linhas.map(function (l) {
+      regLanc(l);
+      return '<tr class="' + (l.ajustado ? 'aj' : '') + '"><td><span class="g-chip" style="background:' + (l.categoria === 'EXTRA' ? '#F1F4D6;color:#4A5200' : '#E8F2FA;color:#145A90') + '">' + (l.categoria === 'EXTRA' ? 'EXTRA' : 'CONTÊINER') + '</span></td><td><b>' + esc(l.conteiner || l.tipo_extra) + '</b></td><td style="white-space:normal;min-width:150px">' + esc(l.destino ? l.origem + ' → ' + l.destino : l.origem || '–') + '</td><td>' + esc(l.tamanho || '–') + '</td><td>' + esc(l.carga || '–') + '</td><td>' + hh(l.inicio) + '</td><td>' + hh(l.fim) + (l.fim.slice(0, 10) > l.data_operacional ? ' (' + dBr(l.fim) + ')' : '') + '</td><td>' + l.pagamento + '</td>' +
+        '<td class="n" style="' + (l.valor_final !== l.valor_lancado ? 'text-decoration:line-through;color:#5B6773' : '') + '">' + br(l.valor_lancado) + '</td><td class="n"><b style="' + (l.ajustado ? 'color:#8A5300' : '') + '">' + br(l.valor_final) + '</b>' + (l.ajuste ? '<div style="font-size:10px;color:#8A5300">' + esc(l.ajuste.por) + ' · ' + esc(l.ajuste.em) + '</div>' : '') + '</td>' +
+        '<td>' + (!master() ? '' : d.aberto ? '<span style="font-size:11px;color:#5B6773">Dia aberto</span>' : '<button class="g-btn sm out" data-a="gAjustar" data-id="' + l.id + '">' + I.lapis + ' Ajustar</button>') + '</td></tr>';
+    }).join('') + '</tbody></table>';
+}
+/** Motorista escolhido: toda a produção dele, dia a dia, em sequência. */
+function buscarPainelMotorista(mid, p) {
+  document.getElementById('pBtns').innerHTML = '<button class="g-btn out" data-a="gIndiv" data-id="' + mid + '" data-f="xlsx">' + I.baixar + ' Excel</button><button class="g-btn out" data-a="gIndiv" data-id="' + mid + '" data-f="pdf">' + I.baixar + ' PDF</button><button class="g-btn" data-a="gConfDe" data-id="' + mid + '">Conferir</button>';
+  call('gDetalhe', { motorista_id: mid, de: p.de, ate: p.ate }).then(function (r) {
+    S.G.extras = r.extras; S.G.extrasTraj = r.extrasComTrajeto;
+    S.G.pDet = r; S.G.pMotAberto = S.G.pMotAberto || {};
+    r.dias.sort(function (a, b) { return a.data < b.data ? -1 : a.data > b.data ? 1 : (a.aberta_em < b.aberta_em ? -1 : 1); });
+    var tot = 0, qtd = 0, aj = 0; r.dias.forEach(function (d) { tot += d.total; qtd += d.linhas.length; d.linhas.forEach(function (l) { if (l.ajustado) aj++; }); });
+    var datas = {}; r.dias.forEach(function (d) { datas[d.data] = 1; });
+    document.getElementById('pKpis').innerHTML = '<div class="g-kpi"><span>Dias trabalhados</span><b>' + Object.keys(datas).length + '</b></div><div class="g-kpi"><span>Lançamentos</span><b>' + qtd + '</b></div><div class="g-kpi navy"><span>Valor do período</span><b>' + brl(tot) + '</b></div><div class="g-kpi warn"><span>Ajustados pelo auditor</span><b>' + aj + '</b></div>';
+    desenharPainelMotorista();
+  }).catch(falha);
+}
+function desenharPainelMotorista() {
+  var r = S.G.pDet, m = r.motorista, box = document.getElementById('pRes'); if (!box) return;
+  box.innerHTML = '<section class="g-tablebox"><div class="hd"><b>' + esc(m.nome) + ' ' + chipVinc(m.vinculo) + '</b><span style="font-size:12px;color:#5B6773">Clique no dia para ver as viagens e ajustar</span></div><div class="g-scroll"><table class="g" style="min-width:860px"><thead><tr><th style="width:34px"></th><th>Dia</th><th>Veículo(s)</th><th>Aberta</th><th>Encerrada</th><th class="n">Lançamentos</th><th class="n">Valor do dia</th><th>Situação</th></tr></thead><tbody>' +
+    (r.dias.length ? r.dias.map(function (d) {
+      var k = d.operacao_id, ab = S.G.pMotAberto[k], aj = d.linhas.filter(function (l) { return l.ajustado; }).length;
+      return '<tr data-a="pMotDia" data-k="' + k + '" style="cursor:pointer"><td style="text-align:center;color:#5B6773">' + (ab ? '▾' : '▸') + '</td><td><b>' + dow(d.data) + ' · ' + dBrA(d.data) + '</b></td><td>' + esc(d.placas || '–') + '</td><td>' + esc(hh(d.aberta_em || '')) + '</td><td>' + esc(d.encerrada_em ? hh(d.encerrada_em) + (d.encerrada_em.slice(0, 10) > d.data ? ' (' + dBr(d.encerrada_em) + ')' : '') : '–') + '</td><td class="n">' + d.linhas.length + '</td><td class="n"><b>' + br(d.total) + '</b></td>' +
+        '<td>' + (d.aberto ? '<span class="g-chip" style="background:#D2EEFB;color:#0F5675">EM ABERTO</span>' : '<span class="g-chip" style="background:#E6EAEE;color:#3E4A55">ENCERRADO</span>') + (aj ? ' <span class="g-chip" style="background:#E8A33D;color:#3D2600">' + aj + ' AJUSTE(S)</span>' : '') + ' ' + chipConf(d.conferido, d.confPor) + '</td></tr>' +
+        (ab ? '<tr><td colspan="8" style="padding:0;background:#FAFBFC;white-space:normal"><div style="padding:10px 12px 14px 40px">' + tabelaLancs(d, { compacta: true }) + '</div></td></tr>' : '');
+    }).join('') : '<tr><td colspan="8" style="text-align:center;color:#5B6773;padding:24px">Nenhuma produção nesse período.</td></tr>') + '</tbody></table></div></section>';
+}
+ACOES.pMotDia = function (d) { S.G.pMotAberto[d.k] = !S.G.pMotAberto[d.k]; desenharPainelMotorista(); };
 ACOES.gVer = function (d) { S.G.motId = d.id; ir('gdetalhe'); };
-ACOES.gConfDe = function (d) { S.G.motId = d.id; S.G.conf = null; ir('gconf'); };
+ACOES.gConfDe = function (d) { limparConferencia(); S.G.confTipo = 'prod'; S.G.confMot = d.id; ir('gconf'); };
 ACOES.gIndiv = function (d) { var p = gPeriodoPadrao(); gerarRelatorio({ tipo: 'individual', motorista_id: d.id, de: p.de, ate: p.ate, formato: d.f }); };
 ACOES.gRelRapido = function (d) { var p = gPeriodoPadrao(); gerarRelatorio({ tipo: 'geral', de: p.de, ate: p.ate, vinculo: S.G.vinc || 'TODOS', formato: d.f }); };
 
 /* ---------- Detalhe do motorista + ajuste ---------- */
 TELAS.gdetalhe = function () {
-  return gLayout('gdetalhe', '<div><h1 class="g-h1">AJUSTES DE VALOR</h1><div class="g-sub">Só é possível ajustar dias já encerrados pelo motorista. O motorista recebe um aviso no app.</div></div>' +
+  return gLayout('gdetalhe', '<div><h1 class="g-h1">AJUSTES</h1><div class="g-sub">Corrija qualquer campo do lançamento (contêiner, trajeto, tamanho, carga, horários e valor). Só dias já encerrados. O motorista recebe um aviso no app com o que mudou.</div></div>' +
     '<section class="g-card g-grid"><div class="g-f"><label for="dMot">Motorista</label><span id="dMotBox">' + selMotorista('dMot', S.G.motId) + '</span></div>' + periodoCampos('d') +
     '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="g-btn" data-a="gDet">Buscar</button><button class="g-btn lime" data-a="gDetCheia">' + I.cheia + ' Tela cheia</button></div></section><div id="dRes"></div>');
 };
@@ -1512,7 +1696,7 @@ ACOES.gDet = function () {
   var id = document.getElementById('dMot').value; if (!id) return toast('Escolha o motorista.', true);
   S.G.motId = id; var p = lerPeriodo('d');
   call('gDetalhe', { motorista_id: id, de: p.de, ate: p.ate }).then(function (r) {
-    S.G.det = r;
+    S.G.det = r; S.G.extras = r.extras; S.G.extrasTraj = r.extrasComTrajeto;
     var m = r.motorista;
     document.getElementById('dRes').innerHTML = '<section class="g-card" style="display:flex;flex-wrap:wrap;align-items:center;gap:16px"><div style="width:56px;height:56px;border-radius:28px;background:#0B3D61;color:#B6C54C;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:19px">' + esc(iniciais(m.nome)) + '</div>' +
       '<div style="flex:1;display:flex;flex-direction:column;gap:4px"><b style="font-size:19px">' + esc(m.nome) + '</b><div style="font-size:13px;color:#3E4A55;display:flex;gap:14px;flex-wrap:wrap"><span class="g-chip" style="background:#E8F2FA;color:#145A90">' + m.vinculo + '</span><span>CPF ' + esc(m.cpf) + '</span><span>' + (m.email ? esc(m.email) : 'sem e-mail') + '</span>' + (m.placa_propria ? '<span>Cavalo próprio ' + esc(m.placa_propria) + '</span>' : '') + '</div></div>' +
@@ -1520,12 +1704,7 @@ ACOES.gDet = function () {
       (r.dias.length ? r.dias.map(function (d) {
         return '<section class="g-tablebox"><div class="hd"><div style="display:flex;flex-direction:column;gap:2px"><b>' + dow(d.data) + ' ' + dBrA(d.data) + ' ' + (d.aberto ? '<span class="g-chip" style="background:#F1F4D6;color:#4A5200">EM ABERTO</span>' : '<span class="g-chip" style="background:#E6EAEE;color:#3E4A55">ENCERRADO</span>') + '</b><span style="font-size:12px;color:#5B6773">Aberta ' + esc(d.aberta_em) + (d.encerrada_em ? ' · encerrada ' + esc(d.encerrada_em) : '') + ' · ' + esc(d.placas) + ' · ' + d.linhas.length + ' lançamento(s)</span></div><b style="font-size:16px">' + brl(d.total) + '</b></div>' +
           (d.aberto ? '<div style="padding:10px 14px;background:#F7F9FA;border-bottom:1px solid #DCE2E8;font-size:13px;color:#3E4A55">Dia ainda em aberto. Os valores podem ser ajustados depois que o motorista encerrar o dia.</div>' : '') +
-          '<div class="g-scroll"><table class="g" style="min-width:900px"><thead><tr><th>Tipo</th><th>Contêiner / descrição</th><th>Origem → destino</th><th>Tam.</th><th>Carga</th><th>Início</th><th>Fim</th><th>Pago como</th><th class="n">Lançado</th><th class="n">Valor final</th><th></th></tr></thead><tbody>' +
-          d.linhas.map(function (l) {
-            return '<tr class="' + (l.ajustado ? 'aj' : '') + '"><td><span class="g-chip" style="background:' + (l.categoria === 'EXTRA' ? '#F1F4D6;color:#4A5200' : '#E8F2FA;color:#145A90') + '">' + (l.categoria === 'EXTRA' ? 'EXTRA' : 'CONTÊINER') + '</span></td><td><b>' + esc(l.conteiner || l.tipo_extra) + '</b></td><td>' + esc(l.destino ? l.origem + ' → ' + l.destino : l.origem) + '</td><td>' + esc(l.tamanho || '–') + '</td><td>' + esc(l.carga || '–') + '</td><td>' + hh(l.inicio) + '</td><td>' + hh(l.fim) + (l.fim.slice(0, 10) > l.data_operacional ? ' (' + dBr(l.fim) + ')' : '') + '</td><td>' + l.pagamento + '</td>' +
-              '<td class="n" style="' + (l.ajustado ? 'text-decoration:line-through;color:#5B6773' : '') + '">' + br(l.valor_lancado) + '</td><td class="n"><b style="' + (l.ajustado ? 'color:#8A5300' : '') + '">' + br(l.valor_final) + '</b>' + (l.ajuste ? '<div style="font-size:10px;color:#8A5300">' + esc(l.ajuste.por) + ' · ' + esc(l.ajuste.em) + '</div>' : '') + '</td>' +
-              '<td>' + (!master() ? '' : d.aberto ? '<span style="font-size:11px;color:#5B6773">Bloqueado</span>' : '<button class="g-btn sm out" data-a="gAjustar" data-id="' + l.id + '" data-v="' + l.valor_final + '">' + I.lapis + ' Ajustar</button>') + '</td></tr>';
-          }).join('') + '</tbody></table></div></section>';
+          '<div class="g-scroll">' + tabelaLancs(d) + '</div></section>';
       }).join('') : '<div class="g-card" style="text-align:center;color:#5B6773">Nenhum lançamento nesse período.</div>');
   }).catch(falha);
 };
@@ -1533,64 +1712,213 @@ ACOES.verCupom = function (d) {
   abrirModal('<div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:16px">Cupom · ' + esc(d.t) + '</b><button class="g-btn sm out" data-a="fecharModal">Fechar</button></div><div id="fotoBox" style="min-height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#5B6773">Carregando foto…</div>');
   carregarFoto(d.f, 'fotoBox');
 };
+/** Ajuste de qualquer campo do lançamento. O motorista recebe aviso com tudo o que mudou. */
+var EXTRAS_PADRAO = ['MANOBRA', 'HORA PARADA', 'BATENDO', 'MEIA DIÁRIA', 'DIÁRIA COMPLETA'];
+function extraTemTrajeto(t) { return (S.G.extrasTraj || ['BATENDO']).indexOf(t) >= 0; }
 ACOES.gAjustar = function (d) {
+  var l = (S.G.lancs || {})[d.id]; if (!l) return toast('Lançamento não encontrado. Atualize a tela.', true);
   S.G.ajId = d.id; S.G.ajConf = d.conf || null;
-  abrirModal('<b style="font-size:17px">Ajustar valor</b><div style="font-size:13px;color:#3E4A55">Valor atual: <b>' + brl(+d.v) + '</b></div><div class="g-f"><label for="ajV">Novo valor (R$)</label><input id="ajV" class="g-in" inputmode="decimal" value="' + br(+d.v) + '"></div>' +
-    '<div class="g-f"><label for="ajO">Observação para o motorista</label><textarea id="ajO" class="g-in" rows="3" style="height:auto;padding:8px 10px"></textarea></div><div style="font-size:12px;color:#8A5300;background:#FFF6E6;border-radius:8px;padding:8px 10px">A viagem fica marcada em laranja, com o valor antigo ao lado do novo, e o motorista recebe um aviso no app.</div>' +
-    '<div style="display:flex;gap:8px"><button class="g-btn out" style="flex:1;justify-content:center" data-a="fecharModal">Cancelar</button><button class="g-btn" style="flex:1;justify-content:center" data-a="gSalvarAj">Salvar ajuste</button></div>');
+  var c = l.categoria === 'CONTEINER', traj = c || extraTemTrajeto(l.tipo_extra);
+  var campo = function (id, rot, val, extra) { return '<div class="g-f"><label for="' + id + '">' + rot + '</label><input id="' + id + '" class="g-in" value="' + esc(val || '') + '"' + (extra || '') + '></div>'; };
+  var seg = function (nome, ops, val) { return '<div class="g-f"><span class="l">' + nome + '</span><div class="g-seg" data-seg="' + nome + '">' + ops.map(function (o) { return '<button type="button" class="' + (o === val ? 'on' : '') + '" data-a="ajSeg" data-v="' + o + '">' + o + '</button>'; }).join('') + '</div></div>'; };
+  var rh = traj ? ['Saída', 'Chegada'] : ['Começou', 'Terminou'];
+  var html = '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px"><div><b style="font-size:17px">Ajustar lançamento</b><div style="font-size:12px;color:#5B6773">Dia ' + dBrA(l.data_operacional) + ' · ' + esc(l.placa) + ' · pago como ' + l.pagamento + '</div></div><button class="g-btn sm out" data-a="fecharModal">Fechar</button></div>' +
+    '<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px">' +
+    (c ? campo('ajCont', 'Contêiner', l.conteiner, ' autocapitalize="characters" style="text-transform:uppercase"') + '<div></div>'
+       : '<div class="g-f" style="grid-column:1/-1"><label for="ajTipo">Custo extra</label><select id="ajTipo" class="g-in" data-i="ajTipo">' + (S.G.extras || EXTRAS_PADRAO).map(function (t) { return '<option' + (t === l.tipo_extra ? ' selected' : '') + '>' + t + '</option>'; }).join('') + '</select></div>') +
+    '<div id="ajTraj" style="display:' + (traj ? 'contents' : 'none') + '">' + campo('ajOri', 'Origem (de onde saiu)', l.origem, ' style="text-transform:uppercase"') + campo('ajDes', 'Destino (para onde foi)', l.destino, ' style="text-transform:uppercase"') + '</div>' +
+    (c ? seg('Tamanho', ['20', '40'], l.tamanho) + seg('Carga', ['CHEIO', 'VAZIO'], l.carga) : '') +
+    campo('ajIni', rh[0], hh(l.inicio), ' type="time"') + campo('ajFim', rh[1], hh(l.fim), ' type="time"') +
+    campo('ajV', 'Valor (R$)', br(l.valor_final), ' inputmode="decimal"') + '<div class="g-f"><span class="l">Lançado pelo motorista</span><div style="height:40px;display:flex;align-items:center;font-size:14px;color:#3E4A55">' + brl(l.valor_lancado) + '</div></div>' +
+    '</div><div id="ajHoraInfo" style="font-size:12px;color:#8A5300"></div>' +
+    '<div class="g-f"><label for="ajO">Observação para o motorista</label><textarea id="ajO" class="g-in" rows="2" style="height:auto;padding:8px 10px"></textarea></div>' +
+    '<div style="font-size:12px;color:#8A5300;background:#FFF6E6;border-radius:8px;padding:8px 10px">O lançamento fica marcado em laranja e o motorista recebe um aviso no app com <b>tudo o que mudou</b> (antes → depois).</div>' +
+    '<div style="display:flex;gap:8px"><button class="g-btn out" style="flex:1;justify-content:center" data-a="fecharModal">Cancelar</button><button class="g-btn" style="flex:1;justify-content:center" data-a="gSalvarAj">Salvar ajuste</button></div>';
+  abrirModal(html);
 };
+ACOES.ajSeg = function (d, el) { el.parentNode.querySelectorAll('button').forEach(function (b) { b.classList.toggle('on', b === el); }); };
+ACOES.ajTipo = function (d, el) { var t = document.getElementById('ajTraj'); if (t) t.style.display = extraTemTrajeto(el.value) ? 'contents' : 'none'; };
 ACOES.gSalvarAj = function () {
-  var v = document.getElementById('ajV').value, o = document.getElementById('ajO').value;
-  if (S.G.ajConf) call('gAjustarNaConferencia', { id: S.G.ajConf, lancamento_id: S.G.ajId, valor: v, obs: o }).then(function (c) { fecharModal(); S.G.conf = c; mostrarConf(); toast('Ajuste salvo. Motorista avisado.'); }).catch(falha);
-  else call('gAjustar', { lancamento_id: S.G.ajId, valor: v, obs: o }).then(function () { fecharModal(); toast('Ajuste salvo. Motorista avisado.'); ACOES.gDet(); }).catch(falha);
+  var l = S.G.lancs[S.G.ajId], v = function (id) { var e = document.getElementById(id); return e ? e.value.trim() : undefined; };
+  var segV = function (n) { var b = document.querySelector('[data-seg="' + n + '"] button.on'); return b ? b.dataset.v : undefined; };
+  var campos = { ini: v('ajIni'), fim: v('ajFim'), valor: v('ajV') };
+  if (!campos.ini || !campos.fim) return toast('Preencha os dois horários.', true);
+  if (campos.fim === campos.ini) return toast('A chegada/fim precisa ser depois da saída/início.', true);
+  if (campos.fim < campos.ini && !confirm('O horário final está antes do inicial. Ele terminou depois da meia-noite (dia seguinte)?')) return;
+  if (l.categoria === 'CONTEINER') { campos.conteiner = v('ajCont').toUpperCase(); campos.tamanho = segV('Tamanho'); campos.carga = segV('Carga'); campos.origem = v('ajOri'); campos.destino = v('ajDes'); }
+  else { campos.tipo_extra = v('ajTipo'); if (extraTemTrajeto(campos.tipo_extra)) { campos.origem = v('ajOri'); campos.destino = v('ajDes'); } else { campos.origem = ''; campos.destino = ''; } }
+  var obs = v('ajO');
+  call('gEditarLancamento', { lancamento_id: S.G.ajId, campos: campos, obs: obs, origem: S.G.ajConf ? 'CONFERENCIA' : 'DETALHE' }).then(function (novo) {
+    regLanc(novo); fecharModal(); toast('Ajuste salvo. Motorista avisado.');
+    if (S.G.ajConf) return call('gAbrirConferencia', { id: S.G.ajConf }).then(function (c) { S.G.conf = c; mostrarConf(); });
+    if (S.tela === 'gdetalhe') return ACOES.gDet();
+    if (S.tela === 'gpainel') { if (S.G.modalDia) ACOES.pVerDia({ id: S.G.modalDia.motorista_id, d: S.G.modalDia.data }); return ACOES.gBuscar(); }
+    if (S.tela === 'gmapa') { if (S.G.modalDia) ACOES.pVerDia({ id: S.G.modalDia.motorista_id, d: S.G.modalDia.data }); return ACOES.mpBuscar(); }
+  }).catch(falha);
 };
 
+/* ---------- Mapa produtivo (motorista x dia) ---------- */
+function mapaEstado() {
+  if (!S.G.mapa) { var q = quinzenaAtual(), p = periodoQ(q.ano, q.mes, q.q); S.G.mapa = { modo: 'q', q: q, de: p.de, ate: p.ate, todos: false, busca: '' }; }
+  return S.G.mapa;
+}
+function mapaPeriodo() { var M = mapaEstado(); if (M.modo === 'q') { var p = periodoQ(M.q.ano, M.q.mes, M.q.q); M.de = p.de; M.ate = p.ate; } return { de: M.de, ate: M.ate }; }
+TELAS.gmapa = function () {
+  var M = mapaEstado(), q = M.q;
+  var filtro = M.modo === 'q'
+    ? '<div class="g-f"><span class="l">Mês</span><div style="display:flex;align-items:center;gap:6px"><button class="g-btn sm out" data-a="mpMes" data-d="-1" aria-label="Mês anterior">‹</button><b style="min-width:150px;text-align:center;font-size:15px">' + MESES[q.mes - 1] + ' ' + q.ano + '</b><button class="g-btn sm out" data-a="mpMes" data-d="1" aria-label="Próximo mês">›</button></div></div>' +
+      '<div class="g-f"><span class="l">Quinzena</span><div class="g-seg"><button class="' + (q.q === 1 ? 'on' : '') + '" data-a="mpQ" data-q="1">1ª · dia 1 a 15</button><button class="' + (q.q === 2 ? 'on' : '') + '" data-a="mpQ" data-q="2">2ª · dia 16 ao fim</button></div></div>'
+    : '<div class="g-f"><label for="mpDe">De</label><input id="mpDe" type="date" class="g-in" value="' + M.de + '"></div><div class="g-f"><label for="mpAte">Até</label><input id="mpAte" type="date" class="g-in" value="' + M.ate + '"></div><div><button class="g-btn" data-a="mpAplicar">Aplicar</button></div>';
+  return gLayout('gmapa', '<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px"><div><h1 class="g-h1">MAPA PRODUTIVO</h1><div class="g-sub">Cada dia que o motorista produziu, separado em CLT, agregado e avulso. Veja quem trabalhou, quem faltou e o valor do período. Clique num valor para ver as viagens do dia.</div></div>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="g-btn out" data-a="mpRel" data-f="xlsx">' + I.baixar + ' Excel</button><button class="g-btn out" data-a="mpRel" data-f="pdf">' + I.baixar + ' PDF</button><button class="g-btn" data-a="mpRel" data-f="html">' + I.cheia + ' Tela cheia</button></div></div>' +
+    '<section class="g-card" style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end"><div class="g-f"><span class="l">Filtrar por</span><div class="g-seg"><button class="' + (M.modo === 'q' ? 'on' : '') + '" data-a="mpModo" data-v="q">Quinzena</button><button class="' + (M.modo === 'p' ? 'on' : '') + '" data-a="mpModo" data-v="p">Dia x a y</button></div></div>' + filtro +
+    '<div class="g-f" style="flex:1;min-width:200px"><label for="mpBusca">Procurar motorista</label><input id="mpBusca" class="g-in" placeholder="Nome" value="' + esc(M.busca) + '" data-i="mpBusca"></div>' +
+    '<label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#3E4A55;height:40px"><input type="checkbox" id="mpTodos" data-a="mpTodos"' + (M.todos ? ' checked' : '') + ' style="width:18px;height:18px"> Mostrar ativos sem produção</label></section>' +
+    '<section class="g-kpis" id="mpKpis"></section>' +
+    '<div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center"><span class="leg"><i style="background:#8FD16A"></i>✓ Conferido e confirmado</span><span class="leg"><i style="background:#E3F2D3"></i>Produziu (falta conferir)</span><span class="leg"><i style="background:#F8C08A"></i>Alterado depois de conferir</span><span class="leg"><i style="background:#FFF1A8"></i>Rodou em outra modalidade</span><span class="leg"><i style="background:#D2EEFB"></i>Dia ainda aberto</span><span class="leg"><i style="background:#FBE7E0"></i>Não trabalhou</span><span class="leg"><i style="background:#F1F3F5"></i>Domingo sem produção</span></div>' +
+    '<section class="g-tablebox" id="mpRes"><div style="padding:24px;text-align:center;color:#5B6773">Carregando…</div></section>');
+};
+TELAS.gmapa.depois = function () { ACOES.mpBuscar(); };
+ACOES.mpModo = function (d) { var M = mapaEstado(); if (M.modo === d.v) return; M.modo = d.v; if (d.v === 'q') mapaPeriodo(); render(); };
+ACOES.mpQ = function (d) { mapaEstado().q.q = +d.q; render(); };
+ACOES.mpMes = function (d) { var q = mapaEstado().q; q.mes += +d.d; if (q.mes < 1) { q.mes = 12; q.ano--; } if (q.mes > 12) { q.mes = 1; q.ano++; } render(); };
+ACOES.mpAplicar = function () {
+  var M = mapaEstado(), de = document.getElementById('mpDe').value, ate = document.getElementById('mpAte').value;
+  if (!de || !ate || ate < de) return toast('Confira as datas.', true);
+  if ((new Date(ate) - new Date(de)) / 864e5 > 61) return toast('Escolha no máximo 62 dias.', true);
+  M.de = de; M.ate = ate; ACOES.mpBuscar();
+};
+ACOES.mpTodos = function (d, el) { mapaEstado().todos = el.checked; ACOES.mpBuscar(); };
+ACOES.mpBusca = function (d, el) { mapaEstado().busca = el.value; desenharMapa(); };
+ACOES.mpRel = function (d) { var p = mapaPeriodo(); gerarRelatorio({ tipo: 'mapa', de: p.de, ate: p.ate, todos: mapaEstado().todos, formato: d.f }); };
+ACOES.mpBuscar = function () {
+  var M = mapaEstado(), p = mapaPeriodo();
+  call('gMapa', { de: p.de, ate: p.ate, todos: M.todos }).then(function (r) { S.G.mapaDados = r; desenharMapa(); }).catch(falha);
+};
+ACOES.mpCel = function (d) { ACOES.pVerDia({ id: d.id, d: d.d }); };
+function desenharMapa() {
+  var r = S.G.mapaDados, box = document.getElementById('mpRes'); if (!r || !box) return;
+  var M = mapaEstado(), busca = String(M.busca || '').toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
+  var semAc = function (t) { return String(t).toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); };
+  var dom = function (d) { return new Date(d + 'T12:00').getDay() === 0; };
+  var nDias = r.dias.length, totMot = 0, faltasPassadas = 0;
+  r.grupos.forEach(function (g) { totMot += g.motoristas.filter(function (m) { return m.total > 0; }).length; });
+  var diasPassados = r.dias.filter(function (d) { return d <= r.hoje; }).length;
+  document.getElementById('mpKpis').innerHTML = '<div class="g-kpi"><span>Período</span><b style="font-size:18px">' + dBrA(r.de) + ' a ' + dBrA(r.ate) + '</b><span>' + nDias + ' dia(s)' + (diasPassados < nDias ? ' · ' + diasPassados + ' até hoje' : '') + '</span></div>' +
+    '<div class="g-kpi"><span>Motoristas que produziram</span><b>' + totMot + '</b><span>' + r.grupos.map(function (g) { return g.motoristas.filter(function (m) { return m.total > 0; }).length + ' ' + g.vinculo.toLowerCase(); }).join(' · ') + '</span></div>' +
+    '<div class="g-kpi' + (r.conferidos === r.diasProduzidos && r.diasProduzidos ? '' : ' warn') + '"><span>Dias conferidos</span><b>' + r.conferidos + ' de ' + r.diasProduzidos + '</b><span>' + (r.diasProduzidos ? Math.round(r.conferidos / r.diasProduzidos * 100) : 0) + '% da produção do período</span></div>' +
+    '<div class="g-kpi navy"><span>Valor produzido no período</span><b>' + brl(r.total) + '</b><span>' + r.grupos.map(function (g) { return g.vinculo.toLowerCase() + ' ' + brl(g.total); }).join(' · ') + '</span></div>';
+  var cab = '<tr><th class="nº">Nº</th><th class="nm">Motorista</th>' + r.dias.map(function (d) { return '<th class="' + (dom(d) ? 'dom' : '') + '">' + d.slice(8) + '/' + d.slice(5, 7) + '<br><span style="font-weight:600">' + dow(d) + '</span></th>'; }).join('') + '<th>Dias</th><th>Total</th></tr>';
+  var linhas = r.grupos.map(function (g) {
+    var ms = g.motoristas.filter(function (m) { return !busca || semAc(m.nome).indexOf(busca) >= 0; });
+    if (!ms.length) return '';
+    return '<tr class="grp"><td colspan="2" class="nm">' + g.vinculo + (g.vinculo === 'CLT' ? '' : 'S') + ' · ' + ms.length + ' motorista(s)</td><td colspan="' + (nDias + 2) + '"></td></tr>' +
+      ms.map(function (m, i) {
+        return '<tr><td class="nº">' + (i + 1) + '</td><td class="nm" title="' + esc(m.nome) + '">' + esc(m.nome) + (m.faltas && m.total ? '' : '') + '</td>' + r.dias.map(function (d) {
+          var c = m.dias[d];
+          if (c) {
+            var cls = c.aberto ? 'aberto' : c.conf === 'ALTERADO' ? 'alt' : c.outra.length ? 'outra' + (c.conf === 'OK' ? ' conf' : '') : c.conf === 'OK' ? 'conf' : 'ok';
+            var tip = dow(d) + ' ' + dBrA(d) + ' · ' + c.qtd + ' lançamento(s) · ' + brl(c.valor) + (c.outra.length ? ' · rodou como ' + c.outra.join('/') : '') + (c.aberto ? ' · dia ainda aberto' : '') +
+              (c.conf === 'OK' ? ' · conferido por ' + c.confPor : c.conf === 'ALTERADO' ? ' · ALTERADO depois de conferido (' + c.confPor + ')' : ' · ainda não conferido');
+            return '<td class="c ' + cls + '" data-a="mpCel" data-id="' + m.motorista_id + '" data-d="' + d + '" title="' + esc(tip) + '">' + br(c.valor) + '</td>';
+          }
+          var cls2 = d > r.hoje ? 'fut' : dom(d) ? 'dom' : 'falta';
+          return '<td class="c ' + cls2 + '" title="' + (cls2 === 'fut' ? '' : dow(d) + ' ' + dBrA(d) + ' · não trabalhou') + '"></td>';
+        }).join('') + '<td class="dias">' + m.diasTrab + '</td><td class="tot">' + br(m.total) + '</td></tr>';
+      }).join('') +
+      '<tr class="tt"><td></td><td class="nm">Total ' + g.vinculo.toLowerCase() + '</td>' + r.dias.map(function (d) { return '<td>' + (g.totalDia[d] ? br(g.totalDia[d]) : '') + '</td>'; }).join('') + '<td></td><td class="tot">' + br(g.total) + '</td></tr>';
+  }).join('');
+  var rodape = '<tr class="tg"><td></td><td class="nm">TOTAL GERAL</td>' + r.dias.map(function (d) { return '<td>' + (r.totalDia[d] ? br(r.totalDia[d]) : '') + '</td>'; }).join('') + '<td></td><td class="tot">' + br(r.total) + '</td></tr>' +
+    '<tr class="tt"><td></td><td class="nm" style="font-weight:700">Motoristas no dia</td>' + r.dias.map(function (d) { return '<td style="text-align:center">' + (r.presentes[d] || '') + '</td>'; }).join('') + '<td></td><td></td></tr>';
+  box.innerHTML = r.grupos.length ? '<div class="g-scroll" style="max-height:72vh;overflow:auto"><table class="mapa"><thead>' + cab + '</thead><tbody>' + (linhas || '<tr><td colspan="' + (nDias + 4) + '" style="padding:20px;text-align:center;color:#5B6773">Nenhum motorista com esse nome.</td></tr>') + rodape + '</tbody></table></div>'
+    : '<div style="padding:28px;text-align:center;color:#5B6773">Ninguém produziu nesse período.</div>';
+}
+
 /* ---------- Conferência ---------- */
+/** Conferência sempre começa vazia (sem motorista, sem planilha e sem resultado). */
+function limparConferencia() { S.G.conf = null; S.G.arq = null; S.G.arqNome = ''; S.G.arqC = null; S.G.arqCNome = ''; S.G.confMot = ''; }
+function botaoArquivo(acao, idBtn, nome, acaoLimpar) {
+  return '<div style="display:flex;gap:6px"><button class="g-btn out" data-a="' + acao + '" id="' + idBtn + '" style="flex:1;justify-content:center;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (nome ? I.ok + ' ' + esc(nome) : 'Escolher arquivo') + '</button>' +
+    (nome ? '<button class="g-btn out" data-a="' + acaoLimpar + '" title="Tirar esta planilha" style="border-color:#C2410C;color:#C2410C">× Limpar</button>' : '') + '</div>';
+}
 TELAS.gconf = function () {
   var comb = S.G.confTipo === 'comb';
   var seg = '<div class="g-seg" style="margin-top:4px"><button class="' + (comb ? '' : 'on') + '" data-a="cTipo" data-v="prod">Produção</button><button class="' + (comb ? 'on' : '') + '" data-a="cTipo" data-v="comb">Combustível</button></div>';
   var form = comb
     ? '<section class="g-card g-grid">' + periodoCampos('k') +
-      '<div class="g-f"><span class="l">Histórico de consumo do posto (.csv ou .xlsx)</span><button class="g-btn out" data-a="kArquivo" id="kArqBtn" style="justify-content:center">' + esc(S.G.arqCNome || 'Escolher arquivo') + '</button></div>' +
+      '<div class="g-f"><span class="l">Histórico de consumo do posto (.csv ou .xlsx)</span><span id="kArqBox">' + botaoArquivo('kArquivo', 'kArqBtn', S.G.arqCNome, 'kLimpar') + '</span></div>' +
       '<div><button class="g-btn" data-a="kComparar">Comparar</button></div></section>'
-    : '<section class="g-card g-grid"><div class="g-f"><label for="cMot">Motorista</label><span id="cMotBox">' + selMotorista('cMot', S.G.motId) + '</span></div>' + periodoCampos('c') +
-      '<div class="g-f"><span class="l">Planilha do sistema (.xlsx ou .csv)</span><button class="g-btn out" data-a="cArquivo" id="cArqBtn" style="justify-content:center">' + esc(S.G.arqNome || 'Escolher arquivo') + '</button></div>' +
+    : '<section class="g-card g-grid"><div class="g-f"><label for="cMotQ">Motorista</label><span id="cMotBox">' + selMotorista('cMot', S.G.confMot) + '</span></div>' + periodoCampos('c') +
+      '<div class="g-f"><span class="l">Planilha do sistema (.xlsx ou .csv)</span><span id="cArqBox">' + botaoArquivo('cArquivo', 'cArqBtn', S.G.arqNome, 'cLimpar') + '</span></div>' +
       '<div><button class="g-btn" data-a="cComparar">Comparar</button></div></section>';
   return gLayout('gconf', '<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px"><div><h1 class="g-h1">CONFERÊNCIA</h1><div class="g-sub">' +
-    (comb ? 'Abastecimentos do posto comparados com o que os motoristas lançaram no app.' : 'Romaneio do motorista comparado com a planilha do sistema da Mucuripe.') + '</div>' + seg + '</div><div id="cBtns"></div></div>' +
-    form + '<div id="cRes"></div><section class="g-tablebox"><div class="hd"><b>Conferências anteriores</b></div><div id="cHist" style="padding:6px 14px 12px;font-size:13px;color:#5B6773">Carregando…</div></section>');
+    (comb ? 'Abastecimentos do posto comparados com o que os motoristas lançaram no app.' : 'Romaneio do motorista comparado com a planilha do sistema da Mucuripe.') + '</div>' + seg + '</div>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><span id="cBtns"></span><button class="g-btn out" data-a="cHistorico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></svg> Histórico de conferências</button></div></div>' +
+    form + '<div id="cRes"></div>');
 };
 ACOES.cTipo = function (d) { if ((S.G.confTipo || 'prod') === d.v) return; S.G.confTipo = d.v; S.G.conf = null; render(); };
-TELAS.gconf.depois = function () {
-  gMotoristasCache().then(function () { var b = document.getElementById('cMotBox'); if (b) b.innerHTML = selMotorista('cMot', S.G.motId); });
-  if (S.G.conf) (S.G.conf.tipo === 'COMBUSTIVEL' ? mostrarConfComb : mostrarConf)();
-  call('gConferencias', {}, true).then(function (l) {
-    var h = document.getElementById('cHist'); if (!h) return;
-    var comb = S.G.confTipo === 'comb';
-    l = l.filter(function (c) { return (c.tipo === 'COMBUSTIVEL') === comb; });
-    h.innerHTML = l.length ? l.map(function (c) { return '<div style="display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid #EDF0F2"><span><b style="color:#0B3D61">' + esc(c.motorista) + '</b> · ' + dBrA(c.de) + ' a ' + dBrA(c.ate) + ' · ' + esc(c.arquivo) + ' · ' + esc(c.usuario) + ' ' + esc(c.criado_em) + '</span><button class="g-btn sm out" data-a="cAbrir" data-id="' + c.id + '">Abrir</button></div>'; }).join('') : 'Nenhuma ainda.';
+function vazioConf() {
+  var box = document.getElementById('cRes'); if (!box || S.G.conf) return;
+  var bt = document.getElementById('cBtns'); if (bt) bt.innerHTML = '';
+  var comb = S.G.confTipo === 'comb', mot = S.G.confMot;
+  var msg = comb ? (S.G.arqCNome ? 'Confira o período e clique em <b>Comparar</b>.' : 'Escolha o período e o arquivo do posto, depois clique em <b>Comparar</b>.')
+    : !mot ? 'Escolha o <b>motorista</b> para começar.' : S.G.arqNome ? 'Confira o período e clique em <b>Comparar</b>.' : 'Agora escolha a <b>planilha do sistema</b> e clique em <b>Comparar</b>.';
+  box.innerHTML = '<div class="g-card" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:36px 16px;color:#5B6773;text-align:center"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#9FB0BF" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg><div style="font-size:14px">' + msg + '</div>' +
+    (!comb && mot ? '<span id="cHistMot" style="font-size:12px"></span>' : '') + '</div>';
+  if (!comb && mot) call('gConferencias', {}, true).then(function (l) {
+    var n = l.filter(function (c) { return c.tipo !== 'COMBUSTIVEL' && c.motorista_id === mot; }).length, e = document.getElementById('cHistMot');
+    if (e && n) e.innerHTML = 'Este motorista tem ' + n + ' conferência(s) anterior(es). <a href="#" data-a="cHistorico" data-m="1">Ver</a>';
   }).catch(function () { });
+}
+TELAS.gconf.depois = function () {
+  MSEL_CB.cMot = function (id) { S.G.confMot = id; S.G.conf = null; vazioConf(); };
+  gMotoristasCache().then(function () { var b = document.getElementById('cMotBox'); if (b && !(document.getElementById('cMotQ') || {}).value) b.innerHTML = selMotorista('cMot', S.G.confMot); });
+  if (S.G.conf) (S.G.conf.tipo === 'COMBUSTIVEL' ? mostrarConfComb : mostrarConf)(); else vazioConf();
 };
+/** Conferências anteriores: ficam numa janela, não na tela. */
+ACOES.cHistorico = function (d) {
+  var comb = S.G.confTipo === 'comb', soMot = d && d.m && S.G.confMot;
+  call('gConferencias', {}).then(function (l) {
+    l = l.filter(function (c) { return (c.tipo === 'COMBUSTIVEL') === comb && (!soMot || c.motorista_id === S.G.confMot); });
+    abrirModal('<div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><b style="font-size:17px">Histórico de conferências · ' + (comb ? 'Combustível' : 'Produção') + '</b><button class="g-btn sm out" data-a="fecharModal">Fechar</button></div>' +
+      '<input class="g-in" placeholder="Filtrar por motorista, arquivo ou usuário" data-i="cHistFiltro">' +
+      '<div id="cHistL" style="display:flex;flex-direction:column;max-height:60vh;overflow:auto">' + (l.length ? l.map(function (c) {
+        return '<div class="hist-it" data-t="' + esc((c.motorista + ' ' + c.arquivo + ' ' + c.usuario).toUpperCase()) + '" style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 2px;border-bottom:1px solid #EDF0F2;font-size:13px"><span><b style="color:#0B3D61">' + esc(c.motorista) + '</b><br><span style="color:#5B6773">' + dBrA(c.de) + ' a ' + dBrA(c.ate) + ' · ' + esc(c.arquivo) + ' · por ' + esc(c.usuario) + ' em ' + esc(c.criado_em) + '</span></span><button class="g-btn sm" data-a="cAbrir" data-id="' + c.id + '">Abrir</button></div>';
+      }).join('') : '<div style="padding:20px;text-align:center;color:#5B6773">Nenhuma conferência ainda.</div>') + '</div>', 'larga');
+  }).catch(falha);
+};
+ACOES.cHistFiltro = function (d, el) { var t = el.value.toUpperCase(); document.querySelectorAll('#cHistL .hist-it').forEach(function (x) { x.style.display = x.dataset.t.indexOf(t) >= 0 ? '' : 'none'; }); };
 ACOES.cArquivo = function () {
   var f = document.getElementById('arquivo'); f.accept = '.xlsx,.csv'; f.value = '';
   f.onchange = function () {
     var file = f.files[0]; if (!file) return;
     var rd = new FileReader();
-    rd.onload = function () { S.G.arq = rd.result; S.G.arqNome = file.name; var b = document.getElementById('cArqBtn'); if (b) b.textContent = file.name; };
+    rd.onload = function () { S.G.arq = rd.result; S.G.arqNome = file.name; var b = document.getElementById('cArqBox'); if (b) b.innerHTML = botaoArquivo('cArquivo', 'cArqBtn', file.name, 'cLimpar'); vazioConf(); };
     rd.readAsDataURL(file);
   };
   f.click();
 };
+ACOES.cLimpar = function () {
+  S.G.arq = null; S.G.arqNome = ''; S.G.conf = null;
+  var b = document.getElementById('cArqBox'); if (b) b.innerHTML = botaoArquivo('cArquivo', 'cArqBtn', '', 'cLimpar');
+  vazioConf(); toast('Planilha retirada.');
+};
 ACOES.cComparar = function () {
   var id = document.getElementById('cMot').value; if (!id) return toast('Escolha o motorista.', true);
   if (!S.G.arq) return toast('Escolha a planilha do sistema.', true);
-  S.G.motId = id; var p = lerPeriodo('c');
+  S.G.confMot = id; var p = lerPeriodo('c');
   call('gConferir', { motorista_id: id, de: p.de, ate: p.ate, base64: S.G.arq, arquivo: S.G.arqNome }).then(function (c) { S.G.conf = c; S.G.cFiltro = 'todas'; mostrarConf(); }).catch(falha);
 };
 ACOES.cAbrir = function (d) {
   call('gAbrirConferencia', { id: d.id }).then(function (c) {
+    fecharModal();
     S.G.conf = c;
-    if (c.tipo === 'COMBUSTIVEL') { S.G.kFiltro = 'div'; mostrarConfComb(); } else { S.G.motId = c.motorista && c.motorista.id; mostrarConf(); }
+    if (c.tipo === 'COMBUSTIVEL') { S.G.kFiltro = 'div'; mostrarConfComb(); }
+    else {
+      S.G.confMot = c.motorista && c.motorista.id;
+      var b = document.getElementById('cMotBox'); if (b) b.innerHTML = selMotorista('cMot', S.G.confMot);
+      mostrarConf();
+    }
     var r = document.getElementById('cRes'); if (r && r.scrollIntoView) r.scrollIntoView({ behavior: 'smooth' });
   }).catch(falha);
 };
@@ -1601,10 +1929,15 @@ ACOES.kArquivo = function () {
   f.onchange = function () {
     var file = f.files[0]; if (!file) return;
     var rd = new FileReader();
-    rd.onload = function () { S.G.arqC = rd.result; S.G.arqCNome = file.name; var b = document.getElementById('kArqBtn'); if (b) b.textContent = file.name; };
+    rd.onload = function () { S.G.arqC = rd.result; S.G.arqCNome = file.name; var b = document.getElementById('kArqBox'); if (b) b.innerHTML = botaoArquivo('kArquivo', 'kArqBtn', file.name, 'kLimpar'); vazioConf(); };
     rd.readAsDataURL(file);
   };
   f.click();
+};
+ACOES.kLimpar = function () {
+  S.G.arqC = null; S.G.arqCNome = ''; S.G.conf = null;
+  var b = document.getElementById('kArqBox'); if (b) b.innerHTML = botaoArquivo('kArquivo', 'kArqBtn', '', 'kLimpar');
+  vazioConf(); toast('Arquivo retirado.');
 };
 ACOES.kComparar = function () {
   if (!S.G.arqC) return toast('Escolha o arquivo do posto.', true);
@@ -1663,6 +1996,7 @@ var ST_TXT = { OK: 'CONFERE', VALOR_DIFERENTE: 'VALOR DIFERENTE', FALTA_SISTEMA:
 var ST_CLS = { OK: '', VALOR_DIFERENTE: 'dif', FALTA_SISTEMA: 'falta', A_MAIS_SISTEMA: 'sobra' };
 function mostrarConf() {
   var c = S.G.conf, t = c.totais, box = document.getElementById('cRes'); if (!box) return;
+  c.linhas.forEach(function (l) { if (l.rom) regLanc(l.rom); });
   var filtro = S.G.cFiltro || 'todas';
   document.getElementById('cBtns').innerHTML = '<button class="g-btn" data-a="cCheia">' + I.cheia + ' Tela cheia (PDF)</button>';
   var linhas = c.linhas.filter(function (l) { return filtro === 'todas' || l.status !== 'OK'; });
@@ -1678,7 +2012,14 @@ function mostrarConf() {
     if (l.rom) out += ' ' + (l.rom.diaAberto ? '<span style="font-size:11px;color:#5B6773">Dia aberto</span>' : '<button class="g-btn sm out" style="border-color:#E8A33D;color:#8A5300" data-a="gAjustar" data-id="' + l.rom.id + '" data-v="' + l.rom.valor_final + '" data-conf="' + c.id + '">' + I.lapis + ' ' + (l.rom.ajustado ? 'Reajustar' : 'Ajustar') + '</button>');
     return out;
   };
-  box.innerHTML = '<section class="g-kpis"><div class="g-kpi"><span>Romaneio do motorista</span><b>' + brl(t.romaneio) + '</b><span>' + t.qRom + ' lançamentos</span></div><div class="g-kpi"><span>Sistema Mucuripe</span><b>' + brl(t.sistema) + '</b><span>' + t.qSis + ' linhas</span></div>' +
+  var cf = c.confirmacao || { dias: 0, confirmados: 0 };
+  var barra = !c.motorista || !cf.dias ? '' : cf.confirmados === cf.dias
+    ? '<section class="g-card" style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;border:2px solid #3F8F1F;background:#F1F9EA"><b style="color:#2F6A12;font-size:15px">✓ PRODUÇÃO CONFERIDA E CONFIRMADA</b><span style="font-size:13px;color:#3E4A55;flex:1">' + cf.dias + ' dia(s) · ' + esc(cf.por) + '. Aparece confirmada no Mapa produtivo.</span>' + (master() ? '<button class="g-btn sm out" data-a="cConfirmar">Confirmar de novo</button>' : '') + '</section>'
+    : '<section class="g-card" style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;border:2px solid ' + (t.pendentes ? '#E8A33D' : '#3F8F1F') + '"><div style="flex:1;display:flex;flex-direction:column;gap:2px"><b style="font-size:15px">Confirmar a produção conferida</b><span style="font-size:13px;color:#3E4A55">' +
+      (t.pendentes ? 'Decida as <b>' + t.pendentes + ' linha(s)</b> pendentes para liberar a confirmação.' : 'Tudo decidido. Confirme para marcar os ' + cf.dias + ' dia(s) de ' + esc(c.motorista.nome) + ' como conferidos no Mapa produtivo.') +
+      (cf.confirmados ? ' (' + cf.confirmados + ' de ' + cf.dias + ' já confirmados)' : '') + '</span></div>' +
+      (master() ? '<button class="g-btn lime" data-a="cConfirmar"' + (t.pendentes ? ' disabled style="opacity:.5;cursor:not-allowed"' : '') + '>' + I.ok + ' Confirmar produção conferida</button>' : '<span style="font-size:12px;color:#5B6773">Só o perfil master confirma.</span>') + '</section>';
+  box.innerHTML = barra + '<section class="g-kpis"><div class="g-kpi"><span>Romaneio do motorista</span><b>' + brl(t.romaneio) + '</b><span>' + t.qRom + ' lançamentos</span></div><div class="g-kpi"><span>Sistema Mucuripe</span><b>' + brl(t.sistema) + '</b><span>' + t.qSis + ' linhas</span></div>' +
     '<div class="g-kpi warn"><span>Divergências</span><b>' + t.divergencias + ' · ' + brl(t.romaneio - t.sistema) + '</b><span>romaneio menos sistema</span></div><div class="g-kpi navy"><span>Valor correto para pagamento</span><b>' + brl(t.pagar) + '</b><span>' + (t.pendentes ? t.pendentes + ' linha(s) aguardando decisão' : 'conferência concluída') + '</span></div></section>' +
     '<section class="g-tablebox"><div class="hd"><div class="g-seg"><button class="' + (filtro === 'todas' ? 'on' : '') + '" data-a="cFiltro" data-v="todas">Todas (' + c.linhas.length + ')</button><button class="' + (filtro === 'div' ? 'on' : '') + '" data-a="cFiltro" data-v="div">Só divergências (' + t.divergencias + ')</button></div>' +
     '<div style="display:flex;gap:10px;flex-wrap:wrap;font-size:11px;font-weight:700;color:#3E4A55">' + Object.keys(ST_TXT).map(function (k) { return '<span class="g-chip st-' + k + '">' + ST_TXT[k] + '</span>'; }).join('') + '</div></div>' +
@@ -1694,6 +2035,13 @@ function mostrarConf() {
       }).join('');
     }).join('') + '</tbody></table></div></section>';
 }
+ACOES.cConfirmar = function () {
+  var c = S.G.conf; if (c.totais.pendentes) return toast('Decida as linhas pendentes primeiro.', true);
+  call('gConfirmar', { motorista_id: c.motorista.id, de: c.de, ate: c.ate, conferencia_id: c.id }).then(function (r) {
+    toast(r.confirmados.length + ' dia(s) confirmados.' + (r.abertos.length ? ' ' + r.abertos.length + ' dia(s) ainda abertos ficaram de fora.' : ''));
+    return call('gAbrirConferencia', { id: c.id }).then(function (n) { S.G.conf = n; mostrarConf(); });
+  }).catch(falha);
+};
 ACOES.cFiltro = function (d) { S.G.cFiltro = d.v; mostrarConf(); };
 ACOES.cDecidir = function (d) { call('gDecidir', { id: S.G.conf.id, chave: d.k, decisao: d.v || null }).then(function (c) { S.G.conf = c; mostrarConf(); }).catch(falha); };
 ACOES.cCheia = function () { var c = S.G.conf; gerarRelatorio({ tipo: 'individual', motorista_id: c.motorista.id, de: c.de, ate: c.ate, formato: 'html' }); };
@@ -2008,13 +2356,14 @@ TELAS.grel = function () {
     '<section class="g-card" style="display:flex;flex-direction:column;gap:12px"><b>1. Qual relatório?</b><div style="display:flex;flex-wrap:wrap;gap:12px">' +
     rd('geral', 'Relatório geral', 'Todos os motoristas no período, um por linha, com Batendo, Cheio, Vazio e Valor total. Mesmo modelo do relatório da ModallPort.') +
     rd('individual', 'Relatório individual', 'Um motorista: todas as operações dia a dia, com subtotal por dia, resumo por tipo e total do período.') +
+    rd('mapa', 'Mapa produtivo', 'Todos os motoristas x cada dia do período, separados em CLT, agregado e avulso: quem trabalhou, quem faltou e o total. Mesmo modelo da planilha de controle.') +
     rd('combustivel', 'Abastecimento x produção', 'Por motorista: litros e valor abastecido, preço médio, produção do período, quanto do produzido foi para combustível e o líquido do agregado.') + '</div></section>' +
     '<section class="g-card" style="display:flex;flex-direction:column;gap:12px"><b>2. Filtros</b><div class="g-grid">' + periodoCampos('r') +
-    (R.tipo !== 'individual' ? '<div class="g-f wide"><span class="l">Vínculo</span><div class="g-seg">' + vs + '</div></div>' : '<div class="g-f"><label for="rMot">Motorista</label><span id="rMotBox">' + selMotorista('rMot', S.G.motId) + '</span></div>') + '</div></section>' +
+    (R.tipo === 'mapa' ? '' : R.tipo !== 'individual' ? '<div class="g-f wide"><span class="l">Vínculo</span><div class="g-seg">' + vs + '</div></div>' : '<div class="g-f"><label for="rMot">Motorista</label><span id="rMotBox">' + selMotorista('rMot', S.G.motId) + '</span></div>') + '</div></section>' +
     '<section class="g-card" style="display:flex;flex-direction:column;gap:12px"><b>3. Formato</b><div style="display:flex;flex-wrap:wrap;gap:10px">' + fm('pdf', 'PDF · para imprimir') + fm('xlsx', 'EXCEL · para conferir') + '</div>' +
     '<div style="display:flex;flex-wrap:wrap;gap:10px"><button class="g-btn out" data-a="relGerar" data-modo="html">' + I.cheia + ' Ver em tela cheia</button><button class="g-btn" data-a="relGerar" data-modo="baixar">' + I.baixar + ' Baixar</button></div></section>');
 };
-TELAS.grel.depois = function () { gMotoristasCache().then(function () { var b = document.getElementById('rMotBox'); if (b) b.innerHTML = selMotorista('rMot', S.G.motId); }); };
+TELAS.grel.depois = function () { MSEL_CB.rMot = function (id) { S.G.motId = id; }; gMotoristasCache().then(function () { var b = document.getElementById('rMotBox'); if (b) b.innerHTML = selMotorista('rMot', S.G.motId); }); };
 ACOES.relTipo = function (d) { lerPeriodo('r'); S.G.rel.tipo = d.v; render(); };
 ACOES.relVinc = function (d) { lerPeriodo('r'); S.G.rel.vinculo = d.v; render(); };
 ACOES.relFmt = function (d) { lerPeriodo('r'); var m = document.getElementById('rMot'); if (m) S.G.motId = m.value; S.G.rel.formato = d.v; render(); };
