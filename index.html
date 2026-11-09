@@ -480,9 +480,12 @@ function transporte(nome, token, args) {
     return enviarPost(nome, token, args);
   });
 }
-var APP_VERSAO = '09.11-b';
+var APP_VERSAO = '09.11-c';
 /** Novidades de cada versão: aparecem uma vez, na primeira abertura depois da atualização. */
 var NOVIDADES = [
+  { v: '09.11-c', motorista: [
+      ['Baixar a produção', 'Em Produção, escolha HOJE, DIAS (de um dia até outro) ou QUINZENA. A lista e os botões Baixar PDF e Baixar Excel seguem o que você escolheu.']
+    ], gestao: [] },
   { v: '09.11-b', motorista: [], gestao: [
       ['Abas começam limpas', 'Ao entrar numa aba pelo menu, ela abre na quinzena atual, sem motorista, sem filtro e sem planilha anexada. Depois de confirmar uma conferência, a planilha é retirada.'],
       ['Conferência pelo dia', 'Na janela do dia (Produção e Mapa produtivo) há o botão Conferência: escolha a planilha e a comparação daquele motorista e dia abre na hora. O botão Voltar leva de volta para onde você estava.'],
@@ -1704,18 +1707,33 @@ ACOES.encerrarDia = function () {
 };
 
 /* ---------- Produção ---------- */
-FALAS.producao = 'Aqui está a sua produção de cada dia. Toque no dia para ver os detalhes.';
+FALAS.producao = 'Aqui está a sua produção. Escolha hoje, alguns dias ou a quinzena. Para guardar, toque em baixar PDF ou Excel.';
+/** O que o motorista escolheu ver/baixar: quinzena, o dia de hoje ou um período (de/até). */
+function argsProd() {
+  var q = S.p.q, modo = S.p.modo || 'q';
+  if (modo === 'h') { var h = diaHojeMot(); return { de: h, ate: h }; }
+  if (modo === 'p') return { de: S.p.de, ate: S.p.ate };
+  return { ano: q.ano, mes: q.mes, quinzena: q.q };
+}
+/** Dia de hoje para o motorista: se ele está com o dia aberto, vale o dia da operação (turno da noite). */
+function diaHojeMot() { var op = S.est && S.est.operacao; return op && op.data_operacional ? op.data_operacional : hojeIso(); }
 TELAS.producao = function () {
-  var q = S.p.q || (S.p.q = quinzenaAtual());
+  var q = S.p.q || (S.p.q = quinzenaAtual()), modo = S.p.modo || 'q';
+  if (!S.p.de) { S.p.de = periodoQ(q.ano, q.mes, q.q).de; S.p.ate = hojeIso() < S.p.de ? S.p.de : hojeIso(); }
+  var escolha = modo === 'h' ? '<div class="card" style="text-align:center;font-weight:800;font-size:15px">HOJE · ' + dBr(diaHojeMot()) + '</div>'
+    : modo === 'p' ? '<div class="card" style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:800;color:var(--muted)">DE<input type="date" id="prodDe" class="field" style="font-size:16px;padding:0 8px" value="' + S.p.de + '" max="' + hojeIso() + '"></label><label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:800;color:var(--muted)">ATÉ<input type="date" id="prodAte" class="field" style="font-size:16px;padding:0 8px" value="' + S.p.ate + '" max="' + hojeIso() + '"></label><button class="btn sm" style="grid-column:1/-1" data-a="prodVer">VER PRODUÇÃO DESSES DIAS</button></div>'
+    : '<div style="display:flex;justify-content:space-between;align-items:center"><button class="ic-btn" style="color:var(--ink);border-color:var(--line);background:var(--surface)" data-a="mesProd" data-d="-1" aria-label="Mês anterior">' + I.voltar + '</button><b style="font-size:16px">' + MESES[q.mes - 1] + ' ' + q.ano + '</b><button class="ic-btn" style="color:var(--ink);border-color:var(--line);background:var(--surface);transform:scaleX(-1)" data-a="mesProd" data-d="1" aria-label="Próximo mês">' + I.voltar + '</button></div>' +
+    '<div class="seg" style="grid-template-columns:1fr 1fr"><button class="' + (q.q === 1 ? 'on' : '') + '" data-a="qProd" data-q="1">1ª QUINZENA</button><button class="' + (q.q === 2 ? 'on' : '') + '" data-a="qProd" data-q="2">2ª QUINZENA</button></div>';
   return '<div class="m-app">' + cab('MINHA PRODUÇÃO') + '<main class="m-body">' +
-    '<div style="display:flex;justify-content:space-between;align-items:center"><button class="ic-btn" style="color:var(--ink);border-color:var(--line);background:var(--surface)" data-a="mesProd" data-d="-1" aria-label="Mês anterior">' + I.voltar + '</button><b style="font-size:16px">' + MESES[q.mes - 1] + ' ' + q.ano + '</b><button class="ic-btn" style="color:var(--ink);border-color:var(--line);background:var(--surface);transform:scaleX(-1)" data-a="mesProd" data-d="1" aria-label="Próximo mês">' + I.voltar + '</button></div>' +
-    '<div class="seg" style="grid-template-columns:1fr 1fr"><button class="' + (q.q === 1 ? 'on' : '') + '" data-a="qProd" data-q="1">1ª QUINZENA</button><button class="' + (q.q === 2 ? 'on' : '') + '" data-a="qProd" data-q="2">2ª QUINZENA</button></div>' +
+    '<div class="seg" style="grid-template-columns:1fr 1fr 1fr"><button class="' + (modo === 'h' ? 'on' : '') + '" data-a="modoProd" data-v="h">HOJE</button><button class="' + (modo === 'p' ? 'on' : '') + '" data-a="modoProd" data-v="p">DIAS</button><button class="' + (modo === 'q' ? 'on' : '') + '" data-a="modoProd" data-v="q">QUINZENA</button></div>' +
+    escolha +
     '<div class="row2"><button class="btn out sm" data-a="baixarProd" data-f="pdf">' + I.baixar + ' BAIXAR PDF</button><button class="btn out sm" data-a="baixarProd" data-f="xlsx">' + I.baixar + ' BAIXAR EXCEL</button></div>' +
     '<div id="prod"><div class="empty">Carregando…</div></div></main>' + tabs('producao') + '</div>';
 };
 /** Motorista baixa a produção da quinzena que está na tela. */
 ACOES.baixarProd = function (d) {
-  var q = S.p.q, args = { ano: q.ano, mes: q.mes, quinzena: q.q, formato: d.f };
+  var args = argsProd(); args.formato = d.f;
+  if (args.de && (!args.ate || args.de > args.ate)) return toast('Confira as datas: a primeira tem que ser antes da segunda.', true);
   if (navigator.onLine === false) return toast('Sem internet. Para baixar o arquivo, conecte na internet.', true);
   if (d.f === 'pdf') return call('minhaProducaoArquivo', args).then(baixarArquivo).catch(falha);
   carregando(true);
@@ -1724,19 +1742,26 @@ ACOES.baixarProd = function (d) {
 };
 TELAS.producao.depois = function () {
   var q = S.p.q;
-  callLeitura('producao', { ano: q.ano, mes: q.mes, quinzena: q.q }).then(function (r) {
+  callLeitura('producao', argsProd()).then(function (r) {
     var box = document.getElementById('prod'); if (!box) return;
     var aj = r.dias.reduce(function (s, d) { return s + d.ajustes; }, 0);
-    box.innerHTML = '<div class="dark-card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div style="display:flex;flex-direction:column;gap:1px"><span style="font-size:11px;font-weight:700;color:#C9D6E2">' + dBr(r.periodo.de) + ' A ' + dBr(r.periodo.ate) + ' · ' + r.dias.length + ' DIAS</span><b style="font-size:22px">' + brl(r.total) + '</b><span style="font-size:12px;color:#C9D6E2">' + r.qtd + ' lançamentos' + (aj ? ' · ' + aj + ' ajuste(s)' : '') + '</span></div>' + '</div>' +
+    box.innerHTML = '<div class="dark-card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div style="display:flex;flex-direction:column;gap:1px"><span style="font-size:11px;font-weight:700;color:#C9D6E2">' + dBr(r.periodo.de) + ' A ' + dBr(r.periodo.ate) + ' · ' + r.dias.length + (r.dias.length === 1 ? ' DIA' : ' DIAS') + '</span><b style="font-size:22px">' + brl(r.total) + '</b><span style="font-size:12px;color:#C9D6E2">' + r.qtd + (r.qtd === 1 ? ' lançamento' : ' lançamentos') + (aj ? ' · ' + aj + ' ajuste(s)' : '') + '</span></div>' + '</div>' +
       (r.dias.length ? r.dias.map(function (d) {
         var cx = function (n, v) { return '<div style="display:flex;flex-direction:column;gap:1px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 8px"><span style="font-size:10px;font-weight:800;color:var(--muted)">' + n + '</span><b style="font-size:14px">' + v[0] + '</b><span style="font-size:11px;font-weight:600">' + brl(v[1]) + '</span></div>'; };
         return '<details class="card" style="padding:0;margin-bottom:8px"><summary style="list-style:none;display:flex;align-items:center;gap:12px;padding:10px 12px;cursor:pointer"><div style="width:42px;display:flex;flex-direction:column;align-items:center;border-right:1px solid var(--line);padding-right:10px"><b style="font-size:18px;line-height:1">' + d.data.slice(8) + '</b><span style="font-size:10px;font-weight:700;color:var(--muted)">' + dow(d.data) + '</span></div>' +
-          '<div style="flex:1;display:flex;flex-direction:column;gap:3px"><span style="font-size:13px;font-weight:700">' + d.qtd + ' lançamentos</span><span>' + (d.aberto ? '<span class="chip lime">ABERTO</span>' : '<span class="chip gray">ENCERRADO</span>') + (d.ajustes ? ' <span class="chip warn">' + d.ajustes + ' AJUSTE</span>' : '') + '</span></div><b style="font-size:15px">' + brl(d.total) + '</b></summary>' +
-          '<div style="border-top:1px solid var(--line);padding:8px 12px 10px;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;background:var(--surface2)">' + cx('CHEIO', d.cheio) + cx('VAZIO', d.vazio) + cx('EXTRAS', d.extra) + + '</div></details>';
-      }).join('') : '<div class="empty">Nenhum lançamento nesta quinzena.</div>');
+          '<div style="flex:1;display:flex;flex-direction:column;gap:3px"><span style="font-size:13px;font-weight:700">' + d.qtd + (d.qtd === 1 ? ' lançamento' : ' lançamentos') + '</span><span>' + (d.aberto ? '<span class="chip lime">ABERTO</span>' : '<span class="chip gray">ENCERRADO</span>') + (d.ajustes ? ' <span class="chip warn">' + d.ajustes + ' AJUSTE</span>' : '') + '</span></div><b style="font-size:15px">' + brl(d.total) + '</b></summary>' +
+          '<div style="border-top:1px solid var(--line);padding:8px 12px 10px;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;background:var(--surface2)">' + cx('CHEIO', d.cheio) + cx('VAZIO', d.vazio) + cx('EXTRAS', d.extra) + '</div></details>';
+      }).join('') : '<div class="empty">Nenhum lançamento ' + ((S.p.modo || 'q') === 'h' ? 'hoje' : (S.p.modo === 'p' ? 'nesses dias' : 'nesta quinzena')) + '.</div>');
   }).catch(falha);
 };
 ACOES.qProd = function (d) { S.p.q.q = +d.q; render(); };
+ACOES.modoProd = function (d) { S.p.modo = d.v; render(); };
+ACOES.prodVer = function () {
+  var de = document.getElementById('prodDe').value, ate = document.getElementById('prodAte').value;
+  if (!de || !ate) return toast('Escolha as duas datas.', true);
+  if (de > ate) return toast('A primeira data tem que ser antes da segunda.', true);
+  S.p.de = de; S.p.ate = ate; render();
+};
 ACOES.mesProd = function (d) { var q = S.p.q; q.mes += +d.d; if (q.mes < 1) { q.mes = 12; q.ano--; } if (q.mes > 12) { q.mes = 1; q.ano++; } render(); };
 
 /* ---------- Desempenho ---------- */

@@ -1,7 +1,7 @@
 /* Romaneio Digital – service worker
  * Guarda a "casca" do app no celular: abre mesmo sem internet (modo offline).
  * As chamadas para o Apps Script (dados) sempre vão para a internet; sem sinal, o app guarda tudo numa fila. */
-const VERSAO = 'romaneio-v15';
+const VERSAO = 'romaneio-v16';
 const CASCA = ['./', './index.html', './config.js', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png', './icons/favicon-32.png'];
 
 self.addEventListener('install', (e) => {
