@@ -480,9 +480,14 @@ function transporte(nome, token, args) {
     return enviarPost(nome, token, args);
   });
 }
-var APP_VERSAO = '09.11-a';
+var APP_VERSAO = '09.11-b';
 /** Novidades de cada versão: aparecem uma vez, na primeira abertura depois da atualização. */
 var NOVIDADES = [
+  { v: '09.11-b', motorista: [], gestao: [
+      ['Abas começam limpas', 'Ao entrar numa aba pelo menu, ela abre na quinzena atual, sem motorista, sem filtro e sem planilha anexada. Depois de confirmar uma conferência, a planilha é retirada.'],
+      ['Conferência pelo dia', 'Na janela do dia (Produção e Mapa produtivo) há o botão Conferência: escolha a planilha e a comparação daquele motorista e dia abre na hora. O botão Voltar leva de volta para onde você estava.'],
+      ['Batendo com origem e destino', 'Na conferência, as linhas de Batendo mostram de onde saiu e para onde foi.']
+    ] },
   { v: '09.11-a', motorista: [
       ['Foto do painel deitada', 'Na foto do KM o app pede para virar o celular de lado: assim o painel inteiro cabe na foto. Depois de tirar, você confere a foto e pode girar ou tirar de novo.'],
       ['Mais recente em cima', 'Os lançamentos do dia agora aparecem do mais novo para o mais antigo.'],
@@ -2006,11 +2011,19 @@ function gLayout(ativo, conteudo) {
     '<div style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;background:rgba(255,255,255,.08)"><div style="width:34px;height:34px;border-radius:17px;background:#B6C54C;color:#0B3D61;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px">' + esc(iniciais(u.nome || u.usuario) || 'U') + '</div><div style="flex:1;display:flex;flex-direction:column"><b style="font-size:13px">' + esc(String(u.nome || u.usuario || '').split(' ')[0]) + '</b><span style="font-size:10px;font-weight:800;color:#B6C54C;letter-spacing:1px">PERFIL ' + esc(u.perfil || '') + '</span></div><button class="g-btn sm out" style="background:transparent;color:#fff;border-color:rgba(255,255,255,.4)" data-a="gSair">Sair</button></div></aside>' +
     '<main class="g-main"><div class="g-wrap">' + conteudo + '</div></main></div>';
 }
-ACOES.gNav = function (d) {
+ACOES.gNav = function (d, el) {
   S.G.detPer = null;
   if (d.t === 'gconf') limparConferencia();   // a conferência sempre abre vazia
+  if (el && el.closest && el.closest('.g-side')) limparFiltros();
   ir(d.t);
 };
+/** Entrar numa aba pelo menu lateral: começa limpa (quinzena atual, sem motorista, sem planilha, sem filtro). */
+function limparFiltros() {
+  limparConferencia();
+  S.G.per = null; S.G.perAntes = null; S.G.pMot = ''; S.G.motId = ''; S.G.kmMot = ''; S.G.kmPlaca = ''; S.G.cMot = '';
+  S.G.vinc = 'TODOS'; S.G.cVinc = 'TODOS'; S.G.pAberto = {}; S.G.pMotAberto = {}; S.G.fAberto = {}; S.G.mapa = null;
+  S.G.confVolta = ''; S.G.pcf = null; S.G.confTipo = 'prod'; S.G.det = null;
+}
 ACOES.gSair = function () { call('sair').finally(function () { ls('rd_token', null); S.token = null; ir('glogin'); }); };
 function master() { return S.G.user && S.G.user.perfil === 'MASTER'; }
 function gPeriodoPadrao() { if (!S.G.per) { var q = quinzenaAtual(); S.G.per = periodoQ(q.ano, q.mes, q.q); } return S.G.per; }
@@ -2212,6 +2225,7 @@ ACOES.pVerDia = function (d) {
       : aberto ? '<span style="font-size:12px;color:#5B6773">Dia em aberto: confirme depois que o motorista encerrar.</span>'
       : (dia.conferido === 'ALTERADO' ? chipConf('ALTERADO', dia.confPor) + ' ' : '') + '<button class="g-btn sm lime" data-a="confDia" data-id="' + d.id + '" data-d="' + d.d + '">' + I.ok + ' Confirmar produção conferida</button>';
     if (master() && !aberto) conf = '<button class="g-btn sm out" data-a="corrigirDia" data-id="' + d.id + '" data-d="' + d.d + '">' + I.lapis + ' Corrigir</button> ' + conf;
+    if (!aberto) conf = '<button class="g-btn sm lime" data-a="pConferir" data-id="' + d.id + '" data-d="' + d.d + '">' + I.conferir + ' Conferência</button> ' + conf;
     abrirModal('<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div><b style="font-size:17px">' + esc(r.motorista.nome) + '</b><div style="font-size:12px;color:#5B6773">' + dow(dia.data) + ' ' + dBrA(dia.data) + ' · ' + esc(dia.placas) + ' · ' + linhas.length + ' lançamento(s) · <b>' + brl(tot) + '</b></div></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">' + conf + '<button class="g-btn sm out" data-a="fecharModal">Fechar</button></div></div>' +
       '<div class="g-scroll" style="max-height:60vh">' + tabelaLancs(junto, { compacta: true }) + '</div>', 'larga');
   }).catch(falha);
@@ -2258,7 +2272,7 @@ ACOES.pConferir = function (d, el, e) {
   if (e) e.stopPropagation();
   var m = (S.G.mots || []).filter(function (x) { return x.id === d.id; })[0];
   var p = d.d ? { de: d.d, ate: d.d } : { de: (document.getElementById('pDe') || {}).value || gPeriodoPadrao().de, ate: (document.getElementById('pAte') || {}).value || gPeriodoPadrao().ate };
-  S.G.pcf = { id: d.id, nome: m ? m.nome : '' };
+  S.G.pcf = { id: d.id, nome: m ? m.nome : '', volta: S.tela === 'gconf' ? (S.G.confVolta || 'gpainel') : S.tela };
   abrirModal('<div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><b style="font-size:17px">' + I.conferir + ' Conferir produção</b><button class="g-btn sm out" data-a="fecharModal">Fechar</button></div>' +
     '<div style="font-size:14px"><b>' + esc(S.G.pcf.nome) + '</b>' + (m ? ' ' + chipVinc(m.vinculo) : '') + '</div>' +
     '<div class="g-grid"><div class="g-f"><label for="pcDe">De</label><input id="pcDe" type="date" class="g-in" value="' + p.de + '"></div><div class="g-f"><label for="pcAte">Até</label><input id="pcAte" type="date" class="g-in" value="' + p.ate + '"></div></div>' +
@@ -2273,7 +2287,7 @@ ACOES.pcComparar = function () {
   var id = S.G.pcf.id;
   call('gConferir', { motorista_id: id, de: p.de, ate: p.ate, base64: S.G.arq, arquivo: S.G.arqNome }).then(function (c) {
     fecharModal();
-    S.G.confTipo = 'prod'; S.G.confMot = id; S.G.conf = c; S.G.cFiltro = 'todas'; S.G.perAntes = S.G.per; S.G.per = p; S.G.confVolta = 'gpainel';
+    S.G.confTipo = 'prod'; S.G.confMot = id; S.G.conf = c; S.G.cFiltro = 'todas'; S.G.perAntes = S.G.per; S.G.per = p; S.G.confVolta = S.G.pcf.volta || 'gpainel';
     ir('gconf');
   }).catch(falha);
 };
@@ -2719,7 +2733,7 @@ TELAS.gconf = function () {
       '<div><button class="g-btn" data-a="cComparar">Comparar</button></div></section>';
   return gLayout('gconf', '<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px"><div><h1 class="g-h1">CONFERÊNCIA</h1><div class="g-sub">' +
     (comb ? 'Abastecimentos do posto comparados com o que os motoristas lançaram no app.' : 'Romaneio do motorista comparado com a planilha do sistema da Mucuripe.') + '</div>' + seg + '</div>' +
-    '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">' + (S.G.confVolta ? '<button class="g-btn out" data-a="cVoltar">' + I.voltar.replace(/24/g, '16') + ' Voltar à Produção</button>' : '') + '<span id="cBtns"></span><button class="g-btn out" data-a="cHistorico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></svg> Histórico de conferências</button></div></div>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">' + (S.G.confVolta ? '<button class="g-btn out" data-a="cVoltar">' + I.voltar.replace(/24/g, '16') + ' Voltar ' + ({ gmapa: 'ao Mapa', gpainel: 'à Produção', gdetalhe: 'aos Ajustes' }[S.G.confVolta] || '') + '</button>' : '') + '<span id="cBtns"></span><button class="g-btn out" data-a="cHistorico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></svg> Histórico de conferências</button></div></div>' +
     form + '<div id="cRes"></div>');
 };
 ACOES.cTipo = function (d) { if ((S.G.confTipo || 'prod') === d.v) return; S.G.confTipo = d.v; S.G.conf = null; render(); };
@@ -2896,7 +2910,7 @@ function mostrarConf() {
     ordem.map(function (d) {
       return '<tr class="day"><td colspan="9">' + dow(d) + ' ' + dBrA(d) + ' · ' + dias[d].length + ' linha(s)</td></tr>' + dias[d].map(function (l) {
         var r = l.rom, s = l.sis;
-        var rota = r ? (r.categoria === 'CONTEINER' ? r.origem + ' → ' + r.destino : r.tipo_extra) : (s.origem ? s.origem + ' → ' + s.destino : s.tipo);
+        var rota = r ? (r.origem || r.destino ? (r.origem || '?') + ' → ' + (r.destino || '?') : r.tipo_extra) : (s.origem ? s.origem + ' → ' + s.destino : s.tipo);
         var tipo = r ? (r.categoria === 'CONTEINER' ? r.carga : r.tipo_extra) : s.tipo;
         return '<tr class="' + (r && r.ajustado ? 'aj' : ST_CLS[l.status]) + '"><td><b>' + esc(l.hora) + '</b></td><td style="white-space:nowrap"><b>' + esc((r && r.conteiner) || (s && s.conteiner) || '—') + '</b></td><td>' + esc(s ? s.os : '—') + '</td><td style="max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + esc(rota) + '">' + esc(rota) + '</td><td>' + esc(tipo) + '</td>' +
           '<td class="n">' + (r ? (r.ajustado ? '<span style="text-decoration:line-through;color:#5B6773;font-size:11px">' + br(r.valor_lancado) + '</span><br><b style="color:#8A5300">' + br(r.valor_final) + '</b>' : '<b>' + br(r.valor_final) + '</b>') : '—') + '</td><td class="n"><b>' + (s ? br(s.valor) : '—') + '</b></td>' +
@@ -2907,7 +2921,9 @@ function mostrarConf() {
 ACOES.cConfirmar = function () {
   var c = S.G.conf; if (c.totais.pendentes) return toast('Decida as linhas pendentes primeiro.', true);
   call('gConfirmar', { motorista_id: c.motorista.id, de: c.de, ate: c.ate, conferencia_id: c.id }).then(function (r) {
-    toast(r.confirmados.length + ' dia(s) confirmados.' + (r.abertos.length ? ' ' + r.abertos.length + ' dia(s) ainda abertos ficaram de fora.' : ''));
+    toast(r.confirmados.length + ' dia(s) confirmados.' + (r.abertos.length ? ' ' + r.abertos.length + ' dia(s) ainda abertos ficaram de fora.' : '') + ' Planilha retirada.');
+    S.G.arq = null; S.G.arqNome = '';   // conferido: a planilha não fica anexada para a próxima
+    var b = document.getElementById('cArqBox'); if (b) b.innerHTML = botaoArquivo('cArquivo', 'cArqBtn', '', 'cLimpar');
     return call('gAbrirConferencia', { id: c.id }).then(function (n) { S.G.conf = n; mostrarConf(); });
   }).catch(falha);
 };
