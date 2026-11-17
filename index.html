@@ -39,6 +39,7 @@
   }
 }
 :root[data-letra="grande"]{--fs:1.15}
+:root[data-letra="grande"] .m-body,:root[data-letra="grande"] .m-foot{zoom:1.15}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%}
 body{background:var(--bg);color:var(--ink);font-family:'Montserrat',system-ui,sans-serif;font-size:calc(15px*var(--fs));-webkit-tap-highlight-color:transparent}
@@ -187,6 +188,11 @@ input::placeholder{color:var(--muted)}
 .cad-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px 14px}
 .cad-sep{grid-column:1/-1;border-top:1px dashed #D5DCE3;padding-top:10px;font-size:13px;font-weight:800}
 table.g.cad-tab td.cad-cut{max-width:200px;overflow:hidden;text-overflow:ellipsis}
+.falta-tag{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.04em;padding:2px 6px;border-radius:4px;background:#FDE8DE;color:#9A3412;border:1px solid #F5B79A;vertical-align:middle}
+.falta-badge{display:flex;width:fit-content;margin-top:3px;font-size:11px;font-weight:700;color:#9A3412;background:#FFF4EE;border-radius:10px;padding:1px 8px}
+.g-in.falta{border-color:#E0875C;background:#FFF8F4}
+.falta-box{font-size:13px;color:#9A3412;background:#FFF4EE;border:1px solid #F5B79A;border-radius:8px;padding:8px 12px}
+.g-btn.falta-on{background:#9A3412;border-color:#9A3412;color:#fff}
 table.g td.cad-acoes{white-space:nowrap;text-align:right;position:sticky;right:0;background:#fff;box-shadow:-8px 0 12px -10px rgba(11,61,97,.35)}
 table.g tr:hover td.cad-acoes{background:#F7FAFC}
 table.g.cad-tab th:last-child{position:sticky;right:0;z-index:2}
@@ -482,9 +488,21 @@ function transporte(nome, token, args) {
     return enviarPost(nome, token, args);
   });
 }
-var APP_VERSAO = '11.11-a';
+var APP_VERSAO = '17.11-a';
 /** Novidades de cada versão: aparecem uma vez, na primeira abertura depois da atualização. */
 var NOVIDADES = [
+  { v: '17.11-a', motorista: [
+      ['Editar viagem já finalizada', 'Errou alguma coisa? Em HOJE, toque no lançamento e depois em EDITAR ESTE LANÇAMENTO. Dá para mudar enquanto o dia não for encerrado. Se o escritório já tiver corrigido, fale com o escritório.'],
+      ['CLT sem valor', 'Quem está pago como CLT não digita mais o valor da viagem nem do custo extra. As telas mostram a quantidade de lançamentos.']
+    ], gestao: [
+      ['Combustível separado', 'Avulsos e CLT (veículos da casa) aparecem em consumo x abastecimento: KM rodado, km por litro e R$ por km. Agregados continuam em consumo x produção. O relatório PDF/Excel segue a mesma divisão.'],
+      ['Desativados fora dos filtros', 'Na escolha de motorista dos filtros, os motoristas desativados não aparecem mais.'],
+      ['Cadastro incompleto', 'Na tela de cadastro de motoristas, o que falta (telefone, e-mail, CPF, PIX e banco de avulsos e agregados, placa do agregado) fica marcado com FALTA. O botão Incompletos mostra só esses.'],
+      ['Edição pelo motorista', 'O motorista pode editar o lançamento enquanto o dia está aberto. Lançamento que o escritório já corrigiu fica travado para ele.']
+    ] },
+  { v: '16.11-a', motorista: [
+      ['Letra grande de verdade', 'No Perfil, a opção Letra grande agora aumenta toda a tela (textos, botões e lista), não só alguns títulos.']
+    ], gestao: [] },
   { v: '11.11-a', motorista: [
       ['Ordem da lista', 'Os lançamentos do dia agora aparecem do mais antigo (em cima) para o mais novo (embaixo). Quer ao contrário? Toque em INVERTER acima da lista. O celular guarda a sua escolha.']
     ], gestao: [] },
@@ -606,7 +624,7 @@ function rotuloAcao(nome, a) {
   if (nome === 'abrirOperacao') return 'Abrir operação' + (a.placa ? ' · ' + a.placa : '');
   if (nome === 'trocarVeiculo') return 'Troca de veículo · ' + a.placa;
   if (nome === 'encerrarOperacao') return 'Encerrar o dia';
-  if (nome === 'salvarLancamento') return (a.categoria === 'EXTRA' ? a.tipo_extra : 'Viagem ' + validarConteiner(a.conteiner).formatado) + ' · ' + brl(+a.valor);
+  if (nome === 'salvarLancamento' || nome === 'editarLancamento') return (nome === 'editarLancamento' ? 'Editar · ' : '') + (a.categoria === 'EXTRA' ? a.tipo_extra : 'Viagem ' + validarConteiner(a.conteiner).formatado) + (+a.valor > 0 ? ' · ' + brl(+a.valor) : '');
   if (nome === 'salvarAbastecimento') return 'Abastecimento · ' + br(+a.litros) + ' L · ' + brl(+a.valor);
   if (nome === 'excluirLancamento') return 'Apagar lançamento';
   if (nome === 'excluirAbastecimento') return 'Apagar abastecimento';
@@ -644,7 +662,19 @@ var LOCAL = {
     var op = e.operacao, ex = a.categoria === 'EXTRA', up = function (x) { return String(x || '').trim().toUpperCase(); };
     e.lancamentos.push({ id: a.cid, operacao_id: op.id, data_operacional: op.data_operacional, categoria: ex ? 'EXTRA' : 'CONTEINER', conteiner: ex ? '' : validarConteiner(a.conteiner).formatado,
       foto_id: a.foto_id || '', origem: up(a.origem), destino: up(a.destino), tamanho: ex ? '' : a.tamanho, carga: ex ? '' : a.carga, tipo_extra: ex ? up(a.tipo_extra) : '',
-      inicio: a.inicio, fim: a.fim, valor_lancado: +a.valor, valor_final: +a.valor, ajustado: false, placa: op.veiculo_atual, pagamento: op.pagamento_atual, ajuste: null, pendente: true });
+      inicio: a.inicio, fim: a.fim, valor_lancado: semValorPag(op.pagamento_atual) ? 0 : +a.valor, valor_final: semValorPag(op.pagamento_atual) ? 0 : +a.valor, ajustado: false, placa: op.veiculo_atual, pagamento: op.pagamento_atual, ajuste: null, pendente: true });
+    e.lancamentos.sort(function (x, y) { return x.inicio < y.inicio ? -1 : 1; });
+    return e;
+  },
+  editarLancamento: function (e, a) {
+    var up = function (x) { return String(x || '').trim().toUpperCase(); };
+    e.lancamentos.forEach(function (l) {
+      if (l.id !== a.id) return;
+      var ex = l.categoria === 'EXTRA', traj = !ex || (e.extrasComTrajeto || ['BATENDO']).indexOf(up(a.tipo_extra)) >= 0;
+      l.conteiner = ex ? '' : validarConteiner(a.conteiner).formatado; l.origem = traj ? up(a.origem) : ''; l.destino = traj ? up(a.destino) : '';
+      l.tamanho = ex ? '' : a.tamanho; l.carga = ex ? '' : a.carga; l.tipo_extra = ex ? up(a.tipo_extra) : '';
+      l.inicio = a.inicio; l.fim = a.fim; l.valor_lancado = +a.valor; l.valor_final = +a.valor; l.editado_em = a.quando; l.pendente = true;
+    });
     e.lancamentos.sort(function (x, y) { return x.inicio < y.inicio ? -1 : 1; });
     return e;
   },
@@ -688,9 +718,22 @@ function guardarNaFila(nome, args) {
     ls('rd_fila_mot', S.est.motorista.id);
     return contarFila().then(function () { setTimeout(sincronizar, 300); return e; });
   };
-  // apagar algo que ainda nem foi enviado: só tira da fila
+  // editar algo que ainda nem foi enviado: troca os dados do lançamento que está na fila
+  if (nome === 'editarLancamento' && alvo) {
+    return IDB.todos().then(function (l) {
+      var it = l.filter(function (x) { return x.args && x.args.cid === alvo && x.k !== OFF.enviandoK && x.nome === 'salvarLancamento'; })[0];
+      if (!it) return IDB.add({ nome: nome, args: args, criado: agoraLocal(), rotulo: rotuloAcao(nome, args) }).then(fim);
+      ['conteiner', 'origem', 'destino', 'tamanho', 'carga', 'tipo_extra', 'inicio', 'fim', 'valor'].forEach(function (k) { it.args[k] = args[k]; });
+      it.rotulo = rotuloAcao('salvarLancamento', it.args);
+      return IDB.put(it).then(fim);
+    });
+  }
+  // apagar algo que ainda nem foi enviado: só tira da fila (e as edições dele que estão esperando)
   if ((nome === 'excluirLancamento' || nome === 'excluirAbastecimento') && alvo) {
     return IDB.todos().then(function (l) {
+      var eds = l.filter(function (x) { return x.nome === 'editarLancamento' && x.args && x.args.id === alvo && x.k !== OFF.enviandoK; });
+      return Promise.all(eds.map(function (x) { return IDB.del(x.k); })).then(function () { return l; });
+    }).then(function (l) {
       var it = l.filter(function (x) { return x.args && x.args.cid === alvo && x.k !== OFF.enviandoK && x.nome.indexOf('salvar') === 0; })[0];
       if (it) return IDB.del(it.k).then(fim);
       return IDB.add({ nome: nome, args: args, criado: agoraLocal(), rotulo: rotuloAcao(nome, args) }).then(fim);
@@ -1077,7 +1120,7 @@ function telaEscolhaFolha() {
   return '<div class="m-app">' + cab('ABRIR OPERAÇÃO', { voltar: 'hoje' }) + '<main class="m-body" style="gap:14px">' +
     '<h2 class="q">Você já encerrou uma folha hoje</h2>' +
     '<div class="card" style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div style="display:flex;flex-direction:column;gap:2px"><span class="lbl">Última folha</span><b style="font-size:18px">' + dow(u.data_operacional) + ' · ' + dBr(u.data_operacional) + '</b>' +
-    '<span style="font-size:12px;color:var(--muted)">' + hh(u.aberta_em) + ' até ' + hh(u.encerrada_em) + ' · ' + u.qtd + ' lançamento(s)</span></div><b style="font-size:18px">' + brl(u.total) + '</b></div>' +
+    '<span style="font-size:12px;color:var(--muted)">' + hh(u.aberta_em) + ' até ' + hh(u.encerrada_em) + ' · ' + u.qtd + ' lançamento(s)</span></div><b style="font-size:18px">' + (S.est.motorista.vinculo === 'CLT' ? '' : brl(u.total)) + '</b></div>' +
     '<span class="lbl">O que você quer fazer?</span>' +
     '<button class="opt" style="min-height:96px;border:2px solid var(--ink);padding:14px" data-a="escFolha" data-v="CONTINUAR"><div class="ico-sq" style="width:52px;height:52px;background:#0B3D61;color:#fff">' + I.seta + '</div><span style="flex:1;display:flex;flex-direction:column;gap:3px"><b style="font-size:18px">CONTINUAR A ÚLTIMA FOLHA</b><span style="font-size:13px;font-weight:600;color:var(--ink2)">Os próximos lançamentos entram na folha do dia ' + dBr(u.data_operacional) + '</span></span></button>' +
     '<button class="opt" style="min-height:96px;border:2px solid #8FA02A;padding:14px" data-a="escFolha" data-v="NOVA"><div class="ico-sq" style="width:52px;height:52px;background:#B6C54C;color:#0B2238">' + I.mais + '</div><span style="flex:1;display:flex;flex-direction:column;gap:3px"><b style="font-size:18px">INICIAR UMA NOVA FOLHA</b><span style="font-size:13px;font-weight:600;color:var(--ink2)">Começa uma folha nova, separada da anterior</span></span></button>' +
@@ -1164,8 +1207,13 @@ ACOES.abrirOp = function () {
 };
 
 /* ---------- Hoje ---------- */
-FALAS.hoje = function () { var e = S.est; if (!e.operacao) return 'Você não tem operação aberta. Para começar o dia, toque em abrir operação.'; return 'Dia ' + dBrA(e.operacao.data_operacional) + ' aberto. ' + e.lancamentos.length + ' lançamentos. Total ' + brl(totalDia()) + '. Para lançar uma viagem toque em novo lançamento.'; };
+FALAS.hoje = function () { var e = S.est; if (!e.operacao) return 'Você não tem operação aberta. Para começar o dia, toque em abrir operação.'; return 'Dia ' + dBrA(e.operacao.data_operacional) + ' aberto. ' + e.lancamentos.length + ' lançamentos. ' + (semValorMot() ? '' : 'Total ' + brl(totalDia()) + '. ') + 'Para lançar uma viagem toque em novo lançamento.'; };
 function totalDia() { return S.est.lancamentos.reduce(function (s, l) { return s + l.valor_final; }, 0); }
+/* CLT não é remunerado por viagem: não digita valor e o app não mostra R$ nos lançamentos dele. */
+function semValorPag(p) { return p === 'CLT'; }
+function semValorMot() { var op = S.est.operacao; return semValorPag(op ? op.pagamento_atual : S.est.motorista.vinculo); }
+function wizSemValor() { return S.W.categoria !== 'ABAST' && semValorPag(S.W.pag); }
+function valorLanc(l) { return semValorPag(l.pagamento) ? '<span style="font-size:11px;font-weight:800;color:var(--muted)">CLT</span>' : brl(l.valor_final); }
 function itemHtml(l) {
   var ic = l.categoria === 'CONTEINER' ? '<div class="ico-sq" style="width:38px;height:38px;border-radius:10px;background:#0B3D61;color:#fff">' + I.cont + '</div>'
     : '<div class="ico-sq" style="width:38px;height:38px;border-radius:10px;background:var(--accentSoft);color:var(--accentText)">' + I.relogio + '</div>';
@@ -1173,7 +1221,7 @@ function itemHtml(l) {
   var t2 = l.destino ? l.origem + ' → ' + l.destino : (l.origem || '');
   var t3 = (l.categoria === 'CONTEINER' ? l.tamanho + ' · ' + l.carga + ' · ' : '') + hh(l.inicio) + ' – ' + hh(l.fim);
   var virou = l.fim && l.fim.slice(0, 10) > l.data_operacional ? '<span class="chip blue" style="align-self:flex-start;margin-top:2px;font-size:10px">TERMINOU ' + dBr(l.fim) + ' · CONTA PARA ' + dBr(l.data_operacional) + '</span>' : '';
-  return '<button class="item' + (l.ajustado ? ' aj' : '') + '" data-a="verLanc" data-id="' + l.id + '">' + ic + '<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><div class="t1">' + esc(t1) + '</div><div class="t2">' + esc(t2) + '</div><div class="t3">' + esc(t3) + '</div>' + virou + (l.pendente ? '<span class="chip pend" style="align-self:flex-start;margin-top:2px;font-size:10px">AGUARDANDO ENVIO</span>' : '') + '</div><span class="v">' + brl(l.valor_final) + '</span></button>';
+  return '<button class="item' + (l.ajustado ? ' aj' : '') + '" data-a="verLanc" data-id="' + l.id + '">' + ic + '<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><div class="t1">' + esc(t1) + '</div><div class="t2">' + esc(t2) + '</div><div class="t3">' + esc(t3) + '</div>' + virou + (l.pendente ? '<span class="chip pend" style="align-self:flex-start;margin-top:2px;font-size:10px">AGUARDANDO ENVIO</span>' : '') + (l.editado_em && !l.ajustado ? '<span class="chip blue" style="align-self:flex-start;margin-top:2px;font-size:10px">EDITADO POR VOCÊ</span>' : '') + '</div><span class="v">' + valorLanc(l) + '</span></button>';
 }
 TELAS.hoje = function () {
   if (!S.est.operacao) return telaInicioSemOperacao();
@@ -1188,13 +1236,13 @@ TELAS.hoje = function () {
     var grupos = []; ls_.forEach(function (l) { var k = l.placa + '|' + l.pagamento; var g = grupos.filter(function (x) { return x.k === k; })[0]; if (!g) grupos.push(g = { k: k, placa: l.placa, pag: l.pagamento, itens: [], tot: 0 }); g.itens.push(l); g.tot += l.valor_final; });
     lista = grupos.map(function (g) {
       return '<div style="display:flex;flex-direction:column;gap:6px"><div style="display:flex;align-items:center;gap:8px"><span class="plate" style="font-size:12px">' + esc(g.placa) + '</span><span style="flex:1"></span><span class="chip ' + (g.pag === 'AGREGADO' ? 'lime' : 'blue') + '">PAGO COMO ' + g.pag + '</span></div>' +
-        g.itens.map(itemHtml).join('') + '<div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;color:var(--muted);padding:0 4px"><span>' + g.itens.length + ' lançamento(s)</span><span style="color:var(--ink)">' + brl(g.tot) + '</span></div></div>';
+        g.itens.map(itemHtml).join('') + '<div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;color:var(--muted);padding:0 4px"><span>' + g.itens.length + ' lançamento(s)</span><span style="color:var(--ink)">' + (semValorPag(g.pag) ? '' : brl(g.tot)) + '</span></div></div>';
     }).join('');
   }
   return '<div class="m-app">' + cab('HOJE', { sino: true }) + '<main class="m-body">' + bannerInstalar() +
     '<div class="card" style="display:flex;flex-direction:column;gap:8px"><div style="display:flex;justify-content:space-between;align-items:center"><span style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;color:var(--accentText)"><span style="width:8px;height:8px;border-radius:4px;background:#8FA02A;box-shadow:0 0 0 4px var(--accentSoft)"></span>OPERAÇÃO ABERTA</span><span class="plate" style="font-size:13px">' + esc(op.veiculo_atual) + '</span></div>' +
     '<div style="display:flex;justify-content:space-between;align-items:flex-end"><div style="display:flex;flex-direction:column"><b style="font-size:19px">' + dow(op.data_operacional) + ' · ' + dBr(op.data_operacional) + '</b><span style="font-size:12px;color:var(--muted)">aberta às ' + hh(op.aberta_em) + ' · pago como ' + op.pagamento_atual.toLowerCase() + '</span></div>' +
-    '<div style="display:flex;flex-direction:column;align-items:flex-end"><span style="font-size:12px;color:var(--muted)">' + ls_.length + ' lançamento(s)</span><b style="font-size:19px">' + brl(totalDia()) + '</b></div></div></div>' +
+    '<div style="display:flex;flex-direction:column;align-items:flex-end">' + (ls_.every(function (l) { return semValorPag(l.pagamento); }) && semValorMot() ? '<span style="font-size:12px;color:var(--muted)">lançamentos</span><b style="font-size:19px">' + ls_.length + '</b>' : '<span style="font-size:12px;color:var(--muted)">' + ls_.length + ' lançamento(s)</span><b style="font-size:19px">' + brl(totalDia()) + '</b>') + '</div></div></div>' +
     (ls_.length > 1 ? botaoOrdem() : '') +
     '<div style="display:flex;flex-direction:column;gap:8px">' + lista + '</div></main>' +
     '<div class="m-foot"><button class="btn" data-a="nav" data-t="novo">' + I.mais + ' NOVO LANÇAMENTO</button><div class="row2"><button class="btn out sm" data-a="nav" data-t="trocar">' + I.troca + ' TROCAR VEÍCULO</button><button class="btn out sm" data-a="nav" data-t="encerrar">' + I.bandeira + ' ENCERRAR DIA</button></div></div>' + tabs('hoje') + '</div>';
@@ -1269,7 +1317,7 @@ function telaInicioSemOperacao() {
     '<div style="display:flex;flex-direction:column;gap:3px"><b style="font-size:17px">Olá, ' + esc(nome) + '</b><span style="font-size:13px;color:var(--muted)">' + dow(e.hoje) + ' · ' + dBrA(e.hoje) + '</span></div></div>' +
     '<div class="card" style="display:flex;flex-direction:column;gap:6px"><span style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;color:var(--muted)"><span style="width:8px;height:8px;border-radius:4px;background:var(--muted)"></span>NENHUMA OPERAÇÃO ABERTA</span>' +
     '<span style="font-size:14px;color:var(--ink2);line-height:1.45">Para lançar viagens e custos extras, primeiro abra a operação do dia. <b>Abastecimento pode ser lançado a qualquer hora.</b></span></div>' +
-    (u ? '<div class="card" style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div style="display:flex;flex-direction:column;gap:2px"><span class="lbl">Folha encerrada hoje</span><b style="font-size:17px">' + dow(u.data_operacional) + ' · ' + dBr(u.data_operacional) + '</b><span style="font-size:12px;color:var(--muted)">' + hh(u.aberta_em) + ' até ' + hh(u.encerrada_em) + ' · ' + u.qtd + ' lançamento(s)</span></div><b style="font-size:17px">' + brl(u.total) + '</b></div>' : '') +
+    (u ? '<div class="card" style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div style="display:flex;flex-direction:column;gap:2px"><span class="lbl">Folha encerrada hoje</span><b style="font-size:17px">' + dow(u.data_operacional) + ' · ' + dBr(u.data_operacional) + '</b><span style="font-size:12px;color:var(--muted)">' + hh(u.aberta_em) + ' até ' + hh(u.encerrada_em) + ' · ' + u.qtd + ' lançamento(s)</span></div><b style="font-size:17px">' + (S.est.motorista.vinculo === 'CLT' ? '' : brl(u.total)) + '</b></div>' : '') +
     '<div class="row2"><button class="opt col" style="min-height:96px;gap:6px" data-a="nav" data-t="producao">' + I.cal + '<b style="font-size:13px">MINHA PRODUÇÃO</b></button>' +
     '<button class="opt col" style="min-height:96px;gap:6px" data-a="nav" data-t="desempenho">' + I.graf + '<b style="font-size:13px">DESEMPENHO</b></button></div>' +
     '<button class="btn out" style="border-color:#E8A33D;color:var(--warnText)" data-a="iniciarWiz" data-c="ABAST">' + I.bomba + ' LANÇAR ABASTECIMENTO</button>' +
@@ -1291,8 +1339,20 @@ ACOES.verLanc = function (d) {
   var l = S.est.lancamentos.filter(function (x) { return x.id === d.id; })[0]; if (!l) return;
   abrirModal('<b style="font-size:17px">' + esc(l.categoria === 'CONTEINER' ? l.conteiner : l.tipo_extra) + '</b>' +
     '<div style="font-size:14px;line-height:1.6;color:var(--ink2)">' + (l.categoria === 'CONTEINER' ? esc(l.origem) + ' → ' + esc(l.destino) + '<br>' + l.tamanho + ' pés · ' + l.carga + '<br>' : l.destino ? esc(l.origem) + ' → ' + esc(l.destino) + '<br>' : '') +
-    hh(l.inicio) + ' (' + dBr(l.inicio) + ') até ' + hh(l.fim) + ' (' + dBr(l.fim) + ')<br>Veículo ' + esc(l.placa) + ' · pago como ' + l.pagamento.toLowerCase() + '<br><b style="color:var(--ink);font-size:18px">' + brl(l.valor_final) + '</b></div>' +
+    hh(l.inicio) + ' (' + dBr(l.inicio) + ') até ' + hh(l.fim) + ' (' + dBr(l.fim) + ')<br>Veículo ' + esc(l.placa) + ' · pago como ' + l.pagamento.toLowerCase() + (semValorPag(l.pagamento) ? '' : '<br><b style="color:var(--ink);font-size:18px">' + brl(l.valor_final) + '</b>') + '</div>' +
+    (l.ajustado ? '<div class="info">' + I.info + '<span>O escritório já corrigiu este lançamento. Para mudar, fale com o escritório.</span></div>'
+      : '<button class="btn sm" data-a="editarLanc" data-id="' + l.id + '">EDITAR ESTE LANÇAMENTO</button>') +
     '<button class="btn out sm" data-a="apagarLanc" data-id="' + l.id + '" style="border-color:var(--pin);color:var(--pin)">APAGAR ESTE LANÇAMENTO</button><button class="btn sm" data-a="fecharModal">FECHAR</button>');
+};
+/** Editar uma viagem ou custo já finalizado: só enquanto o dia está aberto (a lista do Hoje só tem o dia aberto). Abre a revisão já preenchida. */
+ACOES.editarLanc = function (d) {
+  var l = S.est.lancamentos.filter(function (x) { return x.id === d.id; })[0]; if (!l) return;
+  if (l.ajustado) return toast('O escritório já corrigiu este lançamento. Fale com o escritório.', true);
+  fecharModal();
+  S.W = { categoria: l.categoria, i: 0, editId: l.id, pag: l.pagamento, conteiner: l.conteiner || '', foto_id: l.foto_id || '', origem: l.origem || '', destino: l.destino || '',
+    tamanho: l.tamanho ? String(l.tamanho) : '', carga: l.carga || '', tipo_extra: l.tipo_extra || '', ini: hh(l.inicio), fim: hh(l.fim),
+    cents: String(Math.round((+l.valor_final || 0) * 100)), litros: '', thumb: '', placa: '', meiaNoite: String(l.fim).slice(0, 10) > String(l.inicio).slice(0, 10) };
+  S.W.i = listaPassos().indexOf('rev'); ir('wiz');
 };
 ACOES.apagarLanc = function (d) {
   if (!confirm('Apagar este lançamento?')) return;
@@ -1315,7 +1375,7 @@ TELAS.novo = function () {
 var PASSOS = { CONTEINER: ['num', 'origem', 'destino', 'tam', 'carga', 'hora', 'valor', 'rev'], EXTRA: ['tipo', 'hora', 'valor', 'rev'] };
 ACOES.iniciarWiz = function (d) {
   var agora = new Date(), hm = pad(agora.getHours()) + ':' + pad(agora.getMinutes());
-  S.W = { categoria: d.c, i: 0, conteiner: '', foto_id: '', origem: '', destino: '', tamanho: '', carga: '', tipo_extra: '', ini: hm, fim: '', cents: '', litros: '', thumb: '', placa: '', meiaNoite: false };
+  S.W = { categoria: d.c, i: 0, conteiner: '', foto_id: '', origem: '', destino: '', tamanho: '', carga: '', tipo_extra: '', ini: hm, fim: '', cents: '', litros: '', thumb: '', placa: '', meiaNoite: false, pag: S.est.operacao ? S.est.operacao.pagamento_atual : S.est.motorista.vinculo };
   if (d.c === 'ABAST' && !S.est.operacao) {
     S.W.escolheVeic = true;
     return callLeitura('veiculosAbast', {}).catch(function (e) {
@@ -1342,8 +1402,8 @@ function abastExigeCupom() {
 }
 function listaPassos() {
   if (S.W.categoria === 'ABAST') return (S.W.escolheVeic ? ['veic'] : []).concat(abastExigeCupom() ? ['cupom'] : []).concat(['litros', 'valor', 'rev']);
-  if (S.W.categoria === 'EXTRA' && comTrajeto(S.W.tipo_extra)) return ['tipo', 'origem', 'destino', 'hora', 'valor', 'rev'];
-  return PASSOS[S.W.categoria];
+  var l = S.W.categoria === 'EXTRA' && comTrajeto(S.W.tipo_extra) ? ['tipo', 'origem', 'destino', 'hora', 'valor', 'rev'] : PASSOS[S.W.categoria];
+  return wizSemValor() ? l.filter(function (p) { return p !== 'valor'; }) : l;
 }
 function diaWiz() { return S.est.operacao ? S.est.operacao.data_operacional : S.est.hoje; }
 function passo() { return listaPassos()[S.W.i]; }
@@ -1358,7 +1418,7 @@ function progresso() {
 function rodapeWiz(okLabel, okAcao, desab) {
   return '<div class="m-foot"><div class="wiz-foot"><button class="back" data-a="wizVoltar" aria-label="Passo anterior">' + I.voltar + '</button><button class="btn" id="btnOk" data-a="' + (okAcao || 'wizProx') + '"' + (desab ? ' disabled' : '') + '>' + (okLabel || 'PRÓXIMO') + ' ' + I.seta + '</button></div></div>';
 }
-ACOES.wizVoltar = function () { if (S.W.i === 0) ir(S.W.categoria === 'ABAST' ? 'combustivel' : 'novo'); else irPasso(S.W.i - 1); };
+ACOES.wizVoltar = function () { if (S.W.editId && (S.W.i === 0 || passo() === 'rev')) { S.W = null; return ir('hoje'); } if (S.W.i === 0) ir(S.W.categoria === 'ABAST' ? 'combustivel' : 'novo'); else irPasso(S.W.i - 1); };
 ACOES.wizProx = function () {
   var p = passo(), W = S.W;
   if (p === 'num') { var v = validarConteiner(W.conteiner); if (!v.completo) return toast('Digite as 4 letras e os 7 números do contêiner.', true); W.conteiner = v.formatado; }
@@ -1472,18 +1532,21 @@ TELAS.wiz = function () {
     rod = rodapeWiz('CONFERIR');
   } else if (p === 'rev') {
     var d2 = datasHorario(), linhas = [];
-    if (W.categoria === 'CONTEINER') linhas = [['CONTÊINER', W.conteiner, 0], ['ORIGEM', W.origem, 1], ['DESTINO', W.destino, 2], ['TAMANHO', W.tamanho + ' PÉS', 3], ['CARGA', W.carga, 4], ['HORÁRIOS', W.ini + ' → ' + W.fim, 5], ['VALOR', brl(+W.cents / 100), 6]];
+    var lp0 = listaPassos(), ix = function (k) { return lp0.indexOf(k); }, linVal = wizSemValor() ? [] : [['VALOR', brl(+W.cents / 100), ix('valor')]];
+    if (W.categoria === 'CONTEINER') linhas = [['CONTÊINER', W.conteiner, ix('num')], ['ORIGEM', W.origem, ix('origem')], ['DESTINO', W.destino, ix('destino')], ['TAMANHO', W.tamanho + ' PÉS', ix('tam')], ['CARGA', W.carga, ix('carga')], ['HORÁRIOS', W.ini + ' → ' + W.fim, ix('hora')]].concat(linVal);
     else if (W.categoria === 'ABAST') {
       var lp = listaPassos(), li = +W.litros / 100, vl = +W.cents / 100;
       linhas = (lp.indexOf('veic') >= 0 ? [['VEÍCULO', W.placa, lp.indexOf('veic')]] : []).concat(lp.indexOf('cupom') >= 0 ? [['CUPOM', W.foto_id ? 'Foto tirada ✓' : 'Falta a foto', lp.indexOf('cupom')]] : [])
         .concat([['LITROS', br(li) + ' L', lp.indexOf('litros')], ['VALOR', brl(vl), lp.indexOf('valor')], ['PREÇO POR LITRO', li > 0 ? 'R$ ' + (vl / li).toFixed(3).replace('.', ',') : '–', -1]]);
     }
-    else if (comTrajeto(W.tipo_extra)) linhas = [['TIPO', W.tipo_extra, 0], ['ORIGEM', W.origem, 1], ['DESTINO', W.destino, 2], ['HORÁRIOS', W.ini + ' → ' + W.fim, 3], ['VALOR', brl(+W.cents / 100), 4]];
-    else linhas = [['TIPO', W.tipo_extra, 0], ['HORÁRIOS', W.ini + ' → ' + W.fim, 1], ['VALOR', brl(+W.cents / 100), 2]];
-    corpo = '<div style="display:flex;justify-content:space-between;align-items:center"><h2 class="q">Está tudo certo?</h2><span class="chip blue">DIA ' + dBr(diaWiz()) + '</span></div><div class="card" style="padding:0;overflow:hidden">' +
+    else if (comTrajeto(W.tipo_extra)) linhas = [['TIPO', W.tipo_extra, ix('tipo')], ['ORIGEM', W.origem, ix('origem')], ['DESTINO', W.destino, ix('destino')], ['HORÁRIOS', W.ini + ' → ' + W.fim, ix('hora')]].concat(linVal);
+    else linhas = [['TIPO', W.tipo_extra, ix('tipo')], ['HORÁRIOS', W.ini + ' → ' + W.fim, ix('hora')]].concat(linVal);
+    corpo = '<div style="display:flex;justify-content:space-between;align-items:center"><h2 class="q">' + (W.editId ? 'Editar lançamento' : 'Está tudo certo?') + '</h2><span class="chip blue">DIA ' + dBr(diaWiz()) + '</span></div>' +
+      (W.editId ? '<div style="font-size:13px;color:var(--ink2)">Toque em <b>ALTERAR</b> no que quer mudar e depois em <b>SALVAR ALTERAÇÕES</b>.</div>' : '') +
+      (wizSemValor() ? '<div style="font-size:13px;color:var(--muted)">Pago como CLT: este lançamento não tem valor.</div>' : '') + '<div class="card" style="padding:0;overflow:hidden">' +
       linhas.map(function (l) { return '<div style="display:flex;align-items:center;gap:12px;padding:11px 14px;border-bottom:1px solid var(--line)"><div style="flex:1;display:flex;flex-direction:column;gap:2px"><span class="lbl" style="font-size:11px">' + l[0] + '</span><b style="font-size:16px">' + esc(l[1]) + '</b>' + (l[0] === 'HORÁRIOS' && d2.dFim !== diaWiz() ? '<span style="font-size:12px;color:var(--blueText);font-weight:700">Termina em ' + dBr(d2.dFim) + ' · conta para ' + dBr(diaWiz()) + '</span>' : '') + '</div>' + (l[2] >= 0 ? '<button class="btn out sm" style="width:auto;padding:0 12px;height:40px;font-size:12px" data-a="irPasso" data-i="' + l[2] + '">ALTERAR</button>' : '') + '</div>'; }).join('') +
       '</div>';
-    rod = '<div class="m-foot"><button class="btn lime" data-a="finalizar">' + I.ok + ' FINALIZAR ' + (W.categoria === 'CONTEINER' ? 'VIAGEM' : W.categoria === 'ABAST' ? 'ABASTECIMENTO' : 'LANÇAMENTO') + '</button><span style="text-align:center;font-size:12px;color:var(--muted)">Depois de salvar, você volta para a tela inicial.</span></div>';
+    rod = '<div class="m-foot"><button class="btn lime" data-a="finalizar">' + I.ok + (W.editId ? ' SALVAR ALTERAÇÕES' : ' FINALIZAR ' + (W.categoria === 'CONTEINER' ? 'VIAGEM' : W.categoria === 'ABAST' ? 'ABASTECIMENTO' : 'LANÇAMENTO')) + '</button><span style="text-align:center;font-size:12px;color:var(--muted)">Depois de salvar, você volta para a tela inicial.</span></div>';
   }
   return '<div class="m-app">' + cab(titulo, { voltar: W.categoria === 'ABAST' ? 'combustivel' : 'hoje', x: true }) + progresso() + '<main class="m-body" style="gap:14px">' + corpo + '</main>' + rod + '</div>';
 };
@@ -1563,7 +1626,11 @@ ACOES.finalizar = function () {
     }).catch(falha);
   }
   var dh = datasHorario(), traj = W.categoria === 'CONTEINER' || comTrajeto(W.tipo_extra);
-  var dados = { categoria: W.categoria, conteiner: W.conteiner, foto_id: W.foto_id, origem: traj ? W.origem : '', destino: traj ? W.destino : '', tamanho: W.tamanho, carga: W.carga, tipo_extra: W.tipo_extra, inicio: dh.ini, fim: dh.fim, valor: +W.cents / 100 };
+  var dados = { categoria: W.categoria, conteiner: W.conteiner, foto_id: W.foto_id, origem: traj ? W.origem : '', destino: traj ? W.destino : '', tamanho: W.tamanho, carga: W.carga, tipo_extra: W.tipo_extra, inicio: dh.ini, fim: dh.fim, valor: wizSemValor() ? 0 : +W.cents / 100 };
+  if (W.editId) {
+    dados.id = W.editId;
+    return acao('editarLancamento', dados).then(function (est) { S.W = null; toast(est.offline ? 'Alteração salva no celular. Vai quando a internet voltar.' : 'Alteração salva!'); falar('Alteração salva.'); aplicarEstado(est, 'hoje'); }).catch(falha);
+  }
   acao('salvarLancamento', dados).then(function (est) { S.W = null; toast(est.offline ? 'Salvo no celular. Vai quando a internet voltar.' : 'Lançamento salvo!'); falar('Lançamento salvo.'); aplicarEstado(est, 'hoje'); }).catch(falha);
 };
 
@@ -1705,9 +1772,10 @@ FALAS.encerrar = function () { return S.est.exigeKm ? 'Tire a foto do painel, di
 TELAS.encerrar = function () {
   var e = S.est, op = e.operacao, c = { CHEIO: [0, 0], VAZIO: [0, 0], EXTRAS: [0, 0] };
   e.lancamentos.forEach(function (l) { var k = l.categoria === 'CONTEINER' ? l.carga : 'EXTRAS'; c[k][0]++; c[k][1] += l.valor_final; });
-  var cx = function (k) { return '<div style="background:rgba(255,255,255,.08);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:1px"><span style="font-size:10px;font-weight:800;color:#C9D6E2">' + k + '</span><b style="font-size:16px">' + c[k][0] + '</b><span style="font-size:11px;font-weight:600">' + brl(c[k][1]) + '</span></div>'; };
+  var sv = semValorMot() && e.lancamentos.every(function (l) { return semValorPag(l.pagamento); });
+  var cx = function (k) { return '<div style="background:rgba(255,255,255,.08);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:1px"><span style="font-size:10px;font-weight:800;color:#C9D6E2">' + k + '</span><b style="font-size:16px">' + c[k][0] + '</b>' + (sv ? '' : '<span style="font-size:11px;font-weight:600">' + brl(c[k][1]) + '</span>') + '</div>'; };
   return '<div class="m-app">' + cab('ENCERRAR O DIA', { voltar: 'hoje' }) + '<main class="m-body">' +
-    '<div class="dark-card" style="display:flex;flex-direction:column;gap:12px"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:11px;font-weight:700;color:#C9D6E2">PRODUÇÃO DO DIA</span><b style="font-size:20px">' + dow(op.data_operacional) + ' · ' + dBr(op.data_operacional) + '</b><span style="font-size:11px;color:#C9D6E2">aberta às ' + hh(op.aberta_em) + '</span></div><b style="font-size:22px;color:#B6C54C">' + brl(totalDia()) + '</b></div>' +
+    '<div class="dark-card" style="display:flex;flex-direction:column;gap:12px"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:11px;font-weight:700;color:#C9D6E2">PRODUÇÃO DO DIA</span><b style="font-size:20px">' + dow(op.data_operacional) + ' · ' + dBr(op.data_operacional) + '</b><span style="font-size:11px;color:#C9D6E2">aberta às ' + hh(op.aberta_em) + '</span></div><b style="font-size:22px;color:#B6C54C">' + (sv ? e.lancamentos.length + ' lanç.' : brl(totalDia())) + '</b></div>' +
     '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">' + cx('CHEIO') + cx('VAZIO') + cx('EXTRAS') + '</div></div>' +
     '<div class="card" style="display:flex;flex-direction:column;gap:8px"><span class="lbl">Veículos usados hoje</span>' + e.trocas.map(function (t) { return '<div style="display:flex;justify-content:space-between;align-items:center;font-size:13px"><span class="plate">' + esc(t.placa) + '</span><span style="color:var(--ink2);font-weight:600">' + hh(t.inicio) + ' – ' + (t.fim ? hh(t.fim) : 'agora') + ' · ' + t.pagamento.toLowerCase() + '</span></div>'; }).join('') + '</div>' +
     (e.exigeKm ? kmBox('ENCERRAMENTO') : '') +
@@ -1760,13 +1828,13 @@ TELAS.producao.depois = function () {
   var q = S.p.q;
   callLeitura('producao', argsProd()).then(function (r) {
     var box = document.getElementById('prod'); if (!box) return;
-    var aj = r.dias.reduce(function (s, d) { return s + d.ajustes; }, 0);
-    box.innerHTML = '<div class="dark-card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div style="display:flex;flex-direction:column;gap:1px"><span style="font-size:11px;font-weight:700;color:#C9D6E2">' + dBr(r.periodo.de) + ' A ' + dBr(r.periodo.ate) + ' · ' + r.dias.length + (r.dias.length === 1 ? ' DIA' : ' DIAS') + '</span><b style="font-size:22px">' + brl(r.total) + '</b><span style="font-size:12px;color:#C9D6E2">' + r.qtd + (r.qtd === 1 ? ' lançamento' : ' lançamentos') + (aj ? ' · ' + aj + ' ajuste(s)' : '') + '</span></div>' + '</div>' +
+    var aj = r.dias.reduce(function (s, d) { return s + d.ajustes; }, 0), clt = S.est.motorista.vinculo === 'CLT', rs = function (v) { return clt ? '' : brl(v); };
+    box.innerHTML = '<div class="dark-card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div style="display:flex;flex-direction:column;gap:1px"><span style="font-size:11px;font-weight:700;color:#C9D6E2">' + dBr(r.periodo.de) + ' A ' + dBr(r.periodo.ate) + ' · ' + r.dias.length + (r.dias.length === 1 ? ' DIA' : ' DIAS') + '</span><b style="font-size:22px">' + (clt ? r.qtd + (r.qtd === 1 ? ' lançamento' : ' lançamentos') : brl(r.total)) + '</b><span style="font-size:12px;color:#C9D6E2">' + (clt ? 'pago como CLT' : r.qtd + (r.qtd === 1 ? ' lançamento' : ' lançamentos')) + (aj ? ' · ' + aj + ' ajuste(s)' : '') + '</span></div>' + '</div>' +
       (r.dias.length > 1 ? botaoOrdem() : '') +
       (r.dias.length ? r.dias.slice().sort(function (a, b) { return ordemMot() === 'novo' ? (a.data < b.data ? 1 : -1) : (a.data < b.data ? -1 : 1); }).map(function (d) {
-        var cx = function (n, v) { return '<div style="display:flex;flex-direction:column;gap:1px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 8px"><span style="font-size:10px;font-weight:800;color:var(--muted)">' + n + '</span><b style="font-size:14px">' + v[0] + '</b><span style="font-size:11px;font-weight:600">' + brl(v[1]) + '</span></div>'; };
+        var cx = function (n, v) { return '<div style="display:flex;flex-direction:column;gap:1px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 8px"><span style="font-size:10px;font-weight:800;color:var(--muted)">' + n + '</span><b style="font-size:14px">' + v[0] + '</b><span style="font-size:11px;font-weight:600">' + rs(v[1]) + '</span></div>'; };
         return '<details class="card" style="padding:0;margin-bottom:8px"><summary style="list-style:none;display:flex;align-items:center;gap:12px;padding:10px 12px;cursor:pointer"><div style="width:42px;display:flex;flex-direction:column;align-items:center;border-right:1px solid var(--line);padding-right:10px"><b style="font-size:18px;line-height:1">' + d.data.slice(8) + '</b><span style="font-size:10px;font-weight:700;color:var(--muted)">' + dow(d.data) + '</span></div>' +
-          '<div style="flex:1;display:flex;flex-direction:column;gap:3px"><span style="font-size:13px;font-weight:700">' + d.qtd + (d.qtd === 1 ? ' lançamento' : ' lançamentos') + '</span><span>' + (d.aberto ? '<span class="chip lime">ABERTO</span>' : '<span class="chip gray">ENCERRADO</span>') + (d.ajustes ? ' <span class="chip warn">' + d.ajustes + ' AJUSTE</span>' : '') + '</span></div><b style="font-size:15px">' + brl(d.total) + '</b></summary>' +
+          '<div style="flex:1;display:flex;flex-direction:column;gap:3px"><span style="font-size:13px;font-weight:700">' + d.qtd + (d.qtd === 1 ? ' lançamento' : ' lançamentos') + '</span><span>' + (d.aberto ? '<span class="chip lime">ABERTO</span>' : '<span class="chip gray">ENCERRADO</span>') + (d.ajustes ? ' <span class="chip warn">' + d.ajustes + ' AJUSTE</span>' : '') + '</span></div><b style="font-size:15px">' + rs(d.total) + '</b></summary>' +
           '<div style="border-top:1px solid var(--line);padding:8px 12px 10px;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;background:var(--surface2)">' + cx('CHEIO', d.cheio) + cx('VAZIO', d.vazio) + cx('EXTRAS', d.extra) + '</div></details>';
       }).join('') : '<div class="empty">Nenhum lançamento ' + ((S.p.modo || 'q') === 'h' ? 'hoje' : (S.p.modo === 'p' ? 'nesses dias' : 'nesta quinzena')) + '.</div>');
   }).catch(falha);
@@ -1787,6 +1855,8 @@ TELAS.desempenho = function () { return '<div class="m-app">' + cab('MEU DESEMPE
 TELAS.desempenho.depois = function () {
   callLeitura('desempenho', {}).then(function (r) {
     var box = document.getElementById('desemp'); if (!box) return;
+    var clt = S.est.motorista.vinculo === 'CLT', fmt = function (v) { return clt ? String(Math.round(v * 10) / 10).replace('.', ',') : brl(v); };
+    if (clt) { r.dias.forEach(function (d) { d.total = d.qtd || 0; }); r.quinzenas.forEach(function (q) { q.total = q.qtd || 0; }); }   // CLT: conta lançamentos, não R$
     var todosDias = r.dias; r.dias = todosDias.filter(function (d) { return d.total > 0; });
     var tot = r.dias.reduce(function (s, d) { return s + d.total; }, 0), n = r.dias.length, media = n ? tot / n : 0;
     var melhor = r.dias.reduce(function (b, d) { return !b || d.total > b.total ? d : b; }, null);
@@ -1794,16 +1864,16 @@ TELAS.desempenho.depois = function () {
     var lanc = r.composicao.CHEIO[0] + r.composicao.VAZIO[0] + r.composicao.EXTRAS[0];
     var kpi = function (t, v, s, dark) { return '<div class="' + (dark ? 'dark-card' : 'card') + '" style="padding:10px 12px;display:flex;flex-direction:column;gap:2px"><span style="font-size:10px;font-weight:800;color:' + (dark ? '#C9D6E2' : 'var(--muted)') + '">' + t + '</span><b style="font-size:18px;' + (dark ? 'color:#B6C54C' : '') + '">' + v + (s ? ' <span style="font-size:12px;font-weight:600;color:' + (dark ? '#C9D6E2' : 'var(--muted)') + '">' + s + '</span>' : '') + '</b></div>'; };
     var bars = r.dias.length ? '<div class="bars" style="grid-template-columns:repeat(' + r.dias.length + ',1fr)">' + (media ? '<div aria-hidden="true" style="position:absolute;left:0;right:0;bottom:' + Math.round(media / max * 118) + 'px;border-top:1.5px dashed var(--muted)"></div>' : '') +
-      r.dias.map(function (d) { var hoje = d.data === r.hoje; return '<div class="b"><span>' + Math.round(d.total) + '</span><div role="img" aria-label="Dia ' + dBr(d.data) + ': ' + brl(d.total) + '" style="height:' + Math.max(2, Math.round(d.total / max * 118)) + 'px;background:' + (melhor && d.data === melhor.data ? '#B6C54C' : hoje ? 'var(--barSoft)' : 'var(--bar)') + '"></div></div>'; }).join('') + '</div>' +
+      r.dias.map(function (d) { var hoje = d.data === r.hoje; return '<div class="b"><span>' + Math.round(d.total) + '</span><div role="img" aria-label="Dia ' + dBr(d.data) + ': ' + fmt(d.total) + '" style="height:' + Math.max(2, Math.round(d.total / max * 118)) + 'px;background:' + (melhor && d.data === melhor.data ? '#B6C54C' : hoje ? 'var(--barSoft)' : 'var(--bar)') + '"></div></div>'; }).join('') + '</div>' +
       '<div style="display:grid;grid-template-columns:repeat(' + r.dias.length + ',1fr);gap:6px">' + r.dias.map(function (d) { return '<span style="text-align:center;font-size:11px;font-weight:700;color:var(--muted)">' + d.data.slice(8) + '</span>'; }).join('') + '</div>' : '<div class="empty">Sem lançamentos nesta quinzena ainda.</div>';
     var qmax = Math.max.apply(null, r.quinzenas.map(function (q) { return q.total; }).concat([1]));
     var MES3 = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
-    var comp = r.composicao, ctot = (comp.CHEIO[1] + comp.VAZIO[1] + comp.EXTRAS[1]) || 1;
-    box.innerHTML = '<div class="kpis-m" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">' + kpi('ESTA QUINZENA', brl(tot), '', true) + kpi('MÉDIA POR DIA', brl(media)) + kpi('LANÇAMENTOS', lanc, 'em ' + n + ' dias') + kpi('MELHOR DIA', melhor ? dBr(melhor.data) : '—', melhor ? brl(melhor.total) : '') + '</div>' +
-      '<section class="card" style="display:flex;flex-direction:column;gap:10px"><b style="font-size:14px">Produção por dia</b>' + bars + '<div style="display:flex;gap:14px;font-size:11px;color:var(--muted)"><span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#B6C54C"></span> melhor dia</span><span><span style="display:inline-block;width:10px;border-top:1.5px dashed var(--muted)"></span> média</span></div></section>' +
-      '<section class="card" style="display:flex;flex-direction:column;gap:8px"><b style="font-size:14px">Produção por quinzena</b>' + r.quinzenas.map(function (q) { return '<div class="hbar"><span style="font-weight:700;color:var(--muted)">' + q.q + 'ª ' + MES3[q.mes - 1] + '</span><div class="tr"><div style="width:' + Math.round(q.total / qmax * 100) + '%;' + (q.atual ? 'background:var(--barSoft)' : q.total === qmax ? 'background:#B6C54C' : '') + '"></div></div><b style="text-align:right">' + brl(q.total) + '</b></div>'; }).join('') + '</section>' +
-      '<section class="card" style="display:flex;flex-direction:column;gap:10px"><b style="font-size:14px">O que você mais fez</b><div style="display:flex;height:14px;border-radius:4px;overflow:hidden;gap:2px"><div style="width:' + (comp.CHEIO[1] / ctot * 100) + '%;background:var(--bar)"></div><div style="width:' + (comp.VAZIO[1] / ctot * 100) + '%;background:var(--barSoft)"></div><div style="width:' + (comp.EXTRAS[1] / ctot * 100) + '%;background:#B6C54C"></div></div>' +
-      '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;font-size:11px">' + [['CHEIO', 'var(--bar)'], ['VAZIO', 'var(--barSoft)'], ['EXTRAS', '#B6C54C']].map(function (k) { return '<div style="display:flex;flex-direction:column;gap:1px"><span style="color:var(--muted);font-weight:700"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:' + k[1] + '"></span> ' + k[0] + '</span><b style="font-size:13px">' + comp[k[0]][0] + ' · ' + brl(comp[k[0]][1]) + '</b></div>'; }).join('') + '</div></section>';
+    var comp = r.composicao, ci = clt ? 0 : 1, ctot = (comp.CHEIO[ci] + comp.VAZIO[ci] + comp.EXTRAS[ci]) || 1;
+    box.innerHTML = '<div class="kpis-m" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">' + (clt ? kpi('ESTA QUINZENA', lanc, 'lançamentos', true) + kpi('MÉDIA POR DIA', fmt(media), 'lanç.') + kpi('DIAS TRABALHADOS', n) : kpi('ESTA QUINZENA', brl(tot), '', true) + kpi('MÉDIA POR DIA', brl(media)) + kpi('LANÇAMENTOS', lanc, 'em ' + n + ' dias')) + kpi('MELHOR DIA', melhor ? dBr(melhor.data) : '—', melhor ? fmt(melhor.total) + (clt ? ' lanç.' : '') : '') + '</div>' +
+      '<section class="card" style="display:flex;flex-direction:column;gap:10px"><b style="font-size:14px">' + (clt ? 'Lançamentos por dia' : 'Produção por dia') + '</b>' + bars + '<div style="display:flex;gap:14px;font-size:11px;color:var(--muted)"><span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#B6C54C"></span> melhor dia</span><span><span style="display:inline-block;width:10px;border-top:1.5px dashed var(--muted)"></span> média</span></div></section>' +
+      '<section class="card" style="display:flex;flex-direction:column;gap:8px"><b style="font-size:14px">' + (clt ? 'Lançamentos por quinzena' : 'Produção por quinzena') + '</b>' + r.quinzenas.map(function (q) { return '<div class="hbar"><span style="font-weight:700;color:var(--muted)">' + q.q + 'ª ' + MES3[q.mes - 1] + '</span><div class="tr"><div style="width:' + Math.round(q.total / qmax * 100) + '%;' + (q.atual ? 'background:var(--barSoft)' : q.total === qmax ? 'background:#B6C54C' : '') + '"></div></div><b style="text-align:right">' + fmt(q.total) + '</b></div>'; }).join('') + '</section>' +
+      '<section class="card" style="display:flex;flex-direction:column;gap:10px"><b style="font-size:14px">O que você mais fez</b><div style="display:flex;height:14px;border-radius:4px;overflow:hidden;gap:2px"><div style="width:' + (comp.CHEIO[ci] / ctot * 100) + '%;background:var(--bar)"></div><div style="width:' + (comp.VAZIO[ci] / ctot * 100) + '%;background:var(--barSoft)"></div><div style="width:' + (comp.EXTRAS[ci] / ctot * 100) + '%;background:#B6C54C"></div></div>' +
+      '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;font-size:11px">' + [['CHEIO', 'var(--bar)'], ['VAZIO', 'var(--barSoft)'], ['EXTRAS', '#B6C54C']].map(function (k) { return '<div style="display:flex;flex-direction:column;gap:1px"><span style="color:var(--muted);font-weight:700"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:' + k[1] + '"></span> ' + k[0] + '</span><b style="font-size:13px">' + comp[k[0]][0] + (clt ? '' : ' · ' + brl(comp[k[0]][1])) + '</b></div>'; }).join('') + '</div></section>';
   }).catch(falha);
 };
 
@@ -2091,6 +2161,7 @@ function mselLista(id, txt) {
   var box = document.getElementById(id + 'L'); if (!box) return;
   var t = String(txt || '').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim(), dig = t.replace(/\D/g, '');
   var l = (S.G.mots || []).filter(function (m) {
+    if (m.ativo === false) return false;   // desativado não aparece nos filtros
     if (!t) return true;
     var n = String(m.nome).toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     return n.indexOf(t) >= 0 || (dig.length >= 3 && String(m.cpf || '').replace(/\D/g, '').indexOf(dig) >= 0);
@@ -3026,40 +3097,58 @@ function cadMotoristas() {
     desenharMot();
   }).catch(falha);
 }
+/* Dados que faltam no cadastro do motorista (marcados com FALTA na tabela e no formulário).
+ * Todos: CPF, telefone e e-mail. Avulso e agregado (recebem por produção): chave PIX e banco. Agregado: placa do cavalo. */
+var CAMPOS_MOT = { cpf: 'CPF', telefone: 'Telefone', email: 'E-mail', chave_pix: 'Chave PIX', banco: 'Banco', placa_propria: 'Placa do cavalo' };
+function faltasMot(m) {
+  var req = ['cpf', 'telefone', 'email'];
+  if (m.vinculo !== 'CLT') req.push('chave_pix', 'banco');
+  if (m.vinculo === 'AGREGADO') req.push('placa_propria');
+  return req.filter(function (k) { return !String(m[k] || '').trim(); });
+}
+var FALTA_TAG = '<span class="falta-tag">FALTA</span>';
+ACOES.cadIncompletos = function () { if (document.getElementById('mNome')) lerFormMot(); S.G.soIncompletos = !S.G.soIncompletos; desenharMot(); };
 function desenharMot() {
   var box = document.getElementById('cadBox'); if (!box) return;
   var lista = S.G.mots || [], e = S.G.edMot, aberto = !!e;
   var form = '';
   if (aberto) {
+    var fe = e.id ? faltasMot(e) : [], fl = function (k) { return fe.indexOf(k) >= 0 ? ' ' + FALTA_TAG : ''; }, fc = function (k) { return fe.indexOf(k) >= 0 ? ' falta' : ''; };
     var vb = function (v, t) { return '<button class="g-radio' + (e.vinculo === v ? ' on' : '') + '" style="min-height:56px;align-items:center;text-align:center;gap:2px" data-a="cadVinc" data-v="' + v + '"><b>' + v + '</b><span style="font-size:10px;color:#3E4A55">' + t + '</span></button>'; };
     form = '<section class="g-card cad-form" id="motForm"><div class="cad-form-hd"><b style="font-size:16px">' + (e.id ? 'Editar motorista · ' + esc(e.nome || '') : 'Novo motorista') + '</b><button class="g-btn sm out" data-a="cadNovo" data-fechar="1">Fechar</button></div>' +
       '<div class="cad-grid">' +
       '<div class="g-f" style="grid-column:1/-1;flex-direction:row;align-items:center;gap:12px"><button class="g-btn out" style="width:64px;height:64px;border-radius:32px;justify-content:center;padding:0;flex:none" data-a="cadFoto" aria-label="Foto (opcional)">' + (S.G.fotoMot ? '<img src="' + S.G.fotoMot + '" alt="" style="width:60px;height:60px;border-radius:30px;object-fit:cover">' : I.camera) + '</button><span style="font-size:12px;color:#5B6773">Foto (opcional)</span></div>' +
       '<div class="g-f"><label for="mNome">Nome completo *</label><input id="mNome" class="g-in" value="' + esc(e.nome || '') + '"></div>' +
-      '<div class="g-f"><label for="mCpf">CPF *</label><input id="mCpf" class="g-in" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" data-i="mascCpf" value="' + esc(e.cpf || '') + '"></div>' +
-      '<div class="g-f"><label for="mEmail">E-mail (opcional · recuperar a senha)</label><input id="mEmail" class="g-in" type="email" value="' + esc(e.email || '') + '"></div>' +
+      '<div class="g-f"><label for="mCpf">CPF *' + fl('cpf') + '</label><input id="mCpf" class="g-in' + fc('cpf') + '" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" data-i="mascCpf" value="' + esc(e.cpf || '') + '"></div>' +
+      '<div class="g-f"><label for="mEmail">E-mail (para recuperar a senha)' + fl('email') + '</label><input id="mEmail" class="g-in' + fc('email') + '" type="email" value="' + esc(e.email || '') + '"></div>' +
       '<div class="g-f" style="grid-column:span 2"><span class="l">Vínculo *</span><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">' + vb('AVULSO', 'veículo da casa') + vb('CLT', 'veículo da casa') + vb('AGREGADO', 'cavalo próprio') + '</div></div>' +
-      (e.vinculo === 'AGREGADO' ? '<div class="g-f"><label for="mPlaca">Placa do cavalo próprio *</label><input id="mPlaca" class="g-in" style="text-transform:uppercase" maxlength="8" placeholder="ABC1D23" value="' + esc(e.placa_propria || '') + '"><span style="font-size:11px;color:#5B6773">Se a placa já for da frota da casa (veículo vendido para ele), ela passa para o nome dele.</span></div>' : '') +
+      (e.vinculo === 'AGREGADO' ? '<div class="g-f"><label for="mPlaca">Placa do cavalo próprio *' + fl('placa_propria') + '</label><input id="mPlaca" class="g-in' + fc('placa_propria') + '" style="text-transform:uppercase" maxlength="8" placeholder="ABC1D23" value="' + esc(e.placa_propria || '') + '"><span style="font-size:11px;color:#5B6773">Se a placa já for da frota da casa (veículo vendido para ele), ela passa para o nome dele.</span></div>' : '') +
       '<div class="g-f"><label for="mPin">Senha de 4 números ' + (e.id ? '(vazio = manter)' : '(vazio = gerar)') + '</label><input id="mPin" class="g-in" inputmode="numeric" maxlength="4"></div>' +
       '<div class="cad-sep">Pagamento (vai para o Fechamento)</div>' +
-      '<div class="g-f"><label for="mPix">Chave PIX</label><input id="mPix" class="g-in" placeholder="CPF, CNPJ, telefone, e-mail ou aleatória" value="' + esc(e.chave_pix || '') + '"></div>' +
-      '<div class="g-f"><label for="mBanco">Banco</label><input id="mBanco" class="g-in" style="text-transform:uppercase" value="' + esc(e.banco || '') + '"></div>' +
-      '<div class="g-f"><label for="mTel">Telefone</label><input id="mTel" class="g-in" inputmode="tel" placeholder="92 99999-9999" value="' + esc(e.telefone || '') + '"></div>' +
+      '<div class="g-f"><label for="mPix">Chave PIX' + fl('chave_pix') + '</label><input id="mPix" class="g-in' + fc('chave_pix') + '" placeholder="CPF, CNPJ, telefone, e-mail ou aleatória" value="' + esc(e.chave_pix || '') + '"></div>' +
+      '<div class="g-f"><label for="mBanco">Banco' + fl('banco') + '</label><input id="mBanco" class="g-in' + fc('banco') + '" style="text-transform:uppercase" value="' + esc(e.banco || '') + '"></div>' +
+      '<div class="g-f"><label for="mTel">Telefone' + fl('telefone') + '</label><input id="mTel" class="g-in' + fc('telefone') + '" inputmode="tel" placeholder="92 99999-9999" value="' + esc(e.telefone || '') + '"></div>' +
       '<div class="g-f"><label for="mObsPag">Observação do pagamento</label><input id="mObsPag" class="g-in" placeholder="Ex.: PIX em nome de G M CAMPOS TRANSPORTES" value="' + esc(e.obs_pagamento || '') + '"></div>' +
-      '</div><div style="display:flex;gap:8px;justify-content:flex-end"><button class="g-btn out" data-a="cadNovo" data-fechar="1">Cancelar</button><button class="g-btn" data-a="cadSalvarMot"' + (master() ? '' : ' disabled title="Só Master"') + '>' + (e.id ? 'Salvar alterações' : 'Cadastrar motorista') + '</button></div></section>';
+      '</div>' + (fe.length ? '<div class="falta-box">⚑ Faltam no cadastro: <b>' + fe.map(function (k) { return CAMPOS_MOT[k]; }).join(', ') + '</b></div>' : '') +
+      '<div style="display:flex;gap:8px;justify-content:flex-end"><button class="g-btn out" data-a="cadNovo" data-fechar="1">Cancelar</button><button class="g-btn" data-a="cadSalvarMot"' + (master() ? '' : ' disabled title="Só Master"') + '>' + (e.id ? 'Salvar alterações' : 'Cadastrar motorista') + '</button></div></section>';
   }
-  var linhas = soDoFiltro('mot', lista);
+  var base = soDoFiltro('mot', lista), nInc = base.filter(function (m) { return faltasMot(m).length; }).length;
+  var linhas = S.G.soIncompletos ? base.filter(function (m) { return faltasMot(m).length; }) : base;
   var dash = '<span style="color:#9AA5AF">—</span>';
   box.innerHTML = form +
-    '<section class="g-tablebox"><div class="hd"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">' + segAtivos('mot', lista) + '<input id="mBusca" class="g-in" style="width:240px" placeholder="Buscar nome, CPF, placa, telefone" data-i="cadFiltrar"></div>' +
+    '<section class="g-tablebox"><div class="hd"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">' + segAtivos('mot', lista) +
+    '<button class="g-btn sm ' + (S.G.soIncompletos ? 'falta-on' : 'out') + '" data-a="cadIncompletos" aria-pressed="' + !!S.G.soIncompletos + '" title="Mostrar só os cadastros com dados faltando">⚑ Incompletos (' + nInc + ')</button>' +
+    '<input id="mBusca" class="g-in" style="width:240px" placeholder="Buscar nome, CPF, placa, telefone" data-i="cadFiltrar"></div>' +
     (aberto ? '' : '<button class="g-btn" data-a="cadNovo">+ Novo motorista</button>') + '</div>' +
     '<div class="g-scroll"><table class="g cad-tab"><thead><tr><th>Motorista</th><th>Vínculo</th><th>CPF</th><th>Telefone</th><th>E-mail</th><th>Chave PIX</th><th>Banco</th><th>Obs. pagamento</th><th></th></tr></thead><tbody id="mLista">' +
-    (linhas.length ? '' : linhaVazia(9, 'mot')) +
+    (linhas.length ? '' : S.G.soIncompletos ? '<tr><td colspan="9" style="text-align:center;color:#5B6773;padding:22px">Nenhum cadastro com dados faltando.</td></tr>' : linhaVazia(9, 'mot')) +
     linhas.map(function (m) {
       var busca = [m.nome, m.cpf, m.placa_propria, m.telefone, m.email, m.chave_pix].join(' ');
-      return '<tr data-nome="' + esc(busca) + '"' + (e && e.id === m.id ? ' style="background:#F1F4D6"' : '') + '><td><b>' + esc(m.nome) + '</b>' + (m.placa_propria ? '<div style="font-size:11px;color:#5B6773">Cavalo ' + esc(m.placa_propria) + '</div>' : '') + '</td>' +
-        '<td><span class="g-chip vinc-' + m.vinculo + '">' + m.vinculo + '</span></td><td>' + esc(m.cpf) + '</td><td>' + (m.telefone ? esc(m.telefone) : dash) + '</td><td>' + (m.email ? esc(m.email) : dash) + '</td>' +
-        '<td class="cad-cut" title="' + esc(m.chave_pix || '') + '">' + (m.chave_pix ? esc(m.chave_pix) : dash) + '</td><td>' + (m.banco ? esc(m.banco) : dash) + '</td><td class="cad-cut" title="' + esc(m.obs_pagamento || '') + '">' + (m.obs_pagamento ? esc(m.obs_pagamento) : dash) + '</td>' +
+      var fm = faltasMot(m), cel = function (k, html) { return fm.indexOf(k) >= 0 ? FALTA_TAG : (m[k] ? html : dash); };
+      return '<tr data-nome="' + esc(busca) + '"' + (e && e.id === m.id ? ' style="background:#F1F4D6"' : '') + '><td><b>' + esc(m.nome) + '</b>' + (m.placa_propria ? '<div style="font-size:11px;color:#5B6773">Cavalo ' + esc(m.placa_propria) + '</div>' : fm.indexOf('placa_propria') >= 0 ? '<div style="font-size:11px">Cavalo ' + FALTA_TAG + '</div>' : '') +
+          (fm.length ? '<div class="falta-badge" title="Falta: ' + esc(fm.map(function (k) { return CAMPOS_MOT[k]; }).join(', ')) + '">⚑ ' + fm.length + (fm.length === 1 ? ' dado faltando' : ' dados faltando') + '</div>' : '') + '</td>' +
+        '<td><span class="g-chip vinc-' + m.vinculo + '">' + m.vinculo + '</span></td><td>' + cel('cpf', esc(m.cpf)) + '</td><td>' + cel('telefone', esc(m.telefone)) + '</td><td>' + cel('email', esc(m.email)) + '</td>' +
+        '<td class="cad-cut" title="' + esc(m.chave_pix || '') + '">' + cel('chave_pix', esc(m.chave_pix)) + '</td><td>' + cel('banco', esc(m.banco)) + '</td><td class="cad-cut" title="' + esc(m.obs_pagamento || '') + '">' + (m.obs_pagamento ? esc(m.obs_pagamento) : dash) + '</td>' +
         '<td class="cad-acoes"><button class="g-btn sm out" data-a="cadEditar" data-id="' + m.id + '">Editar</button> ' + (master() ? (m.ativo ? '<button class="g-btn sm out" data-a="cadPin" data-id="' + m.id + '">Nova senha</button> <button class="g-btn sm out" style="border-color:#C2410C;color:#C2410C" data-a="motAtivar" data-id="' + m.id + '" data-on="0">Desativar</button>' : '<button class="g-btn sm lime" data-a="motAtivar" data-id="' + m.id + '" data-on="1">Reativar</button>') : '') + '</td></tr>';
     }).join('') + '</tbody></table></div></section>';
   var busca = S.G.buscaMot || '';
@@ -3217,7 +3306,7 @@ ACOES.cadSalvarUsu = function () { call('gSalvarUsuario', { usuario: document.ge
 TELAS.gcomb = function () {
   S.G.cVinc = S.G.cVinc || 'TODOS';
   var seg = ['TODOS', 'AVULSO', 'CLT', 'AGREGADO'].map(function (v) { return '<button class="' + (S.G.cVinc === v ? 'on' : '') + '" data-a="cVinc" data-v="' + v + '">' + v + '</button>'; }).join('');
-  return gLayout('gcomb', '<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px"><div><h1 class="g-h1">COMBUSTÍVEL</h1><div class="g-sub">Abastecimentos lançados pelos motoristas e a relação consumo x produção de cada um.</div></div>' +
+  return gLayout('gcomb', '<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px"><div><h1 class="g-h1">COMBUSTÍVEL</h1><div class="g-sub">Abastecimentos lançados pelos motoristas. Avulsos e CLT: consumo x abastecimento (km por litro). Agregados: consumo x produção.</div></div>' +
     '</div>' +
     barraFiltros('cb', periodoCampos('cb') + '<div class="g-f"><label for="cbMotQ">Motorista</label><span id="cbMotBox">' + selMotorista('cbMot', S.G.cMot).replace('Escolha o motorista…', 'Todos os motoristas') + '</span></div>' +
     '<div class="g-f wide"><span class="l">Vínculo (pago como)</span><div class="g-seg">' + seg + '</div></div><div><button class="g-btn fpop-ok" data-a="cBuscar">Buscar</button></div>',
@@ -3235,21 +3324,31 @@ ACOES.cBuscar = function () {
   call('gCombustivel', f, true).then(function (r) {
     var box = document.getElementById('cbRes'); if (!box) return;
     var t = r.totais, pct = function (v) { return v === null || v === undefined ? '–' : String(v).replace('.', ',') + '%'; };
+    var n2 = function (v) { return v === null || v === undefined ? '–' : v.toFixed(2).replace('.', ','); };
     var barra = function (v) { if (v === null || v === undefined) return ''; var w = Math.min(100, v), c = v > 60 ? '#C2410C' : v > 35 ? '#E8A33D' : '#8FA02A'; return '<div style="height:6px;border-radius:3px;background:#EEF1F4;margin-top:4px;width:110px;margin-left:auto"><div style="height:100%;border-radius:3px;width:' + w + '%;background:' + c + '"></div></div>'; };
+    var chip = function (v) { return '<span class="g-chip" style="background:' + (v === 'AGREGADO' ? '#F1F4D6;color:#4A5200' : v === 'CLT' ? '#E8F2FA;color:#145A90' : '#F3F0FA;color:#5B3FA0') + '">' + v + '</span>'; };
+    var periodo = '<span style="font-size:12px;color:#5B6773">' + dBrA(f.de) + ' a ' + dBrA(f.ate) + (r.arquivadoAntes && f.de < r.arquivadoAntes ? ' · inclui meses do Histórico' : '') + '</span>';
+    var casa = r.linhas.filter(function (g) { return g.casa; }), agr = r.linhas.filter(function (g) { return !g.casa; });
+    var vazio = function (n) { return '<tr><td colspan="' + n + '" style="text-align:center;color:#5B6773;padding:22px">Nenhum abastecimento nesse filtro.</td></tr>'; };
     box.innerHTML = '<section class="g-kpis" style="margin-bottom:16px"><div class="g-kpi navy"><span>Abastecido no período</span><b>' + brl(t.valor) + '</b><span style="color:#C9D6E2;text-transform:none;letter-spacing:0">' + t.qtd + ' abastecimento(s) · ' + t.motoristas + ' motorista(s)</span></div>' +
       '<div class="g-kpi"><span>Litros</span><b>' + br(t.litros) + '</b></div><div class="g-kpi"><span>Preço médio por litro</span><b>R$ ' + t.preco.toFixed(3).replace('.', ',') + '</b></div>' +
-      '<div class="g-kpi"><span>Produção de quem abasteceu</span><b>' + brl(t.produzido) + '</b></div><div class="g-kpi warn"><span>Consumo / produção</span><b>' + pct(t.pct) + '</b></div></section>' +
-      '<section class="g-tablebox" style="margin-bottom:16px"><div class="hd"><b>Consumo x produção por motorista</b><span style="font-size:12px;color:#5B6773">' + dBrA(f.de) + ' a ' + dBrA(f.ate) + (r.arquivadoAntes && f.de < r.arquivadoAntes ? ' · inclui meses do Histórico' : '') + '</span></div><div class="g-scroll"><table class="g"><thead><tr><th>Motorista</th><th>Pago como</th><th class="n">Abast.</th><th class="n">Litros</th><th class="n">R$/litro</th><th class="n">Valor abastecido</th><th class="n">Produção</th><th class="n">Consumo / produção</th><th class="n">Líquido (agregado)</th></tr></thead><tbody>' +
-      (r.linhas.length ? r.linhas.map(function (g) {
-        return '<tr><td><b>' + esc(g.nome) + '</b></td><td><span class="g-chip" style="background:' + (g.vinculo === 'AGREGADO' ? '#F1F4D6;color:#4A5200' : '#E8F2FA;color:#145A90') + '">' + g.vinculo + '</span></td><td class="n">' + g.qtd + '</td><td class="n">' + br(g.litros) + '</td><td class="n">' + g.preco.toFixed(3).replace('.', ',') + '</td><td class="n"><b style="color:#8A5300">' + br(g.valor) + '</b></td><td class="n">' + br(g.produzido) + '</td>' +
-          '<td class="n"><b>' + pct(g.pct) + '</b>' + barra(g.pct) + '</td><td class="n">' + (g.vinculo === 'AGREGADO' ? '<b style="color:' + (g.liquido < 0 ? '#C2410C' : '#4A5200') + '">' + br(g.liquido) + '</b>' : '–') + '</td></tr>';
-      }).join('') : '<tr><td colspan="9" style="text-align:center;color:#5B6773;padding:22px">Nenhum abastecimento nesse filtro.</td></tr>') + '</tbody></table></div></section>' +
+      '<div class="g-kpi"><span>Média da frota da casa</span><b>' + (t.kmL ? n2(t.kmL) + ' km/L' : '–') + '</b><span style="text-transform:none;letter-spacing:0">' + (t.km ? fmtKm(t.km) + ' km rodados' : 'sem KM no período') + '</span></div>' +
+      '<div class="g-kpi warn"><span>Agregados: consumo / produção</span><b>' + pct(t.pct) + '</b></div></section>' +
+      '<section class="g-tablebox" style="margin-bottom:16px"><div class="hd"><b>Avulsos e CLT · consumo x abastecimento</b>' + periodo + '</div><div class="g-scroll"><table class="g"><thead><tr><th>Motorista</th><th>Pago como</th><th class="n">Abast.</th><th class="n">Litros</th><th class="n">R$/litro</th><th class="n">Valor</th><th class="n">KM rodado</th><th class="n">km/litro</th><th class="n">R$/km</th></tr></thead><tbody>' +
+      (casa.length ? casa.map(function (g) {
+        return '<tr><td><b>' + esc(g.nome) + '</b></td><td>' + chip(g.vinculo) + '</td><td class="n">' + g.qtd + '</td><td class="n">' + br(g.litros) + '</td><td class="n">' + g.preco.toFixed(3).replace('.', ',') + '</td><td class="n"><b style="color:#8A5300">' + br(g.valor) + '</b></td>' +
+          '<td class="n">' + (g.km ? fmtKm(g.km) : '<span title="Sem registro de KM (abertura e encerramento) no período">–</span>') + '</td><td class="n"><b>' + n2(g.kmL) + '</b></td><td class="n">' + n2(g.rsKm) + '</td></tr>';
+      }).join('') : vazio(9)) + '</tbody></table></div><div style="padding:8px 14px;font-size:12px;color:#5B6773">KM rodado = soma dos KM do painel (abertura até encerramento ou troca) no período. km/litro = KM rodado ÷ litros abastecidos.</div></section>' +
+      '<section class="g-tablebox" style="margin-bottom:16px"><div class="hd"><b>Agregados · consumo x produção</b>' + periodo + '</div><div class="g-scroll"><table class="g"><thead><tr><th>Motorista</th><th class="n">Abast.</th><th class="n">Litros</th><th class="n">R$/litro</th><th class="n">Valor</th><th class="n">Produção</th><th class="n">Consumo / produção</th><th class="n">Líquido</th></tr></thead><tbody>' +
+      (agr.length ? agr.map(function (g) {
+        return '<tr><td><b>' + esc(g.nome) + '</b></td><td class="n">' + g.qtd + '</td><td class="n">' + br(g.litros) + '</td><td class="n">' + g.preco.toFixed(3).replace('.', ',') + '</td><td class="n"><b style="color:#8A5300">' + br(g.valor) + '</b></td><td class="n">' + br(g.produzido) + '</td>' +
+          '<td class="n"><b>' + pct(g.pct) + '</b>' + barra(g.pct) + '</td><td class="n"><b style="color:' + (g.liquido < 0 ? '#C2410C' : '#4A5200') + '">' + br(g.liquido) + '</b></td></tr>';
+      }).join('') : vazio(8)) + '</tbody></table></div></section>' +
       '<section class="g-tablebox"><div class="hd"><b>Abastecimentos lançados</b><span style="font-size:12px;color:#5B6773">' + r.lista.length + ' registro(s)</span></div><div class="g-scroll"><table class="g"><thead><tr><th>Dia</th><th>Hora</th><th>Motorista</th><th>Veículo</th><th>Pago como</th><th class="n">Litros</th><th class="n">R$/litro</th><th class="n">Valor</th><th>Cupom</th></tr></thead><tbody>' +
       (r.lista.length ? r.lista.map(function (x) { return '<tr><td>' + dBrA(x.data_operacional) + '</td><td>' + hh(x.registrado_em) + '</td><td>' + esc(x.motorista) + '</td><td><b>' + esc(x.placa) + '</b></td><td>' + x.pagamento + '</td><td class="n">' + br(x.litros) + '</td><td class="n">' + x.preco.toFixed(3).replace('.', ',') + '</td><td class="n"><b>' + br(x.valor) + '</b></td><td>' + (x.foto_id ? '<button class="g-btn sm out" data-a="verCupom" data-f="' + esc(x.foto_id) + '" data-t="' + esc(x.motorista + ' · ' + x.placa + ' · ' + brl(x.valor)) + '">Ver cupom</button>' : '<span style="font-size:11px;color:#5B6773">não exige</span>') + '</td></tr>'; }).join('')
         : '<tr><td colspan="9" style="text-align:center;color:#5B6773;padding:22px">Nada nesse filtro.</td></tr>') + '</tbody></table></div></section>';
   }).catch(falha);
 };
-
 /* ---------- Registro de KM ---------- */
 TELAS.gkm = function () {
   S.G.kmPor = S.G.kmPor || 'placa';
@@ -3451,7 +3550,7 @@ TELAS.grel = function () {
     rd('geral', 'Relatório geral', 'Todos os motoristas no período, um por linha, com Batendo, Cheio, Vazio e Valor total. Mesmo modelo do relatório da ModallPort.') +
     rd('individual', 'Relatório individual', 'Um motorista: todas as operações dia a dia, com subtotal por dia, resumo por tipo e total do período.') +
     rd('mapa', 'Mapa produtivo', 'Todos os motoristas x cada dia do período, separados em CLT, agregado e avulso: quem trabalhou, quem faltou e o total. Mesmo modelo da planilha de controle.') +
-    rd('combustivel', 'Abastecimento x produção', 'Por motorista: litros e valor abastecido, preço médio, produção do período, quanto do produzido foi para combustível e o líquido do agregado.') + '</div></section>' +
+    rd('combustivel', 'Combustível por motorista', 'Avulsos e CLT: consumo x abastecimento (litros, valor, KM rodado, km por litro e R$ por km). Agregados: consumo x produção (quanto do produzido foi para combustível e o líquido).') + '</div></section>' +
     '<section class="g-card" style="display:flex;flex-direction:column;gap:12px"><b>2. Filtros</b><div class="g-grid">' + periodoCampos('r') +
     (R.tipo === 'mapa' ? '' : R.tipo !== 'individual' ? '<div class="g-f wide"><span class="l">Vínculo</span><div class="g-seg">' + vs + '</div></div>' : '<div class="g-f"><label for="rMot">Motorista</label><span id="rMotBox">' + selMotorista('rMot', S.G.motId) + '</span></div>') + '</div></section>' +
     '<section class="g-card" style="display:flex;flex-direction:column;gap:12px"><b>3. Formato</b><div style="display:flex;flex-wrap:wrap;gap:10px">' + fm('pdf', 'PDF · para imprimir') + fm('xlsx', 'EXCEL · para conferir') + '</div>' +
