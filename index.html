@@ -188,6 +188,7 @@ input::placeholder{color:var(--muted)}
 .cad-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px 14px}
 .cad-sep{grid-column:1/-1;border-top:1px dashed #D5DCE3;padding-top:10px;font-size:13px;font-weight:800}
 table.g.cad-tab td.cad-cut{max-width:200px;overflow:hidden;text-overflow:ellipsis}
+.btn-apagar{border-color:#E0875C!important;color:#C2410C!important}
 .falta-tag{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.04em;padding:2px 6px;border-radius:4px;background:#FDE8DE;color:#9A3412;border:1px solid #F5B79A;vertical-align:middle}
 .falta-badge{display:flex;width:fit-content;margin-top:3px;font-size:11px;font-weight:700;color:#9A3412;background:#FFF4EE;border-radius:10px;padding:1px 8px}
 .g-in.falta{border-color:#E0875C;background:#FFF8F4}
@@ -488,12 +489,20 @@ function transporte(nome, token, args) {
     return enviarPost(nome, token, args);
   });
 }
-var APP_VERSAO = '17.11-a';
+var APP_VERSAO = '18.11-a';
 /** Novidades de cada versão: aparecem uma vez, na primeira abertura depois da atualização. */
 var NOVIDADES = [
+  { v: '18.11-a', motorista: [
+      ['Avisos do escritório', 'Se o escritório incluir ou retirar um lançamento da sua produção, ou apagar um registro de KM seu, você recebe um aviso no app com o motivo.']
+    ], gestao: [
+      ['Incluir e apagar na Conferência', 'Perfil Master: na conferência, as linhas que só estão no sistema têm o botão + Incluir no romaneio (já vem preenchido). O botão + Incluir viagem cria qualquer lançamento, e a lixeira apaga um lançamento (com motivo). O motorista é avisado.'],
+      ['Apagar registro de KM', 'Perfil Master: no Registro de KM, abra o registro (Corrigir), escreva o motivo e toque em Apagar registro.'],
+      ['Log de alterações', 'Nova tela em Administração (só Master): tudo o que foi apagado, com os dados apagados, e quem fez cada alteração (usuário da gestão ou motorista). Dá para filtrar e baixar em Excel.'],
+      ['Novidades separadas', 'As novidades da gestão não aparecem mais para os motoristas.']
+    ] },
   { v: '17.11-a', motorista: [
       ['Editar viagem já finalizada', 'Errou alguma coisa? Em HOJE, toque no lançamento e depois em EDITAR ESTE LANÇAMENTO. Dá para mudar enquanto o dia não for encerrado. Se o escritório já tiver corrigido, fale com o escritório.'],
-      ['CLT sem valor', 'Quem está pago como CLT não digita mais o valor da viagem nem do custo extra. As telas mostram a quantidade de lançamentos.']
+      ['CLT sem valor', 'Quem está pago como CLT não digita mais o valor da viagem nem do custo extra. As telas mostram a quantidade de lançamentos.', { so: 'CLT' }]
     ], gestao: [
       ['Combustível separado', 'Avulsos e CLT (veículos da casa) aparecem em consumo x abastecimento: KM rodado, km por litro e R$ por km. Agregados continuam em consumo x produção. O relatório PDF/Excel segue a mesma divisão.'],
       ['Desativados fora dos filtros', 'Na escolha de motorista dos filtros, os motoristas desativados não aparecem mais.'],
@@ -540,14 +549,25 @@ var NOVIDADES = [
       ['Mais rápido', 'Produção, Mapa e Registro de KM abrem na hora com a última consulta. O Excel dos relatórios é montado no próprio computador ou celular.']
     ] }
 ];
-function checarNovidades(gestao) {
-  var visto = ls('rd_versao_vista');
+/**
+ * Novidades: o motorista vê só a lista "motorista" e a gestão só a lista "gestao".
+ * Quem decide é o tipo de login (não a tela), e cada público tem a sua marca de "já vi".
+ * Item com {so: 'CLT'} (3º elemento) aparece só para motoristas desse vínculo.
+ */
+function checarNovidades() {
+  var gestao = ls('rd_tipo') === 'GESTAO' || !!(S.G && S.G.user && !S.est);
+  var chave = gestao ? 'rd_versao_vista_g' : 'rd_versao_vista';
+  var visto = ls(chave) || (gestao ? ls('rd_versao_vista') : null);   // gestão: aproveita a marca antiga na primeira vez
   if (visto === APP_VERSAO) return;
-  ls('rd_versao_vista', APP_VERSAO);
-  if (!visto && !S.token) return;   // instalação nova: nada para mostrar
+  ls(chave, APP_VERSAO);
+  if (!S.token) return;
+  var vinc = !gestao && S.est && S.est.motorista ? S.est.motorista.vinculo : '';
   var itens = [];
   var ordem = function (v) { var m = String(v || '').match(/(\d\d)\.(\d\d)-(\w)/); return m ? m[2] + m[1] + m[3] : ''; };   // versão = dia.mês-letra
-  NOVIDADES.forEach(function (n) { if (!visto || ordem(n.v) > ordem(visto) || n.v === APP_VERSAO) itens = itens.concat(gestao ? n.gestao : n.motorista); });
+  NOVIDADES.forEach(function (n) {
+    if (visto ? !(ordem(n.v) > ordem(visto) || n.v === APP_VERSAO) : n.v !== APP_VERSAO) return;   // instalação nova: só a versão atual
+    (gestao ? n.gestao : n.motorista).forEach(function (i) { if (!i[2] || !i[2].so || i[2].so === vinc) itens.push(i); });
+  });
   if (!itens.length) return;
   setTimeout(function () {
     abrirModal('<div style="display:flex;align-items:center;gap:10px"><div class="ico-sq" style="width:44px;height:44px;background:#B6C54C;color:#0B2238;border-radius:12px">' + I.mais + '</div><div><b style="font-size:18px">Novidades da versão ' + APP_VERSAO + '</b><div style="font-size:12px;color:var(--muted, #5B6773)">O app foi atualizado. Veja o que mudou:</div></div></div>' +
@@ -934,6 +954,7 @@ var I = {
   camera: '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h3l2-3h6l2 3h3v13H4z"/><circle cx="12" cy="13" r="4"/></svg>',
   info: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true" style="flex-shrink:0;color:var(--blue)"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>',
   alerta: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/></svg>',
+  lixo: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6"/></svg>',
   lapis: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
   baixar: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>',
   bomba: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16"/><path d="M3 21h12M7 8h4"/><path d="M14 10h2a2 2 0 0 1 2 2v4a1.5 1.5 0 0 0 3 0V8l-3-3"/></svg>',
@@ -982,7 +1003,7 @@ function render() {
   if (t.depois) t.depois();
   if (S.tela && S.tela.charAt(0) === 'g') setTimeout(resumoFiltros, 0);
   if (OFF.ativo && S.est && S.tela && S.tela.charAt(0) !== 'g') barraOffline();
-  if (S.token && !S._novidades && (S.tela === 'hoje' || S.tela === 'gpainel')) { S._novidades = true; checarNovidades(S.tela === 'gpainel'); }
+  if (S.token && !S._novidades && (S.tela === 'hoje' || S.tela === 'gpainel')) { S._novidades = true; checarNovidades(); }
   if (ls('rd_voz') === 'auto' && FALAS[S.tela]) falar(typeof FALAS[S.tela] === 'function' ? FALAS[S.tela]() : FALAS[S.tela]);
 }
 var ACOES = ACOES || {};   // o modo offline (mais acima) já registra algumas ações
@@ -2114,12 +2135,13 @@ function gLayout(ativo, conteudo) {
     gkm: '<circle cx="12" cy="13" r="8"/><path d="M12 13l4-3M12 5v1M5 13h1M18 13h1"/>',
     gcomb: '<path d="M4 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16"/><path d="M3 21h12M7 8h4"/><path d="M14 10h2a2 2 0 0 1 2 2v4a1.5 1.5 0 0 0 3 0V8l-3-3"/>',
     gcad: '<circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0M19 8v6M16 11h6"/>',
-    grel: '<path d="M14 3H6v18h12V7z"/><path d="M14 3v4h4M9 13h6M9 17h6"/>'
+    grel: '<path d="M14 3H6v18h12V7z"/><path d="M14 3v4h4M9 13h6M9 17h6"/>',
+    glog: '<path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/>'
   };
   var b = function (t, n) { return '<button class="' + (ativo === t ? 'on' : '') + '" data-a="gNav" data-t="' + t + '"' + (ativo === t ? ' aria-current="page"' : '') + '><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + IG[t] + '</svg>' + n + '</button>'; };
   return '<div class="g-app"><aside class="g-side"><div style="display:flex;flex-direction:column;gap:8px;padding:0 8px"><img src="' + LOGO_NEG + '" alt="Romaneio Digital Mucuripe" style="width:176px;height:auto"></div>' +
     '<nav aria-label="Menu da gestão"><span class="g-sec">OPERAÇÃO</span>' + b('gpainel', 'Produção') + b('gmapa', 'Mapa produtivo') + b('gconf', 'Conferência') + b('gdetalhe', 'Ajustes') + b('gkm', 'Registro de KM') + b('gcomb', 'Combustível') + b('gfech', 'Fechamento') +
-    '<span class="g-sec">ADMINISTRAÇÃO</span>' + b('gcad', 'Cadastros') + b('grel', 'Relatórios') + '</nav><div style="flex:1"></div>' +
+    '<span class="g-sec">ADMINISTRAÇÃO</span>' + b('gcad', 'Cadastros') + b('grel', 'Relatórios') + (u.perfil === 'MASTER' ? b('glog', 'Log de alterações') : '') + '</nav><div style="flex:1"></div>' +
     '<div style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;background:rgba(255,255,255,.08)"><div style="width:34px;height:34px;border-radius:17px;background:#B6C54C;color:#0B3D61;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px">' + esc(iniciais(u.nome || u.usuario) || 'U') + '</div><div style="flex:1;display:flex;flex-direction:column"><b style="font-size:13px">' + esc(String(u.nome || u.usuario || '').split(' ')[0]) + '</b><span style="font-size:10px;font-weight:800;color:#B6C54C;letter-spacing:1px">PERFIL ' + esc(u.perfil || '') + '</span></div><button class="g-btn sm out" style="background:transparent;color:#fff;border-color:rgba(255,255,255,.4)" data-a="gSair">Sair</button></div></aside>' +
     '<main class="g-main"><div class="g-wrap">' + conteudo + '</div></main></div>';
 }
@@ -2992,7 +3014,7 @@ function mostrarConf() {
   var c = S.G.conf, t = c.totais, box = document.getElementById('cRes'); if (!box) return;
   c.linhas.forEach(function (l) { if (l.rom) regLanc(l.rom); });
   var filtro = S.G.cFiltro || 'todas';
-  document.getElementById('cBtns').innerHTML = '<button class="g-btn" data-a="cCheia">' + I.cheia + ' Tela cheia (PDF)</button>';
+  document.getElementById('cBtns').innerHTML = (master() && c.motorista ? '<button class="g-btn out" data-a="cIncluir">+ Incluir viagem</button>' : '') + '<button class="g-btn" data-a="cCheia">' + I.cheia + ' Tela cheia (PDF)</button>';
   var linhas = c.linhas.filter(function (l) { return filtro === 'todas' || l.status !== 'OK'; }).reverse();   // mais recente em cima
   var dias = {}, ordem = [];
   linhas.forEach(function (l) { if (!dias[l.data]) { dias[l.data] = []; ordem.push(l.data); } dias[l.data].push(l); });
@@ -3003,6 +3025,8 @@ function mostrarConf() {
     if (l.status === 'VALOR_DIFERENTE') out = b('ROMANEIO', 'Romaneio ' + br(l.rom.valor_final)) + ' ' + b('SISTEMA', 'Sistema ' + br(l.sis.valor));
     if (l.status === 'FALTA_SISTEMA') out = b('PAGAR', 'Pagar ' + br(l.rom.valor_final)) + ' ' + b('NAO_PAGAR', 'Não pagar');
     if (l.status === 'A_MAIS_SISTEMA') out = b('MANTER', 'Manter ' + br(l.sis.valor)) + ' ' + b('RETIRAR', 'Retirar');
+    if (!l.rom && l.sis) out += ' <button class="g-btn sm" data-a="cIncluir" data-k="' + l.chave + '" title="Criar no romaneio do motorista com os dados do sistema">+ Incluir no romaneio</button>';
+    if (l.rom && !l.rom.diaAberto) out += ' <button class="g-btn sm out btn-apagar" data-a="cApagar" data-id="' + l.rom.id + '" title="Apagar este lançamento do romaneio">' + I.lixo + '</button>';
     if (l.rom) out += ' ' + (l.rom.diaAberto ? '<span style="font-size:11px;color:#5B6773">Dia aberto</span>' : '<button class="g-btn sm out" style="border-color:#E8A33D;color:#8A5300" data-a="gAjustar" data-id="' + l.rom.id + '" data-v="' + l.rom.valor_final + '" data-conf="' + c.id + '">' + I.lapis + ' ' + (l.rom.ajustado ? 'Reajustar' : 'Ajustar') + '</button>');
     return out;
   };
@@ -3058,12 +3082,12 @@ function ladoALado(c, filtro) {
   var marca = function (n) { return n ? '<span style="display:inline-flex;min-width:22px;height:20px;border-radius:10px;background:#0B3D61;color:#fff;font-size:10px;font-weight:800;align-items:center;justify-content:center;padding:0 5px">' + n + '</span>' : '<span style="display:inline-flex;min-width:22px;height:20px;border-radius:10px;background:#C2410C;color:#fff;font-size:10px;font-weight:800;align-items:center;justify-content:center;padding:0 5px" title="Sem par do outro lado">!</span>'; };
   var lado = function (itens, sis) {
     if (!itens.length) return '<div style="padding:14px;color:#5B6773;font-size:13px">Nada ' + (sis ? 'no sistema' : 'lançado pelo motorista') + ' neste dia.</div>';
-    return '<table class="g" style="min-width:0"><thead><tr><th></th><th>Hora</th><th>Contêiner</th>' + (sis ? '<th>OS</th>' : '') + '<th>Origem → destino · tipo</th><th class="n">Valor</th>' + (!sis && master() ? '<th></th>' : '') + '</tr></thead><tbody>' +
+    return '<table class="g" style="min-width:0"><thead><tr><th></th><th>Hora</th><th>Contêiner</th>' + (sis ? '<th>OS</th>' : '') + '<th>Origem → destino · tipo</th><th class="n">Valor</th>' + (master() ? '<th></th>' : '') + '</tr></thead><tbody>' +
       itens.sort(function (a, b) { var ha = sis ? a.l.sis.hora : (a.l.rom.inicio || '').slice(11, 16), hb = sis ? b.l.sis.hora : (b.l.rom.inicio || '').slice(11, 16); return ha < hb ? 1 : -1; }).map(function (it) {
         var l = it.l, r = l.rom, s0 = l.sis, bg = cor[l.status] || '#fff';
-        if (sis) return '<tr><td style="background:' + bg + '">' + marca(it.n) + '</td><td style="background:' + bg + '"><b>' + esc(s0.hora) + '</b></td><td style="background:' + bg + '"><b>' + esc(s0.conteiner || '—') + '</b></td><td style="background:' + bg + '">' + esc(s0.os || '') + '</td><td style="background:' + bg + ';white-space:normal">' + esc(s0.origem ? s0.origem + ' → ' + s0.destino : '') + '<div style="font-size:11px;font-weight:700;color:#5B6773">' + esc(s0.tipo) + '</div></td><td class="n" style="background:' + bg + '"><b>' + br(s0.valor) + '</b></td></tr>';
+        if (sis) return '<tr><td style="background:' + bg + '">' + marca(it.n) + '</td><td style="background:' + bg + '"><b>' + esc(s0.hora) + '</b></td><td style="background:' + bg + '"><b>' + esc(s0.conteiner || '—') + '</b></td><td style="background:' + bg + '">' + esc(s0.os || '') + '</td><td style="background:' + bg + ';white-space:normal">' + esc(s0.origem ? s0.origem + ' → ' + s0.destino : '') + '<div style="font-size:11px;font-weight:700;color:#5B6773">' + esc(s0.tipo) + '</div></td><td class="n" style="background:' + bg + '"><b>' + br(s0.valor) + '</b></td>' + (master() ? '<td style="background:' + bg + '">' + (r ? '' : '<button class="g-btn sm" data-a="cIncluir" data-k="' + l.chave + '" title="Incluir no romaneio">+</button>') + '</td>' : '') + '</tr>';
         return '<tr' + (r.ajustado ? ' class="aj"' : '') + '><td style="background:' + bg + '">' + marca(it.n) + '</td><td style="background:' + bg + '"><b>' + hh(r.inicio) + '</b></td><td style="background:' + bg + '"><b>' + esc(r.conteiner || r.tipo_extra) + '</b></td><td style="background:' + bg + ';white-space:normal">' + esc(r.destino ? r.origem + ' → ' + r.destino : r.origem || '') + '<div style="font-size:11px;font-weight:700;color:#5B6773">' + esc(r.categoria === 'CONTEINER' ? r.carga : r.tipo_extra) + '</div></td><td class="n" style="background:' + bg + '"><b>' + br(r.valor_final) + '</b></td>' +
-          (master() ? '<td style="background:' + bg + '">' + (r.diaAberto ? '' : '<button class="g-btn sm out" data-a="gAjustar" data-id="' + r.id + '" data-conf="' + c.id + '">' + I.lapis + '</button>') + '</td>' : '') + '</tr>';
+          (master() ? '<td style="background:' + bg + ';white-space:nowrap">' + (r.diaAberto ? '' : '<button class="g-btn sm out" data-a="gAjustar" data-id="' + r.id + '" data-conf="' + c.id + '">' + I.lapis + '</button> <button class="g-btn sm out btn-apagar" data-a="cApagar" data-id="' + r.id + '" title="Apagar">' + I.lixo + '</button>') + '</td>' : '') + '</tr>';
       }).join('') + '</tbody></table>';
   };
   return '<div style="display:flex;gap:10px;flex-wrap:wrap;font-size:11px;font-weight:700;color:#3E4A55;align-items:center">' + Object.keys(ST_TXT).map(function (k) { return '<span class="g-chip st-' + k + '">' + ST_TXT[k] + '</span>'; }).join('') + '<span style="color:#5B6773;font-weight:600">· o mesmo número aparece nos dois lados quando a viagem casou · <b style="color:#C2410C">!</b> = sem par</span></div>' +
@@ -3075,6 +3099,62 @@ function ladoALado(c, filtro) {
     }).join('') : '<div class="g-card" style="text-align:center;color:#5B6773">Nenhuma divergência.</div>');
 }
 ACOES.cVisao = function (d) { S.G.cVisao = d.v; ls('rd_cvisao', d.v); mostrarConf(); };
+
+/* Conferência: o Master inclui viagens que só estão no sistema (ou qualquer outra) e apaga lançamentos do romaneio.
+ * Tudo vai para o Log com o usuário, e o motorista recebe um aviso no app. */
+var TIPOS_CONT = ['CHEIO', 'VAZIO'];
+ACOES.cIncluir = function (d) {
+  var c = S.G.conf; if (!c || !c.motorista) return;
+  var ln = d && d.k ? c.linhas.filter(function (x) { return x.chave === d.k; })[0] : null, s0 = ln && ln.sis || {};
+  var tipo = String(s0.tipo || '').toUpperCase().trim(), cont = !s0.tipo || TIPOS_CONT.indexOf(tipo) >= 0;
+  var extras = S.G.extras || EXTRAS_PADRAO, pagPad = c.motorista.vinculo;
+  var dias = []; for (var t = new Date(c.de + 'T12:00:00'), fimP = new Date(c.ate + 'T12:00:00'); t <= fimP; t.setDate(t.getDate() + 1)) dias.push(t.toISOString().slice(0, 10));
+  var hIni = s0.hora || '', hFim = '';
+  if (hIni) { var mm = (+hIni.slice(0, 2) * 60 + +hIni.slice(3)) + 60; hFim = ('0' + Math.floor(mm / 60) % 24).slice(-2) + ':' + ('0' + mm % 60).slice(-2); }
+  var campo = function (id, rot, val, extra) { return '<div class="g-f"><label for="' + id + '">' + rot + '</label><input id="' + id + '" class="g-in" value="' + esc(val || '') + '"' + (extra || '') + '></div>'; };
+  var seg = function (nome, ops, val) { return '<div class="g-f"><span class="l">' + nome + '</span><div class="g-seg" data-seg="' + nome + '">' + ops.map(function (o) { return '<button type="button" class="' + (o === val ? 'on' : '') + '" data-a="ajSeg" data-v="' + o + '">' + o + '</button>'; }).join('') + '</div></div>'; };
+  S.G.incl = { cont: cont };
+  abrirModal('<div><b style="font-size:17px">Incluir no romaneio</b><div style="font-size:12px;color:#5B6773">' + esc(c.motorista.nome) + (ln ? ' · dados da linha do sistema' + (s0.os ? ' (OS ' + esc(s0.os) + ')' : '') : '') + '</div></div>' +
+    '<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px">' +
+    '<div class="g-f"><label for="inDia">Dia</label><select id="inDia" class="g-in">' + dias.map(function (x) { return '<option value="' + x + '"' + (x === (s0.data || '') ? ' selected' : '') + '>' + dow(x) + ' ' + dBrA(x) + '</option>'; }).join('') + '</select></div>' +
+    seg('Tipo', ['CONTÊINER', 'CUSTO EXTRA'], cont ? 'CONTÊINER' : 'CUSTO EXTRA') +
+    '<div id="inCont" style="display:' + (cont ? 'contents' : 'none') + '">' + campo('inNum', 'Contêiner', s0.conteiner, ' autocapitalize="characters" style="text-transform:uppercase"') + '<div></div>' +
+      seg('Tamanho', ['20', '40'], '40') + seg('Carga', ['CHEIO', 'VAZIO'], tipo === 'VAZIO' ? 'VAZIO' : 'CHEIO') + '</div>' +
+    '<div id="inExtra" class="g-f" style="grid-column:1/-1;display:' + (cont ? 'none' : 'flex') + '"><label for="inTipo">Custo extra</label><select id="inTipo" class="g-in">' + extras.map(function (x) { return '<option' + (x === tipo ? ' selected' : '') + '>' + x + '</option>'; }).join('') + '</select></div>' +
+    campo('inOri', 'Origem', s0.origem, ' style="text-transform:uppercase"') + campo('inDes', 'Destino', s0.destino, ' style="text-transform:uppercase"') +
+    campo('inIni', 'Início / saída', hIni, ' type="time"') + campo('inFim', 'Fim / chegada', hFim, ' type="time"') +
+    campo('inV', 'Valor (R$)', s0.valor ? br(s0.valor) : '', ' inputmode="decimal"') +
+    '<div class="g-f"><label for="inPag">Pago como</label><select id="inPag" class="g-in"><option value="">Igual ao dia (' + esc(pagPad) + ' se não abriu)</option>' + ['AVULSO', 'AGREGADO', 'CLT'].map(function (x) { return '<option>' + x + '</option>'; }).join('') + '</select></div>' +
+    campo('inPlaca', 'Placa (opcional)', '', ' style="text-transform:uppercase" placeholder="usa a do dia"') + '<div></div></div>' +
+    '<div class="g-f"><label for="inObs">Observação para o motorista</label><textarea id="inObs" class="g-in" rows="2" style="height:auto;padding:8px 10px" placeholder="Ex.: estava no sistema e não foi lançada no app"></textarea></div>' +
+    '<div style="font-size:12px;color:#5B6773;background:#F3F6F8;border-radius:8px;padding:8px 10px">O motorista recebe um aviso no app. A inclusão fica no <b>Log</b> com o seu usuário. Dia sem abertura no app ganha um dia encerrado criado pelo escritório. Dia ainda aberto no app não recebe inclusão.</div>' +
+    '<div style="display:flex;gap:8px"><button class="g-btn out" style="flex:1;justify-content:center" data-a="fecharModal">Cancelar</button><button class="g-btn" style="flex:1;justify-content:center" data-a="cIncluirOk">Incluir</button></div>');
+  document.querySelectorAll('[data-seg="Tipo"] button').forEach(function (b) { b.addEventListener('click', function () { var ct = b.dataset.v === 'CONTÊINER'; document.getElementById('inCont').style.display = ct ? 'contents' : 'none'; document.getElementById('inExtra').style.display = ct ? 'none' : 'flex'; }); });
+};
+ACOES.cIncluirOk = function (d, el) {
+  var c = S.G.conf, v = function (id) { return (document.getElementById(id) || {}).value || ''; };
+  var segV = function (n) { var b = document.querySelector('[data-seg="' + n + '"] button.on'); return b ? b.dataset.v : ''; };
+  var cont = segV('Tipo') === 'CONTÊINER';
+  var a = { conferencia_id: c.id, motorista_id: c.motorista.id, data: v('inDia'), categoria: cont ? 'CONTEINER' : 'EXTRA', conteiner: v('inNum').toUpperCase(), tamanho: segV('Tamanho'), carga: segV('Carga'),
+    tipo_extra: cont ? '' : v('inTipo'), origem: v('inOri'), destino: v('inDes'), ini: v('inIni'), fim: v('inFim'), valor: v('inV').replace(/\./g, '').replace(',', '.'), pagamento: v('inPag'), placa: v('inPlaca'), obs: v('inObs').trim() };
+  if (!a.ini || !a.fim) return toast('Preencha início e fim.', true);
+  if (a.fim < a.ini && !confirm('O fim está antes do início. Terminou depois da meia-noite (dia seguinte)?')) return;
+  el.disabled = true;
+  call('gIncluirLancamento', a).then(function (n) { fecharModal(); toast('Lançamento incluído. O motorista foi avisado.'); S.G.conf = n; mostrarConf(); }).catch(function (e) { el.disabled = false; falha(e); });
+};
+ACOES.cApagar = function (d) {
+  var l = (S.G.lancs || {})[d.id]; if (!l) return toast('Lançamento não encontrado. Atualize a tela.', true);
+  var desc = l.categoria === 'CONTEINER' ? l.conteiner + ' · ' + (l.origem || '?') + ' → ' + (l.destino || '?') : l.tipo_extra;
+  abrirModal('<b style="font-size:17px">Apagar lançamento?</b><div style="font-size:14px;color:#3E4A55">' + dBrA(l.data_operacional) + ' ' + hh(l.inicio) + ' · <b>' + esc(desc) + '</b> · ' + brl(l.valor_final) + '</div>' +
+    '<div class="g-f"><label for="apMot">Motivo *</label><textarea id="apMot" class="g-in" rows="2" style="height:auto;padding:8px 10px" placeholder="Ex.: lançado em duplicidade"></textarea></div>' +
+    '<div style="font-size:12px;color:#9A3412;background:#FFF4EE;border-radius:8px;padding:8px 10px">O lançamento sai do romaneio do motorista e ele recebe um aviso. Tudo o que foi apagado fica guardado no <b>Log</b> com o seu usuário.</div>' +
+    '<div style="display:flex;gap:8px"><button class="g-btn out" style="flex:1;justify-content:center" data-a="fecharModal">Cancelar</button><button class="g-btn" style="flex:1;justify-content:center;background:#C2410C;border-color:#C2410C" data-a="cApagarOk" data-id="' + l.id + '">Apagar</button></div>');
+};
+ACOES.cApagarOk = function (d, el) {
+  var motivo = document.getElementById('apMot').value.trim(); if (!motivo) return toast('Escreva o motivo.', true);
+  el.disabled = true;
+  call('gExcluirLancamento', { id: d.id, motivo: motivo, conferencia_id: S.G.conf.id }).then(function (n) { fecharModal(); toast('Lançamento apagado. O motorista foi avisado.'); S.G.conf = n; mostrarConf(); }).catch(function (e) { el.disabled = false; falha(e); });
+};
 ACOES.cFiltro = function (d) { S.G.cFiltro = d.v; mostrarConf(); };
 ACOES.cDecidir = function (d) { call('gDecidir', { id: S.G.conf.id, chave: d.k, decisao: d.v || null }).then(function (c) { S.G.conf = c; mostrarConf(); }).catch(falha); };
 ACOES.cCheia = function () { var c = S.G.conf; gerarRelatorio({ tipo: 'individual', motorista_id: c.motorista.id, de: c.de, ate: c.ate, formato: 'html' }); };
@@ -3517,7 +3597,8 @@ ACOES.kmAlterar = function (d) {
     '<div class="g-f"><span class="l">Foto correta (opcional)</span><button class="g-btn out" data-a="kmNovaFoto" id="kmNovaFotoBtn" style="justify-content:center">Escolher outra foto</button></div>' +
     '<div class="g-f"><label for="kmMotivo">Motivo da correção *</label><textarea id="kmMotivo" class="g-in" rows="2" style="height:auto;padding:8px 10px" placeholder="Ex.: motorista digitou errado, o painel mostra 254.380"></textarea></div>' +
     '<div style="font-size:12px;color:#8A5300;background:#FFF6E6;border-radius:8px;padding:8px 10px">O valor e a foto enviados pelo motorista ficam guardados. A correção vai para o histórico com seu usuário, data e motivo.</div>' +
-    '<div style="display:flex;gap:8px"><button class="g-btn out" style="flex:1;justify-content:center" data-a="fecharModal">Cancelar</button><button class="g-btn" style="flex:1;justify-content:center" data-a="kmSalvarAlt">Salvar correção</button></div>' + hist);
+    '<div style="display:flex;gap:8px"><button class="g-btn out" style="flex:1;justify-content:center" data-a="fecharModal">Cancelar</button><button class="g-btn" style="flex:1;justify-content:center" data-a="kmSalvarAlt">Salvar correção</button></div>' +
+    '<div style="border-top:1px solid #DCE2E8;padding-top:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span style="flex:1;font-size:12px;color:#5B6773">Registro errado ou repetido? Escreva o motivo acima e apague. Fica guardado no Log.</span><button class="g-btn sm out btn-apagar" data-a="kmApagar">' + I.lixo + ' Apagar registro</button></div>' + hist);
   carregarFoto(k.foto_id, 'fotoBox');
 };
 ACOES.kmMasc = function (d, el) { var v = el.value.replace(/\D/g, '').slice(0, 7); el.value = v ? fmtKm(v) : ''; };
@@ -3533,10 +3614,64 @@ ACOES.kmNovaFoto = function () {
   };
   f.click();
 };
+ACOES.kmApagar = function (d, el) {
+  var k = kmPorId(S.G.kmEd.id), motivo = document.getElementById('kmMotivo').value.trim();
+  if (!motivo) { document.getElementById('kmMotivo').focus(); return toast('Escreva o motivo no campo "Motivo".', true); }
+  if (!confirm('Apagar o registro de KM ' + fmtKm(k.km) + ' (' + k.placa + ', ' + k.momento.toLowerCase() + ' de ' + dBrA(k.data_operacional) + ')?')) return;
+  el.disabled = true;
+  call('gExcluirKm', { id: k.id, motivo: motivo }).then(function () { fecharModal(); toast('Registro de KM apagado. Está guardado no Log.'); ACOES.kmBuscar(); }).catch(function (e) { el.disabled = false; falha(e); });
+};
 ACOES.kmSalvarAlt = function () {
   var k = kmPorId(S.G.kmEd.id), km = document.getElementById('kmNovo').value.replace(/\D/g, '');
   call('gAjustarKm', { id: k.id, km: +km !== k.km ? km : '', fotoBase64: S.G.kmEd.foto, motivo: document.getElementById('kmMotivo').value })
     .then(function () { fecharModal(); toast('Correção salva no histórico.'); ACOES.kmBuscar(); }).catch(falha);
+};
+
+/* ---------- Log de alterações (só Master) ---------- */
+var LOG_TIPO = { EXCLUSAO: ['Exclusão', '#FDE3DA', '#9A3412'], INCLUSAO: ['Inclusão', '#E3F0FA', '#145A90'], ALTERACAO: ['Alteração', '#FFF1D6', '#8A5300'] };
+TELAS.glog = function () {
+  var F = S.G.logF || (S.G.logF = { de: (function () { var d = new Date(); d.setDate(d.getDate() - 30); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); })(), ate: hojeIso(), tipo: '', acesso: '', texto: '' });
+  var op = function (v, t, sel) { return '<option value="' + v + '"' + (v === sel ? ' selected' : '') + '>' + t + '</option>'; };
+  return gLayout('glog', '<div><h1 class="g-h1">LOG DE ALTERAÇÕES</h1><div class="g-sub">Tudo o que foi apagado (com os dados apagados) e quem fez cada alteração: usuário da gestão ou motorista.</div></div>' +
+    '<section class="g-card g-grid"><div class="g-f"><label for="lgDe">De</label><input id="lgDe" type="date" class="g-in" value="' + F.de + '"></div><div class="g-f"><label for="lgAte">Até</label><input id="lgAte" type="date" class="g-in" value="' + F.ate + '"></div>' +
+    '<div class="g-f"><label for="lgTipo">Tipo</label><select id="lgTipo" class="g-in">' + op('', 'Todos', F.tipo) + op('EXCLUSAO', 'Exclusões', F.tipo) + op('INCLUSAO', 'Inclusões', F.tipo) + op('ALTERACAO', 'Alterações', F.tipo) + '</select></div>' +
+    '<div class="g-f"><label for="lgAc">Acesso</label><select id="lgAc" class="g-in">' + op('', 'Todos', F.acesso) + op('GESTÃO', 'Gestão', F.acesso) + op('MOTORISTA', 'Motorista', F.acesso) + '</select></div>' +
+    '<div class="g-f wide"><label for="lgTx">Buscar (nome, usuário, contêiner…)</label><input id="lgTx" class="g-in" value="' + esc(F.texto) + '"></div><div><button class="g-btn" data-a="logBuscar">Buscar</button></div></section>' +
+    '<div id="lgRes"><div class="g-card" style="text-align:center;color:#5B6773">Carregando…</div></div>');
+};
+TELAS.glog.depois = function () { ACOES.logBuscar(); var t = document.getElementById('lgTx'); if (t) t.addEventListener('keydown', function (e) { if (e.key === 'Enter') ACOES.logBuscar(); }); };
+ACOES.logBuscar = function () {
+  var v = function (id) { return (document.getElementById(id) || {}).value || ''; };
+  var F = S.G.logF = { de: v('lgDe'), ate: v('lgAte'), tipo: v('lgTipo'), acesso: v('lgAc'), texto: v('lgTx').trim() };
+  call('gLog', F).then(function (r) {
+    S.G.logR = r;
+    var box = document.getElementById('lgRes'); if (!box) return;
+    if (!r.linhas.length) { box.innerHTML = '<div class="g-card" style="text-align:center;color:#5B6773">Nada no log com esse filtro.</div>'; return; }
+    box.innerHTML = '<section class="g-tablebox"><div class="hd"><b>' + r.total + ' registro(s)</b>' + (r.total > r.linhas.length ? '<span style="font-size:12px;color:#5B6773">mostrando os ' + r.linhas.length + ' mais recentes</span>' : '') +
+      '<button class="g-btn sm out" data-a="logExcel">' + I.baixar + ' Excel</button></div><div class="g-scroll"><table class="g" style="min-width:1100px"><thead><tr><th>Quando</th><th>Quem</th><th>Tipo</th><th>O quê</th><th>Motorista</th><th>Detalhe</th><th></th></tr></thead><tbody>' +
+      r.linhas.map(function (x, i) {
+        var t = LOG_TIPO[x.tipo] || [x.tipo, '#EEF1F4', '#3E4A55'];
+        return '<tr><td style="white-space:nowrap">' + dBrA(x.data.slice(0, 10)) + '<div style="font-size:11px;color:#5B6773">' + esc(x.data.slice(11)) + '</div></td>' +
+          '<td><b>' + esc(x.nome || x.usuario) + '</b><div style="font-size:11px;color:#5B6773">' + esc(x.acesso) + (x.perfil ? ' · ' + esc(x.perfil) : '') + ' · ' + esc(x.usuario) + '</div></td>' +
+          '<td><span class="g-chip" style="background:' + t[1] + ';color:' + t[2] + '">' + t[0] + '</span></td><td>' + esc(x.acao) + '</td><td>' + esc(x.motorista || '—') + '</td>' +
+          '<td style="min-width:340px;max-width:520px;white-space:normal;font-size:12px;line-height:1.45">' + esc(x.resumo) + '</td><td>' + (x.dados_json ? '<button class="g-btn sm out" data-a="logVer" data-i="' + i + '">Dados</button>' : '') + '</td></tr>';
+      }).join('') + '</tbody></table></div></section>';
+  }).catch(falha);
+};
+ACOES.logVer = function (d) {
+  var x = S.G.logR.linhas[+d.i], dd; try { dd = JSON.parse(x.dados_json); } catch (e) { dd = x.dados_json; }
+  var linhas = function (o) { return '<table class="g" style="min-width:0"><tbody>' + Object.keys(o).filter(function (k) { return o[k] !== '' && o[k] !== null && typeof o[k] !== 'object'; }).map(function (k) { return '<tr><td style="color:#5B6773;text-align:left">' + esc(k) + '</td><td style="text-align:left"><b>' + esc(o[k]) + '</b></td></tr>'; }).join('') + '</tbody></table>'; };
+  var corpo = typeof dd !== 'object' || !dd ? '<pre style="white-space:pre-wrap;font-size:12px">' + esc(dd) + '</pre>'
+    : Object.keys(dd).some(function (k) { return dd[k] && typeof dd[k] === 'object'; })
+      ? Object.keys(dd).filter(function (k) { return dd[k]; }).map(function (k) { var o = dd[k]; return '<b style="font-size:13px;text-transform:uppercase">' + esc(k.replace(/_/g, ' ')) + '</b>' + (Array.isArray(o) ? '<div style="font-size:13px">' + o.map(function (a) { return esc(a.campo + ': ' + a.de + ' → ' + a.para); }).join('<br>') + '</div>' : typeof o === 'object' ? linhas(o) : esc(o)); }).join('')
+      : linhas(dd);
+  abrirModal('<b style="font-size:17px">' + esc(x.acao) + '</b><div style="font-size:12px;color:#5B6773">' + esc(x.data) + ' · ' + esc(x.nome || x.usuario) + ' (' + esc(x.acesso) + ')</div><div style="max-height:60vh;overflow:auto;display:flex;flex-direction:column;gap:8px">' + corpo + '</div>' +
+    '<button class="g-btn" style="justify-content:center" data-a="fecharModal">Fechar</button>');
+};
+ACOES.logExcel = function () {
+  var r = S.G.logR; if (!r) return;
+  var tab = [['Data', 'Acesso', 'Usuário', 'Nome', 'Perfil', 'Tipo', 'Ação', 'Motorista', 'Detalhe', 'Dados (JSON)']].concat(r.linhas.map(function (x) { return [x.data, x.acesso, x.usuario, x.nome, x.perfil, (LOG_TIPO[x.tipo] || [x.tipo])[0], x.acao, x.motorista, x.resumo, x.dados_json]; }));
+  carregarExcelJS().then(function () { return xlsxDeTabela({ tabela: tab, nome: 'Log_' + S.G.logF.de + '_a_' + S.G.logF.ate }); }).catch(falha);
 };
 
 /* ---------- Relatórios ---------- */
