@@ -205,6 +205,15 @@ table.g.dia-tab{min-width:920px}.dia-placa{display:flex;flex-wrap:wrap;align-ite
   .dia-tab td.dia-acoes:empty{display:none}.dia-tab td.dia-acoes>div{justify-content:flex-start}
 }
 .dia-sem{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:10px 16px 14px;font-size:12px;color:#5B6773}.dia-sem>span:first-child{font-weight:700;margin-right:4px}
+.modal.gm.larga{max-width:960px;max-height:calc(100vh - 32px);overflow:auto}
+.lp-cab{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 12px}
+.lp-itens{display:flex;flex-direction:column;gap:10px}
+.lp-item{border:1px solid #DCE2E8;border-radius:12px;padding:10px 12px;background:#FAFBFC}
+.lp-item-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}.lp-item-hd b{display:inline-flex;width:24px;height:24px;border-radius:12px;background:#0B3D61;color:#fff;align-items:center;justify-content:center;font-size:12px}
+.lp-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px 10px}
+.lp-pe{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;position:sticky;bottom:-18px;background:#fff;padding:10px 0 4px;border-top:1px solid #DCE2E8}
+.dia-pill-b{border:1px dashed #9AA5AF;cursor:pointer;font:inherit;color:inherit}.dia-pill-b b{font-size:11px;color:#145A90;margin-left:2px}
+@media (max-width:760px){.lp-cab{grid-template-columns:1fr 1fr}.lp-cab .g-f{grid-column:span 2!important}.lp-grid{grid-template-columns:1fr 1fr}.lp-grid .g-f{grid-column:auto!important}}
 .dia-seta{width:40px;padding:0;justify-content:center;font-size:22px;line-height:1}
 .dia-esq-i{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;background:#fff;border:1px solid #F3D39A;border-radius:10px;padding:10px 12px;color:#3E4A55}
 .dia-esq{border:1px solid #E8A33D;background:#FFF8EC;color:#7A4A00;display:flex;flex-direction:column;gap:10px}
@@ -512,9 +521,14 @@ function transporte(nome, token, args) {
     return enviarPost(nome, token, args);
   });
 }
-var APP_VERSAO = '18.11-c';
+var APP_VERSAO = '23.11-a';
 /** Novidades de cada versão: aparecem uma vez, na primeira abertura depois da atualização. */
 var NOVIDADES = [
+  { v: '23.11-a', motorista: [
+      ['Produção lançada pelo escritório', 'Se você esquecer de lançar a produção de um dia, o escritório pode lançar por você. Você recebe um aviso no app com cada lançamento incluído.']
+    ], gestao: [
+      ['Lançar produção (Master)', 'Botão + Lançar produção na Produção e em Motoristas do dia (também no nome de quem não abriu o dia). Escolha motorista, dia e veículo e lance várias viagens e custos de uma vez. O motorista é avisado e tudo vai para o Log.']
+    ] },
   { v: '18.11-c', motorista: [], gestao: [
       ['Perfis Operacional e Manutenção', 'Novos perfis de usuário (Cadastros → Usuários). Operacional: Produção e Motoristas do dia. Manutenção: Registro de KM e Combustível.'],
       ['Registro de KM organizado', 'Por veículo, os cavalos vêm na ordem da frota (CV 01 até CV 30) e todos começam recolhidos: toque no cavalo para abrir.'],
@@ -1077,7 +1091,7 @@ ACOES.falar = function () { var f = FALAS[S.tela]; falar(typeof f === 'function'
 function abrirModal(html, cls) { var gm = (S.tela && S.tela.charAt(0) === 'g' ? ' gm' : '') + (cls ? ' ' + cls : ''); document.getElementById('layer').innerHTML = '<div class="modal-bg" data-a="fecharModalFundo" style="' + (gm ? 'align-items:center;padding:16px' : '') + '"><div class="modal' + gm + '" role="dialog" aria-modal="true">' + html + '</div></div>'; }
 function fecharModal() { document.getElementById('layer').innerHTML = ''; }
 ACOES.fecharModal = fecharModal;
-ACOES.fecharModalFundo = function (d, el, e) { if (e.target === el) fecharModal(); };
+ACOES.fecharModalFundo = function (d, el, e) { if (e.target === el && !el.querySelector('.modal.larga')) fecharModal(); };   // formulário grande não fecha com toque fora (não perde o que foi digitado)
 
 /* =========================================================
  * MOTORISTA
@@ -2004,13 +2018,16 @@ TELAS.avisos.depois = function () {
       var l = a.lancamento, det = a.detalhe;
       var dataAv = esc(a.data.slice(8, 10) + '/' + a.data.slice(5, 7) + ' ' + a.data.slice(11)) + (a.lido ? '' : ' · NOVO');
       if (det && det.alteracoes && det.alteracoes.length) {
-        var tit = a.tipo === 'KM' ? 'SEU KM FOI CORRIGIDO' : 'SUA VIAGEM FOI CORRIGIDA';
+        // avisos do escritório que não são correção (lançou produção, incluiu, retirou, encerrou ou apagou dia) usam o título que veio do servidor
+        var tit = a.titulo && !/corrigid/i.test(a.titulo) ? esc(a.titulo.toUpperCase()) : a.tipo === 'KM' ? 'SEU KM FOI CORRIGIDO' : 'SUA VIAGEM FOI CORRIGIDA';
         return '<div class="card" style="padding:0;overflow:hidden;border:2px solid var(--warn)"><div style="background:var(--warnSoft);padding:12px 14px;display:flex;align-items:center;gap:10px"><div class="ico-sq" style="width:38px;height:38px;border-radius:19px;background:#E8A33D;color:#3D2600">' + I.lapis + '</div><div style="display:flex;flex-direction:column"><b style="font-size:15px;color:var(--warnText)">' + tit + '</b><span style="font-size:12px;font-weight:600;color:var(--warnText)">' + (l ? 'Dia ' + dBr(l.data_operacional) + ' · ' : '') + dataAv + '</span></div></div>' +
           '<div style="padding:12px 14px;display:flex;flex-direction:column;gap:8px">' + (l ? '<div style="display:flex;flex-direction:column;gap:2px"><b>' + esc(l.categoria === 'CONTEINER' ? l.conteiner : l.tipo_extra) + '</b><span style="font-size:13px;color:var(--ink2)">' + esc(l.destino ? l.origem + ' → ' + l.destino : '') + '</span></div>' : '<div style="font-size:13px;color:var(--ink2)">' + esc(a.mensagem.split(' · ').slice(0, 2).join(' · ')) + '</div>') +
           '<div style="display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;overflow:hidden">' + det.alteracoes.map(function (x) {
-            return '<div style="display:grid;grid-template-columns:92px 1fr;gap:8px;padding:8px 10px;border-top:1px solid var(--line);font-size:13px;align-items:center"><span style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase">' + esc(x.campo) + '</span><span><span style="color:var(--muted);text-decoration:line-through">' + esc(String(x.de || '–')) + '</span> → <b style="color:var(--warnText)">' + esc(String(x.para || '–')) + '</b></span></div>';
+            return '<div style="display:grid;grid-template-columns:92px 1fr;gap:8px;padding:8px 10px;border-top:1px solid var(--line);font-size:13px;align-items:center"><span style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase">' + esc(x.campo) + '</span><span>' + (x.de === '—' ? '<b style="color:var(--warnText)">+ ' + esc(String(x.para)) + '</b>'   // incluído
+              : x.para === '—' ? '<span style="color:var(--muted);text-decoration:line-through">' + esc(String(x.de)) + '</span> <b style="color:var(--warnText)">retirado</b>'
+              : '<span style="color:var(--muted);text-decoration:line-through">' + esc(String(x.de || '–')) + '</span> → <b style="color:var(--warnText)">' + esc(String(x.para || '–')) + '</b>') + '</span></div>';
           }).join('').replace('border-top:1px solid var(--line);', '') + '</div>' +
-          '<div style="font-size:12px;color:var(--ink2)"><b>Alterado por:</b> ' + esc(det.por || '') + (det.obs ? '<br><b>' + (a.tipo === 'KM' ? 'Motivo' : 'Observação') + ':</b> ' + esc(det.obs) : '') + '</div></div></div>';
+          '<div style="font-size:12px;color:var(--ink2)"><b>' + (/corrigid/i.test(a.titulo || '') ? 'Alterado por' : 'Feito por') + ':</b> ' + esc(det.por || '') + (det.obs ? '<br><b>' + (a.tipo === 'KM' ? 'Motivo' : 'Observação') + ':</b> ' + esc(det.obs) : '') + '</div></div></div>';
       }
       if (a.tipo === 'AJUSTE' && l) {
         return '<div class="card" style="padding:0;overflow:hidden;border:2px solid var(--warn)"><div style="background:var(--warnSoft);padding:12px 14px;display:flex;align-items:center;gap:10px"><div class="ico-sq" style="width:38px;height:38px;border-radius:19px;background:#E8A33D;color:#3D2600">' + I.lapis + '</div><div style="display:flex;flex-direction:column"><b style="font-size:15px;color:var(--warnText)">SUA VIAGEM TEVE AJUSTE</b><span style="font-size:12px;font-weight:600;color:var(--warnText)">Dia ' + dBr(l.data_operacional) + ' · ' + esc(a.data.slice(8, 10) + '/' + a.data.slice(5, 7) + ' ' + a.data.slice(11)) + (a.lido ? '' : ' · NOVO') + '</span></div></div>' +
@@ -2199,6 +2216,9 @@ function limparFiltros() {
 }
 ACOES.gSair = function () { call('sair').finally(function () { ls('rd_token', null); S.token = null; ir('glogin'); }); };
 function master() { return S.G.user && S.G.user.perfil === 'MASTER'; }
+/* Custos extras e quem pode lançar cada um (igual ao servidor). */
+var EXTRAS_REGRA = { MANOBRA: ['AVULSO', 'AGREGADO', 'CLT'], 'HORA PARADA': ['AVULSO', 'AGREGADO', 'CLT'], BATENDO: ['AGREGADO'], 'MEIA DIÁRIA': ['AVULSO'], 'DIÁRIA COMPLETA': ['AVULSO'] };
+var EXTRAS_PADRAO = Object.keys(EXTRAS_REGRA), EXTRAS_TRAJETO = ['BATENDO'];
 /* Perfis com acesso limitado: só estas telas (o servidor também recusa o resto). */
 var TELAS_PERFIL = { MANUTENCAO: ['gkm', 'gcomb'], OPERACIONAL: ['gpainel', 'gdia'] };
 var TELAS_GESTAO = ['gpainel', 'gdia', 'gmapa', 'gconf', 'gdetalhe', 'gkm', 'gcomb', 'gfech', 'gcad', 'grel', 'glog'];
@@ -2362,7 +2382,7 @@ ACOES.gBuscar = function () {
   S.G.pMot = mid; S.G.pAberto = S.G.pAberto || {};
   var vb = document.getElementById('pVincBox'); if (vb) vb.style.display = mid ? 'none' : '';
   if (mid) return buscarPainelMotorista(mid, p);
-  document.getElementById('pBtns').innerHTML = menuExportar('<button class="g-btn out" data-a="gRelRapido" data-f="xlsx">' + I.baixar + ' Excel geral</button><button class="g-btn" data-a="gRelRapido" data-f="html">' + I.cheia + ' Relatório geral (tela cheia / PDF)</button>');
+  document.getElementById('pBtns').innerHTML = (master() ? '<button class="g-btn out" data-a="lancProd">+ Lançar produção</button>' : '') + menuExportar('<button class="g-btn out" data-a="gRelRapido" data-f="xlsx">' + I.baixar + ' Excel geral</button><button class="g-btn" data-a="gRelRapido" data-f="html">' + I.cheia + ' Relatório geral (tela cheia / PDF)</button>');
   callRapido('gProducaoDias', { de: p.de, ate: p.ate, vinculo: S.G.vinc }, function (r) {
     S.G.pDias = r;
     var t = r.totais;
@@ -2426,7 +2446,7 @@ function tabelaLancs(d, o) {
 }
 /** Motorista escolhido: toda a produção dele, dia a dia, em sequência. */
 function buscarPainelMotorista(mid, p) {
-  document.getElementById('pBtns').innerHTML = '<button class="g-btn lime" data-a="pConferir" data-id="' + mid + '">' + I.conferir + ' Conferir</button>' + menuExportar('<button class="g-btn out" data-a="gIndiv" data-id="' + mid + '" data-f="xlsx">' + I.baixar + ' Excel</button><button class="g-btn out" data-a="gIndiv" data-id="' + mid + '" data-f="pdf">' + I.baixar + ' PDF</button>');
+  document.getElementById('pBtns').innerHTML = (master() ? '<button class="g-btn out" data-a="lancProd" data-id="' + mid + '">+ Lançar produção</button>' : '') + '<button class="g-btn lime" data-a="pConferir" data-id="' + mid + '">' + I.conferir + ' Conferir</button>' + menuExportar('<button class="g-btn out" data-a="gIndiv" data-id="' + mid + '" data-f="xlsx">' + I.baixar + ' Excel</button><button class="g-btn out" data-a="gIndiv" data-id="' + mid + '" data-f="pdf">' + I.baixar + ' PDF</button>');
   callRapido('gDetalhe', { motorista_id: mid, de: p.de, ate: p.ate }, function (r) {
     S.G.extras = r.extras; S.G.extrasTraj = r.extrasComTrajeto;
     S.G.pDet = r; S.G.pMotAberto = S.G.pMotAberto || {};
@@ -3685,7 +3705,7 @@ TELAS.gdia = function () {
   var seg = [['mot', 'Por motorista'], ['vei', 'Por veículo']].map(function (o) { return '<button class="' + (S.G.diaVis === o[0] ? 'on' : '') + '" data-a="diaVis" data-v="' + o[0] + '">' + o[1] + '</button>'; }).join('');
   return gLayout('gdia', '<div><h1 class="g-h1">MOTORISTAS DO DIA</h1><div class="g-sub">Em qual veículo está cada motorista (agregado ou avulso), quem não abriu o dia e os dias que ficaram abertos.' + (master() ? ' O Master pode encerrar ou apagar um dia.' : '') + '</div></div>' +
     '<section class="g-card" style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap"><div class="g-f"><label for="dData">Dia</label><div style="display:flex;gap:6px"><button class="g-btn out dia-seta" data-a="diaMudar" data-n="-1" aria-label="Dia anterior">‹</button><input id="dData" type="date" class="g-in" value="' + S.G.diaData + '" style="width:170px"><button class="g-btn out dia-seta" data-a="diaMudar" data-n="1" aria-label="Próximo dia">›</button></div></div>' +
-    '<button class="g-btn out" data-a="diaHoje">Hoje</button><button class="g-btn" data-a="diaBuscar">Atualizar</button><div style="flex:1"></div><div class="g-seg">' + seg + '</div></section>' +
+    '<button class="g-btn out" data-a="diaHoje">Hoje</button><button class="g-btn" data-a="diaBuscar">Atualizar</button>' + (master() ? '<button class="g-btn out" data-a="lancProd" data-dia="1">+ Lançar produção</button>' : '') + '<div style="flex:1"></div><div class="g-seg">' + seg + '</div></section>' +
     '<div id="diaRes" style="display:flex;flex-direction:column;gap:16px"><div class="g-card" style="text-align:center;color:#5B6773">Carregando…</div></div>');
 };
 TELAS.gdia.depois = function () { ACOES.diaBuscar(); var d = document.getElementById('dData'); if (d) d.addEventListener('change', function () { S.G.diaData = d.value || hojeIso(); ACOES.diaBuscar(); }); };
@@ -3710,7 +3730,7 @@ function kmTxt(o) {
 }
 function botoesDia(o, empilhar) {
   if (!master()) return '';
-  return '<div style="display:flex;gap:6px;justify-content:flex-end;white-space:nowrap' + (empilhar ? ';flex-direction:column;align-items:stretch' : '') + '">' + (o.status === 'ABERTA' ? '<button class="g-btn sm" data-a="diaEncerrar" data-id="' + o.id + '">Encerrar</button>' : '') +
+  return '<div style="display:flex;gap:6px;justify-content:flex-end;white-space:nowrap' + (empilhar ? ';flex-direction:column;align-items:stretch' : '') + '">' + (o.status === 'ABERTA' ? '<button class="g-btn sm" data-a="diaEncerrar" data-id="' + o.id + '">Encerrar</button>' : '<button class="g-btn sm out" data-a="lancProd" data-id="' + o.motorista_id + '" data-d="' + o.data_operacional + '" title="Lançar mais produção neste dia">+ Lançar</button>') +
     '<button class="g-btn sm out btn-apagar" data-a="diaApagar" data-id="' + o.id + '" title="Apagar o dia">' + I.lixo + ' Apagar</button></div>';
 }
 function prodTxt(o) { return '<b>' + o.qtd + '</b> lanç.' + (o.vinculo === 'CLT' && o.veiculos.every(function (v) { return v.pagamento === 'CLT'; }) ? '' : '<div style="font-size:12px;color:#5B6773">' + brl(o.total) + '</div>'); }
@@ -3767,7 +3787,7 @@ function desenharDia() {
                   : '<span class="g-chip" style="background:#EEF1F4;color:#3E4A55">ENCERRADO</span><div class="dia-h">' + quandoDia(o.aberta_em, r.data) + ' → ' + quandoDia(o.encerrada_em, r.data) + '</div>') + '</td>' +
                 '<td class="n" data-l="Produção">' + prodTxt(o) + '</td><td data-l="KM">' + kmTxt(o) + '</td><td class="dia-acoes">' + botoesDia(o) + '</td></tr>';
             }).join('') + '</tbody></table></div>' : '') +
-          (sd.length ? '<div class="dia-sem"><span>Sem abertura:</span>' + sd.map(function (m) { return '<span class="dia-pill" title="CPF ' + esc(m.cpf || '') + '">' + esc(m.nome) + '</span>'; }).join('') + '</div>' : '') + '</div>';
+          (sd.length ? '<div class="dia-sem"><span>Sem abertura:</span>' + sd.map(function (m) { return master() ? '<button class="dia-pill dia-pill-b" data-a="lancProd" data-id="' + m.id + '" data-d="' + r.data + '" title="Lançar a produção de ' + esc(m.nome) + ' neste dia">' + esc(m.nome) + ' <b>+ lançar</b></button>' : '<span class="dia-pill" title="CPF ' + esc(m.cpf || '') + '">' + esc(m.nome) + '</span>'; }).join('') + '</div>' : '') + '</div>';
       }).join('') + (r.motoristas.length || r.semDia.length ? '' : '<div style="padding:20px;text-align:center;color:#5B6773">Nenhum motorista ativo.</div>') + '</section>';
   }
   var sem = '<section class="g-tablebox"><div class="hd"><b>Sem abertura neste dia · ' + r.semDia.length + '</b><span style="font-size:12px;color:#5B6773">motoristas ativos que não abriram o dia</span></div><div style="padding:10px 14px;display:flex;flex-wrap:wrap;gap:8px">' +
@@ -3809,6 +3829,96 @@ ACOES.diaApagarOk = function (d, el) {
   var mot = (document.getElementById('apdMot') || {}).value || ''; if (!mot.trim()) return toast('Escreva o motivo.', true);
   el.disabled = true;
   call('gExcluirDia', { op_id: d.id, motivo: mot.trim() }).then(function () { fecharModal(); toast('Dia apagado. Está guardado no Log.'); ACOES.diaBuscar(); }).catch(function (e) { el.disabled = false; falha(e); });
+};
+
+/* ---------- Lançar produção pelo escritório (só Master): dia que o motorista esqueceu de lançar ---------- */
+function lpItemNovo(ant) {
+  var mais = function (h) { if (!/^\d\d:\d\d$/.test(h || '')) return ''; var n = (+h.slice(0, 2) * 60 + +h.slice(3) + 60) % 1440; return pad(Math.floor(n / 60)) + ':' + pad(n % 60); };
+  return ant ? { categoria: ant.categoria, conteiner: '', tamanho: ant.tamanho, carga: ant.carga, tipo_extra: ant.tipo_extra, origem: ant.destino || '', destino: '', local: '', ini: ant.fim || '', fim: mais(ant.fim), valor: ant.valor }
+    : { categoria: 'CONTEINER', conteiner: '', tamanho: '40', carga: 'CHEIO', tipo_extra: '', origem: '', destino: '', local: '', ini: '', fim: '', valor: '' };
+}
+ACOES.lancProd = function (d) {
+  Promise.all([gMotoristasCache(), gVeiculosCache()]).then(function () {
+    var dia = d.d || (d.dia ? S.G.diaData : '') || hojeIso();
+    S.G.lp = { mot: d.id || '', data: dia, pag: '', placa: '', obs: '', itens: [lpItemNovo()] };
+    lpDesenhar();
+  }).catch(falha);
+};
+function lpLer() {
+  var L = S.G.lp; if (!L || !document.getElementById('lpMot')) return L;
+  var v = function (id) { var e = document.getElementById(id); return e ? e.value : ''; };
+  L.mot = v('lpMot'); L.data = v('lpData'); L.pag = v('lpPag'); L.placa = v('lpPlaca'); L.obs = v('lpObs');
+  L.itens = [].map.call(document.querySelectorAll('.lp-item'), function (box) {
+    var f = function (c) { var e = box.querySelector('[data-c="' + c + '"]'); return e ? e.value : ''; };
+    return { categoria: f('categoria'), conteiner: f('conteiner').toUpperCase(), tamanho: f('tamanho'), carga: f('carga'), tipo_extra: f('tipo_extra'), origem: f('origem').toUpperCase(),
+      destino: f('destino').toUpperCase(), local: f('local').toUpperCase(), ini: f('ini'), fim: f('fim'), valor: f('valor') };
+  });
+  return L;
+}
+function lpPagEfetivo() {
+  var L = S.G.lp, m = (S.G.mots || []).filter(function (x) { return x.id === L.mot; })[0];
+  if (L.pag) return L.pag; if (!m) return 'AVULSO';
+  return m.vinculo === 'AGREGADO' && L.placa && L.placa !== String(m.placa_propria || '').toUpperCase().replace(/[^A-Z0-9]/g, '') ? 'AVULSO' : m.vinculo;
+}
+function lpTotal() {
+  var L = S.G.lp, clt = lpPagEfetivo() === 'CLT', t = 0;
+  L.itens.forEach(function (it) { t += +String(it.valor || '0').replace(/\./g, '').replace(',', '.') || 0; });
+  var el = document.getElementById('lpTot'); if (el) el.innerHTML = L.itens.length + (L.itens.length === 1 ? ' lançamento' : ' lançamentos') + (clt ? ' · CLT, sem valor' : ' · <b>' + brl(t) + '</b>');
+}
+function lpDesenhar() {
+  var L = S.G.lp, pag = lpPagEfetivo(), clt = pag === 'CLT';
+  var mots = (S.G.mots || []).filter(function (m) { return m.ativo !== false || m.id === L.mot; }).slice().sort(function (a, b) { return a.nome < b.nome ? -1 : 1; });
+  var m = mots.filter(function (x) { return x.id === L.mot; })[0];
+  var casa = (S.G.veis || []).filter(function (v) { return v.tipo !== 'PROPRIO' && v.ativo !== false; }).sort(function (a, b) { var n = function (x) { var k = String(x.frota || '').match(/\d+/); return k ? +k[0] : 9999; }; return n(a) - n(b); });
+  var extras = EXTRAS_PADRAO.filter(function (x) { return EXTRAS_REGRA[x].indexOf(pag) >= 0; });
+  var op = function (v, t, sel) { return '<option value="' + esc(v) + '"' + (v === sel ? ' selected' : '') + '>' + esc(t) + '</option>'; };
+  var item = function (it, i) {
+    var cont = it.categoria !== 'EXTRA', traj = cont || EXTRAS_TRAJETO.indexOf(it.tipo_extra) >= 0;
+    var c = function (k, rot, extra, larg) { return '<div class="g-f"' + (larg ? ' style="grid-column:span ' + larg + '"' : '') + '><label>' + rot + '</label><input class="g-in" data-c="' + k + '" value="' + esc(it[k] || '') + '"' + (extra || '') + '></div>'; };
+    var sl = function (k, rot, ops) { return '<div class="g-f"><label>' + rot + '</label><select class="g-in" data-c="' + k + '"' + (k === 'categoria' || k === 'tipo_extra' ? ' data-re="1"' : '') + '>' + ops + '</select></div>'; };
+    return '<div class="lp-item"><div class="lp-item-hd"><b>' + (i + 1) + '</b>' + (L.itens.length > 1 ? '<button class="g-btn sm out btn-apagar" data-a="lpTirar" data-i="' + i + '" aria-label="Tirar o lançamento ' + (i + 1) + '">' + I.lixo + '</button>' : '') + '</div><div class="lp-grid">' +
+      sl('categoria', 'Tipo', op('CONTEINER', 'Contêiner', it.categoria) + op('EXTRA', 'Custo extra', it.categoria)) +
+      (cont ? c('conteiner', 'Contêiner', ' placeholder="ABCU 123456-7" style="text-transform:uppercase"', 2) + sl('tamanho', 'Tamanho', op('20', '20 pés', it.tamanho) + op('40', '40 pés', it.tamanho)) + sl('carga', 'Carga', op('CHEIO', 'Cheio', it.carga) + op('VAZIO', 'Vazio', it.carga))
+        : sl('tipo_extra', 'Custo extra', op('', 'Escolha…', it.tipo_extra) + extras.map(function (x) { return op(x, x, it.tipo_extra); }).join('')) + (traj ? '' : c('local', 'Local (opcional)', ' style="text-transform:uppercase"'))) +
+      (clt ? '' : c('valor', 'Valor (R$)', ' inputmode="decimal" placeholder="0,00"')) +   // linha 1: o que foi e quanto; linha 2: de onde, para onde e horários
+      (traj ? c('origem', cont ? 'Origem' : 'Saiu de', ' style="text-transform:uppercase" list="lpLocais"', 2) + c('destino', cont ? 'Destino' : 'Foi para', ' style="text-transform:uppercase" list="lpLocais"', 2) : '') +
+      c('ini', 'Início', ' type="time"') + c('fim', 'Fim', ' type="time"') + '</div></div>';
+  };
+  var locais = {}; L.itens.forEach(function (it) { [it.origem, it.destino].forEach(function (x) { if (x) locais[x] = 1; }); });
+  abrirModal('<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px"><div><b style="font-size:17px">Lançar produção</b><div style="font-size:12px;color:#5B6773">Para o dia que o motorista esqueceu de lançar. Só o Master.</div></div><button class="g-btn sm out" data-a="fecharModal">Fechar</button></div>' +
+    '<div class="lp-cab"><div class="g-f" style="grid-column:span 2"><label for="lpMot">Motorista</label><select id="lpMot" class="g-in" data-re="1">' + op('', 'Escolha o motorista…', L.mot) + mots.map(function (x) { return op(x.id, x.nome + ' · ' + x.vinculo, L.mot); }).join('') + '</select></div>' +
+    '<div class="g-f"><label for="lpData">Dia</label><input id="lpData" type="date" class="g-in" max="' + hojeIso() + '" value="' + esc(L.data) + '"></div>' +
+    '<div class="g-f"><label for="lpPlaca">Veículo</label><select id="lpPlaca" class="g-in" data-re="1">' + op('', m && m.vinculo === 'AGREGADO' ? 'Cavalo próprio (' + (m.placa_propria || '?') + ')' : 'Igual ao dia / não informar', L.placa) +
+      casa.map(function (v) { return op(v.placa, (v.frota ? v.frota + ' · ' : '') + v.placa, L.placa); }).join('') + '</select></div>' +
+    '<div class="g-f"><label for="lpPag">Pago como</label><select id="lpPag" class="g-in" data-re="1">' + op('', 'Automático (' + lpPagEfetivoSem() + ')', L.pag) + ['AVULSO', 'AGREGADO', 'CLT'].map(function (x) { return op(x, x, L.pag); }).join('') + '</select></div>' +
+    '<div class="g-f" style="grid-column:span 3"><label for="lpObs">Observação para o motorista</label><input id="lpObs" class="g-in" value="' + esc(L.obs) + '" placeholder="Ex.: produção do dia lançada pelo escritório (não foi lançada no app)"></div></div>' +
+    '<datalist id="lpLocais">' + Object.keys(locais).map(function (x) { return '<option value="' + esc(x) + '">'; }).join('') + '</datalist>' +
+    '<div class="lp-itens">' + L.itens.map(item).join('') + '</div>' +
+    '<button class="g-btn out" style="align-self:flex-start" data-a="lpMais">+ Adicionar viagem ou custo</button>' +
+    '<div style="font-size:12px;color:#5B6773;background:#F3F6F8;border-radius:8px;padding:8px 10px">Fim antes do início = terminou depois da meia-noite. Se o motorista não abriu esse dia, o app cria o dia já encerrado. O motorista recebe um aviso com cada lançamento e tudo fica no <b>Log</b> com o seu usuário.</div>' +
+    '<div class="lp-pe"><span id="lpTot"></span><button class="g-btn" data-a="lpSalvar">Lançar produção</button></div>', 'larga');
+  lpTotal();
+  var lay = document.getElementById('layer');
+  lay.querySelectorAll('[data-re]').forEach(function (e) { e.addEventListener('change', function () { lpLer(); if (e.dataset.c === 'categoria') { var b = e.closest('.lp-item'), i = [].indexOf.call(document.querySelectorAll('.lp-item'), b); if (S.G.lp.itens[i].categoria === 'EXTRA') S.G.lp.itens[i].tipo_extra = ''; } lpDesenhar(); }); });
+  lay.querySelectorAll('.lp-item [data-c="valor"]').forEach(function (e) { e.addEventListener('input', function () { lpLer(); lpTotal(); }); });
+}
+function lpPagEfetivoSem() { var L = S.G.lp, g = L.pag; L.pag = ''; var r = lpPagEfetivo(); L.pag = g; return r.toLowerCase(); }
+ACOES.lpMais = function () { lpLer(); var L = S.G.lp; L.itens.push(lpItemNovo(L.itens[L.itens.length - 1])); lpDesenhar(); var its = document.querySelectorAll('.lp-item'); if (its.length) its[its.length - 1].scrollIntoView({ block: 'nearest' }); };
+ACOES.lpTirar = function (d) { lpLer(); S.G.lp.itens.splice(+d.i, 1); lpDesenhar(); };
+ACOES.lpSalvar = function (d, el) {
+  var L = lpLer();
+  if (!L.mot) return toast('Escolha o motorista.', true);
+  if (!L.data) return toast('Escolha o dia.', true);
+  var m = (S.G.mots || []).filter(function (x) { return x.id === L.mot; })[0];
+  var tot = L.itens.length, quem = m ? m.nome : '';
+  if (!confirm('Lançar ' + tot + (tot === 1 ? ' lançamento' : ' lançamentos') + ' para ' + quem + ' no dia ' + dBrA(L.data) + '? O motorista vai receber um aviso.')) return;
+  el.disabled = true;
+  var itens = L.itens.map(function (it) { var c = {}; Object.keys(it).forEach(function (k) { c[k] = it[k]; }); c.valor = String(it.valor || '').replace(/\./g, '').replace(',', '.'); return c; });
+  call('gLancarProducao', { motorista_id: L.mot, data: L.data, pagamento: L.pag, placa: L.placa, obs: L.obs.trim(), itens: itens }).then(function (r) {
+    fecharModal(); S.G.lp = null;
+    toast(r.qtd + ' lançamento(s) incluído(s)' + (r.criouDia ? ' em um dia novo' : '') + '. O motorista foi avisado.');
+    if (S.tela === 'gdia') ACOES.diaBuscar(); else ir(S.tela, S.p);
+  }).catch(function (e) { el.disabled = false; falha(e); });
 };
 
 /* ---------- Log de alterações (só Master) ---------- */
