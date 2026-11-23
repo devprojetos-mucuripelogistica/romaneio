@@ -188,6 +188,12 @@ input::placeholder{color:var(--muted)}
 .cad-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px 14px}
 .cad-sep{grid-column:1/-1;border-top:1px dashed #D5DCE3;padding-top:10px;font-size:13px;font-weight:800}
 table.g.cad-tab td.cad-cut{max-width:200px;overflow:hidden;text-overflow:ellipsis}
+.dia-seta{width:40px;padding:0;justify-content:center;font-size:22px;line-height:1}
+.dia-esq-i{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;background:#fff;border:1px solid #F3D39A;border-radius:10px;padding:10px 12px;color:#3E4A55}
+.dia-esq{border:1px solid #E8A33D;background:#FFF8EC;color:#7A4A00;display:flex;flex-direction:column;gap:10px}
+.dia-v{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 6px;padding:2px 0}.dia-v+.dia-v{border-top:1px dashed #DCE2E8;margin-top:3px;padding-top:5px}
+.dia-h{font-size:12px;color:#5B6773}.dia-tag{font-size:11px;font-weight:700;background:#EEF1F4;color:#3E4A55;border-radius:6px;padding:1px 6px}.dia-tag.prop{background:#F1F4D6;color:#4A5200}
+.dia-pill{display:inline-flex;align-items:center;gap:6px;font-size:13px;background:#F3F6F8;border-radius:20px;padding:4px 6px 4px 12px}
 .btn-apagar{border-color:#E0875C!important;color:#C2410C!important}
 .falta-tag{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.04em;padding:2px 6px;border-radius:4px;background:#FDE8DE;color:#9A3412;border:1px solid #F5B79A;vertical-align:middle}
 .falta-badge{display:flex;width:fit-content;margin-top:3px;font-size:11px;font-weight:700;color:#9A3412;background:#FFF4EE;border-radius:10px;padding:1px 8px}
@@ -489,9 +495,15 @@ function transporte(nome, token, args) {
     return enviarPost(nome, token, args);
   });
 }
-var APP_VERSAO = '18.11-a';
+var APP_VERSAO = '18.11-b';
 /** Novidades de cada versão: aparecem uma vez, na primeira abertura depois da atualização. */
 var NOVIDADES = [
+  { v: '18.11-b', motorista: [
+      ['Dia esquecido aberto', 'Se você esquecer de encerrar o dia, o escritório pode encerrar ou apagar esse dia. Você recebe um aviso no app com o motivo.']
+    ], gestao: [
+      ['Motoristas do dia', 'Nova tela em Operação: em qual veículo está cada motorista no dia (agregado ou avulso, com as trocas), quem não abriu o dia e, na visão Por veículo, com quem está cada veículo da casa agora.'],
+      ['Encerrar ou apagar dia (Master)', 'Na mesma tela aparecem os dias que ficaram abertos de datas anteriores. Encerrar: você escolhe dia, hora e, se quiser, o KM final. Apagar: tira o dia, os lançamentos e o KM (abastecimentos ficam). Os dois pedem motivo, avisam o motorista e vão para o Log.']
+    ] },
   { v: '18.11-a', motorista: [
       ['Avisos do escritório', 'Se o escritório incluir ou retirar um lançamento da sua produção, ou apagar um registro de KM seu, você recebe um aviso no app com o motivo.']
     ], gestao: [
@@ -2136,11 +2148,12 @@ function gLayout(ativo, conteudo) {
     gcomb: '<path d="M4 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16"/><path d="M3 21h12M7 8h4"/><path d="M14 10h2a2 2 0 0 1 2 2v4a1.5 1.5 0 0 0 3 0V8l-3-3"/>',
     gcad: '<circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0M19 8v6M16 11h6"/>',
     grel: '<path d="M14 3H6v18h12V7z"/><path d="M14 3v4h4M9 13h6M9 17h6"/>',
-    glog: '<path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/>'
+    glog: '<path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/>',
+    gdia: '<path d="M3 17h2l2-6h9l3 6h2"/><circle cx="7.5" cy="18" r="1.8"/><circle cx="17" cy="18" r="1.8"/><path d="M9 11V7h5l2 4"/>'
   };
   var b = function (t, n) { return '<button class="' + (ativo === t ? 'on' : '') + '" data-a="gNav" data-t="' + t + '"' + (ativo === t ? ' aria-current="page"' : '') + '><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + IG[t] + '</svg>' + n + '</button>'; };
   return '<div class="g-app"><aside class="g-side"><div style="display:flex;flex-direction:column;gap:8px;padding:0 8px"><img src="' + LOGO_NEG + '" alt="Romaneio Digital Mucuripe" style="width:176px;height:auto"></div>' +
-    '<nav aria-label="Menu da gestão"><span class="g-sec">OPERAÇÃO</span>' + b('gpainel', 'Produção') + b('gmapa', 'Mapa produtivo') + b('gconf', 'Conferência') + b('gdetalhe', 'Ajustes') + b('gkm', 'Registro de KM') + b('gcomb', 'Combustível') + b('gfech', 'Fechamento') +
+    '<nav aria-label="Menu da gestão"><span class="g-sec">OPERAÇÃO</span>' + b('gpainel', 'Produção') + b('gdia', 'Motoristas do dia') + b('gmapa', 'Mapa produtivo') + b('gconf', 'Conferência') + b('gdetalhe', 'Ajustes') + b('gkm', 'Registro de KM') + b('gcomb', 'Combustível') + b('gfech', 'Fechamento') +
     '<span class="g-sec">ADMINISTRAÇÃO</span>' + b('gcad', 'Cadastros') + b('grel', 'Relatórios') + (u.perfil === 'MASTER' ? b('glog', 'Log de alterações') : '') + '</nav><div style="flex:1"></div>' +
     '<div style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;background:rgba(255,255,255,.08)"><div style="width:34px;height:34px;border-radius:17px;background:#B6C54C;color:#0B3D61;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px">' + esc(iniciais(u.nome || u.usuario) || 'U') + '</div><div style="flex:1;display:flex;flex-direction:column"><b style="font-size:13px">' + esc(String(u.nome || u.usuario || '').split(' ')[0]) + '</b><span style="font-size:10px;font-weight:800;color:#B6C54C;letter-spacing:1px">PERFIL ' + esc(u.perfil || '') + '</span></div><button class="g-btn sm out" style="background:transparent;color:#fff;border-color:rgba(255,255,255,.4)" data-a="gSair">Sair</button></div></aside>' +
     '<main class="g-main"><div class="g-wrap">' + conteudo + '</div></main></div>';
@@ -3625,6 +3638,120 @@ ACOES.kmSalvarAlt = function () {
   var k = kmPorId(S.G.kmEd.id), km = document.getElementById('kmNovo').value.replace(/\D/g, '');
   call('gAjustarKm', { id: k.id, km: +km !== k.km ? km : '', fotoBase64: S.G.kmEd.foto, motivo: document.getElementById('kmMotivo').value })
     .then(function () { fecharModal(); toast('Correção salva no histórico.'); ACOES.kmBuscar(); }).catch(falha);
+};
+
+/* ---------- Motoristas do dia: veículo de cada um, quem não abriu e dias esquecidos abertos ---------- */
+function diaMais(iso, n) { var p = iso.split('-'), d = new Date(+p[0], +p[1] - 1, +p[2] + n); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+TELAS.gdia = function () {
+  S.G.diaData = S.G.diaData || hojeIso(); S.G.diaVis = S.G.diaVis || 'mot';
+  var seg = [['mot', 'Por motorista'], ['vei', 'Por veículo']].map(function (o) { return '<button class="' + (S.G.diaVis === o[0] ? 'on' : '') + '" data-a="diaVis" data-v="' + o[0] + '">' + o[1] + '</button>'; }).join('');
+  return gLayout('gdia', '<div><h1 class="g-h1">MOTORISTAS DO DIA</h1><div class="g-sub">Em qual veículo está cada motorista (agregado ou avulso), quem não abriu o dia e os dias que ficaram abertos.' + (master() ? ' O Master pode encerrar ou apagar um dia.' : '') + '</div></div>' +
+    '<section class="g-card" style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap"><div class="g-f"><label for="dData">Dia</label><div style="display:flex;gap:6px"><button class="g-btn out dia-seta" data-a="diaMudar" data-n="-1" aria-label="Dia anterior">‹</button><input id="dData" type="date" class="g-in" value="' + S.G.diaData + '" style="width:170px"><button class="g-btn out dia-seta" data-a="diaMudar" data-n="1" aria-label="Próximo dia">›</button></div></div>' +
+    '<button class="g-btn out" data-a="diaHoje">Hoje</button><button class="g-btn" data-a="diaBuscar">Atualizar</button><div style="flex:1"></div><div class="g-seg">' + seg + '</div></section>' +
+    '<div id="diaRes" style="display:flex;flex-direction:column;gap:16px"><div class="g-card" style="text-align:center;color:#5B6773">Carregando…</div></div>');
+};
+TELAS.gdia.depois = function () { ACOES.diaBuscar(); var d = document.getElementById('dData'); if (d) d.addEventListener('change', function () { S.G.diaData = d.value || hojeIso(); ACOES.diaBuscar(); }); };
+ACOES.diaMudar = function (d) { S.G.diaData = diaMais(S.G.diaData || hojeIso(), +d.n); var i = document.getElementById('dData'); if (i) i.value = S.G.diaData; ACOES.diaBuscar(); };
+ACOES.diaHoje = function () { S.G.diaData = hojeIso(); var i = document.getElementById('dData'); if (i) i.value = S.G.diaData; ACOES.diaBuscar(); };
+ACOES.diaVis = function (d) { S.G.diaVis = d.v; document.querySelectorAll('[data-a=diaVis]').forEach(function (b) { b.classList.toggle('on', b.dataset.v === d.v); }); if (S.G.diaR) desenharDia(); };
+ACOES.diaBuscar = function () {
+  var i = document.getElementById('dData'); if (i && i.value) S.G.diaData = i.value;
+  call('gMotoristasDia', { data: S.G.diaData }).then(function (r) { S.G.diaR = r; desenharDia(); }).catch(falha);
+};
+var VINC_COR = { AGREGADO: ['#F1F4D6', '#4A5200'], CLT: ['#E8F2FA', '#145A90'], AVULSO: ['#F3F0FA', '#5B3FA0'] };
+function chipVinc(v) { var c = VINC_COR[v] || ['#EEF1F4', '#3E4A55']; return '<span class="g-chip" style="background:' + c[0] + ';color:' + c[1] + '">' + esc(v || '—') + '</span>'; }
+function quandoDia(iso, dia) { if (!iso) return ''; return (iso.slice(0, 10) !== dia ? dBrA(iso).slice(0, 5) + ' ' : '') + hh(iso); }
+function veicTxt(v, dia) {
+  return '<div class="dia-v"><b>' + esc(v.placa) + '</b>' + (v.tipo === 'PROPRIO' ? ' <span class="dia-tag prop">cavalo próprio</span>' : v.frota ? ' <span class="dia-tag">' + esc(v.frota) + '</span>' : '') +
+    '<span class="dia-h">' + quandoDia(v.inicio, dia) + ' → ' + (v.fim ? quandoDia(v.fim, dia) : 'agora') + (v.pagamento ? ' · ' + v.pagamento.toLowerCase() : '') + (v.motivo && v.motivo !== 'ABERTURA' && v.motivo !== 'CONTINUOU A FOLHA' ? ' · ' + esc(v.motivo.toLowerCase()) : '') + '</span></div>';
+}
+function kmTxt(o) {
+  if (!o.km.length) return o.exigeKm ? '<span style="color:#9AA5AF">—</span>' : '<span style="color:#9AA5AF;font-size:11px">não pede</span>';
+  var ab = o.km.filter(function (k) { return k.momento === 'ABERTURA'; }).pop(), en = o.km.filter(function (k) { return k.momento !== 'ABERTURA'; }).pop();
+  return (ab ? fmtKm(ab.km) : '?') + ' → ' + (en ? fmtKm(en.km) : '…') + (ab && en ? '<div style="font-size:11px;color:#5B6773">' + fmtKm(en.km - ab.km) + ' km</div>' : '');
+}
+function botoesDia(o, empilhar) {
+  if (!master()) return '';
+  return '<div style="display:flex;gap:6px;justify-content:flex-end;white-space:nowrap' + (empilhar ? ';flex-direction:column;align-items:stretch' : '') + '">' + (o.status === 'ABERTA' ? '<button class="g-btn sm" data-a="diaEncerrar" data-id="' + o.id + '">Encerrar</button>' : '') +
+    '<button class="g-btn sm out btn-apagar" data-a="diaApagar" data-id="' + o.id + '" title="Apagar o dia">' + I.lixo + ' Apagar</button></div>';
+}
+function prodTxt(o) { return '<b>' + o.qtd + '</b> lanç.' + (o.vinculo === 'CLT' && o.veiculos.every(function (v) { return v.pagamento === 'CLT'; }) ? '' : '<div style="font-size:12px;color:#5B6773">' + brl(o.total) + '</div>'); }
+function desenharDia() {
+  var r = S.G.diaR, box = document.getElementById('diaRes'); if (!box || !r) return;
+  var todos = {}; r.motoristas.concat(r.esquecidos).forEach(function (o) { todos[o.id] = o; }); S.G.diaOps = todos;
+  var abertos = r.motoristas.filter(function (o) { return o.status === 'ABERTA'; }).length, enc = r.motoristas.length - abertos;
+  var emUso = r.veiculos.filter(function (v) { return v.agora; }).length, livres = r.veiculos.filter(function (v) { return !v.agora && v.ativo; }).length;
+  var esq = r.esquecidos.length ? '<section class="g-card dia-esq"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:15px">⚠ ' + r.esquecidos.length + (r.esquecidos.length === 1 ? ' dia ficou aberto' : ' dias ficaram abertos') + '</b>' +
+    '<span style="font-size:13px">O motorista esqueceu de encerrar. Enquanto o dia estiver aberto, a quinzena não fecha e o veículo aparece como em uso.</span></div>' +
+    r.esquecidos.map(function (o) {
+      return '<div class="dia-esq-i"><div style="flex:1;min-width:240px;display:flex;flex-direction:column;gap:3px"><div><b>' + esc(o.nome) + '</b> ' + chipVinc(o.vinculo) + '</div>' +
+        '<div style="font-size:13px">Dia <b>' + dow(o.data_operacional) + ' ' + dBrA(o.data_operacional) + '</b> · aberto em ' + dBrA(o.aberta_em) + ' às ' + hh(o.aberta_em) + ' <span style="color:#8A5300">(há ' + (o.horas >= 48 ? Math.floor(o.horas / 24) + ' dias' : o.horas + ' h') + ')</span></div>' +
+        '<div style="font-size:13px;color:#5B6773">Veículo <b style="color:#3E4A55">' + esc(o.veiculo_atual) + '</b> · ' + o.qtd + ' lançamento(s)' + (o.vinculo === 'CLT' ? '' : ' · ' + brl(o.total)) + (o.ultimoFim ? ' · último termina ' + dBrA(o.ultimoFim) + ' às ' + hh(o.ultimoFim) : '') + '</div></div>' +
+        (master() ? botoesDia(o) : '<span style="font-size:12px;color:#5B6773">Só o Master encerra</span>') + '</div>';
+    }).join('') + '</section>' : '';
+  var kpis = '<section class="g-kpis"><div class="g-kpi navy"><span>' + (r.data === r.hoje ? 'Hoje' : dow(r.data) + ' ' + dBrA(r.data)) + '</span><b>' + r.motoristas.length + '</b><span style="color:#C9D6E2;text-transform:none;letter-spacing:0">motorista(s) com dia aberto ou encerrado</span></div>' +
+    '<div class="g-kpi"><span>Rodando (dia aberto)</span><b>' + abertos + '</b></div><div class="g-kpi"><span>Encerrados</span><b>' + enc + '</b></div>' +
+    '<div class="g-kpi' + (r.semDia.length ? ' warn' : '') + '"><span>Sem abertura no dia</span><b>' + r.semDia.length + '</b></div>' +
+    '<div class="g-kpi"><span>Veículos da casa agora</span><b>' + emUso + ' em uso</b><span style="text-transform:none;letter-spacing:0">' + livres + ' livre(s)</span></div></section>';
+  var corpo;
+  if (S.G.diaVis === 'vei') {
+    corpo = '<section class="g-tablebox"><div class="hd"><b>Veículos da casa</b><span style="font-size:12px;color:#5B6773">quem usou em ' + dBrA(r.data) + ' e com quem está agora</span></div><div class="g-scroll"><table class="g" style="min-width:760px"><thead><tr><th>Veículo</th><th>Com quem está agora</th><th>Quem usou no dia</th></tr></thead><tbody>' +
+      (r.veiculos.length ? r.veiculos.map(function (v) {
+        return '<tr><td><b>' + esc(v.frota || v.placa) + '</b><div style="font-size:12px;color:#5B6773">' + esc(v.placa) + (v.descricao ? ' · ' + esc(v.descricao) : '') + (v.ativo ? '' : ' · inativo') + '</div></td>' +
+          '<td>' + (v.agora ? '<span class="g-chip" style="background:#E3F0FA;color:#145A90">EM USO</span> <b>' + esc(v.agora.nome) + '</b><div style="font-size:11px;color:#5B6773">desde ' + dBrA(v.agora.desde) + ' ' + hh(v.agora.desde) + '</div>' : '<span class="g-chip" style="background:#EEF6E4;color:#3F6212">LIVRE</span>') + '</td>' +
+          '<td>' + (v.usos.length ? v.usos.map(function (u) { return '<div><b>' + esc(u.nome) + '</b> <span style="font-size:12px;color:#5B6773">' + quandoDia(u.inicio, r.data) + ' → ' + (u.fim ? quandoDia(u.fim, r.data) : 'agora') + ' · ' + String(u.pagamento || '').toLowerCase() + '</span></div>'; }).join('') : '<span style="color:#9AA5AF">ninguém neste dia</span>') + '</td></tr>';
+      }).join('') : '<tr><td colspan="3" style="text-align:center;color:#5B6773;padding:20px">Nenhum veículo da casa cadastrado.</td></tr>') + '</tbody></table></div></section>' +
+      '<section class="g-tablebox"><div class="hd"><b>Agregados no cavalo próprio</b></div><div style="padding:10px 14px;display:flex;flex-wrap:wrap;gap:8px">' +
+      (r.motoristas.filter(function (o) { return o.veiculos.some(function (v) { return v.tipo === 'PROPRIO'; }); }).map(function (o) { return '<span class="dia-pill"><b>' + esc(o.nome) + '</b> · ' + esc(o.veiculos.filter(function (v) { return v.tipo === 'PROPRIO'; })[0].placa) + ' · ' + (o.status === 'ABERTA' ? 'aberto' : 'encerrado') + '</span>'; }).join('') || '<span style="color:#9AA5AF">Nenhum agregado rodou no próprio cavalo neste dia.</span>') + '</div></section>';
+  } else {
+    corpo = !r.motoristas.length ? '<section class="g-card" style="text-align:center;color:#5B6773">Ninguém abriu o dia em ' + dBrA(r.data) + '.</section>' :
+      '<section class="g-tablebox"><div class="hd"><b>' + r.motoristas.length + ' motorista(s) em ' + dBrA(r.data) + '</b><span style="font-size:12px;color:#5B6773">veículo e horário de cada um (com as trocas)</span></div><div class="g-scroll"><table class="g" style="min-width:980px"><thead><tr><th>Motorista</th><th>Veículo(s)</th><th>Situação</th><th class="n">Produção</th><th>KM</th><th></th></tr></thead><tbody>' +
+      (r.motoristas.length ? r.motoristas.map(function (o) {
+        return '<tr><td><b>' + esc(o.nome) + '</b><div style="margin-top:3px">' + chipVinc(o.vinculo) + '</div></td><td>' + o.veiculos.map(function (v) { return veicTxt(v, r.data); }).join('') + '</td>' +
+          '<td>' + (o.status === 'ABERTA' ? '<span class="g-chip" style="background:#E3F0FA;color:#145A90">ABERTO</span><div style="font-size:12px;color:#5B6773;margin-top:3px">desde ' + quandoDia(o.aberta_em, r.data) + '</div>'
+            : '<span class="g-chip" style="background:#EEF1F4;color:#3E4A55">ENCERRADO</span><div style="font-size:12px;color:#5B6773;margin-top:3px">' + quandoDia(o.aberta_em, r.data) + ' → ' + quandoDia(o.encerrada_em, r.data) + '</div>') + '</td>' +
+          '<td class="n">' + prodTxt(o) + '</td><td>' + kmTxt(o) + '</td><td>' + botoesDia(o) + '</td></tr>';
+      }).join('') : '<tr><td colspan="6" style="text-align:center;color:#5B6773;padding:20px">Ninguém abriu o dia em ' + dBrA(r.data) + '.</td></tr>') + '</tbody></table></div></section>';
+  }
+  var sem = '<section class="g-tablebox"><div class="hd"><b>Sem abertura neste dia · ' + r.semDia.length + '</b><span style="font-size:12px;color:#5B6773">motoristas ativos que não abriram o dia</span></div><div style="padding:10px 14px;display:flex;flex-wrap:wrap;gap:8px">' +
+    (r.semDia.map(function (m) { return '<span class="dia-pill">' + esc(m.nome) + ' ' + chipVinc(m.vinculo) + '</span>'; }).join('') || '<span style="color:#9AA5AF">Todos os ativos abriram o dia.</span>') + '</div></section>';
+  box.innerHTML = esq + kpis + corpo + sem;
+}
+ACOES.diaEncerrar = function (d) {
+  var o = S.G.diaOps[d.id]; if (!o) return;
+  var agora = new Date(), agoraIso = hojeIso() + ' ' + pad(agora.getHours()) + ':' + pad(agora.getMinutes());
+  var sug = o.ultimoFim ? o.ultimoFim.slice(0, 16) : agoraIso;
+  if (sug < o.aberta_em.slice(0, 16)) sug = o.aberta_em.slice(0, 16);
+  var kmAb = o.km.filter(function (k) { return k.momento === 'ABERTURA'; }).pop();
+  abrirModal('<div><b style="font-size:17px">Encerrar o dia</b><div style="font-size:12px;color:#5B6773">' + esc(o.nome) + ' · ' + dow(o.data_operacional) + ' ' + dBrA(o.data_operacional) + '</div></div>' +
+    '<div style="font-size:13px;color:#3E4A55;background:#F3F6F8;border-radius:8px;padding:8px 10px">Aberto em ' + dBrA(o.aberta_em) + ' às ' + hh(o.aberta_em) + ' · veículo <b>' + esc(o.veiculo_atual) + '</b> · ' + o.qtd + ' lançamento(s)' + (o.ultimoFim ? ' · último termina ' + dBrA(o.ultimoFim) + ' às ' + hh(o.ultimoFim) : '') + '</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div class="g-f"><label for="enDia">Encerrado no dia</label><input id="enDia" type="date" class="g-in" value="' + sug.slice(0, 10) + '"></div><div class="g-f"><label for="enHora">Hora</label><input id="enHora" type="time" class="g-in" value="' + sug.slice(11, 16) + '"></div></div>' +
+    (o.exigeKm ? '<div class="g-f"><label for="enKm">KM final do painel (opcional)</label><input id="enKm" class="g-in" inputmode="numeric" placeholder="' + (kmAb ? 'abertura: ' + fmtKm(kmAb.km) : 'sem KM de abertura') + '"><span style="font-size:11px;color:#5B6773">Sem foto. Fica marcado no Registro de KM como lançado pelo escritório.</span></div>' : '') +
+    '<div class="g-f"><label for="enMot">Motivo *</label><textarea id="enMot" class="g-in" rows="2" style="height:auto;padding:8px 10px" placeholder="Ex.: motorista esqueceu de encerrar"></textarea></div>' +
+    '<div style="font-size:12px;color:#5B6773">Os lançamentos do dia continuam como estão. O motorista recebe um aviso no app e o encerramento fica no Log com o seu usuário.</div>' +
+    '<div style="display:flex;gap:8px"><button class="g-btn out" style="flex:1;justify-content:center" data-a="fecharModal">Cancelar</button><button class="g-btn" style="flex:1;justify-content:center" data-a="diaEncerrarOk" data-id="' + o.id + '">Encerrar dia</button></div>');
+};
+ACOES.diaEncerrarOk = function (d, el) {
+  var v = function (id) { var e = document.getElementById(id); return e ? e.value.trim() : ''; };
+  if (!v('enDia') || !v('enHora')) return toast('Informe o dia e a hora.', true);
+  if (!v('enMot')) return toast('Escreva o motivo.', true);
+  el.disabled = true;
+  call('gEncerrarDia', { op_id: d.id, quando: v('enDia') + ' ' + v('enHora'), km: v('enKm').replace(/\D/g, ''), motivo: v('enMot') })
+    .then(function () { fecharModal(); toast('Dia encerrado. O motorista foi avisado.'); ACOES.diaBuscar(); }).catch(function (e) { el.disabled = false; falha(e); });
+};
+ACOES.diaApagar = function (d) {
+  var o = S.G.diaOps[d.id]; if (!o) return;
+  abrirModal('<div><b style="font-size:17px">Apagar o dia inteiro?</b><div style="font-size:12px;color:#5B6773">' + esc(o.nome) + ' · ' + dow(o.data_operacional) + ' ' + dBrA(o.data_operacional) + ' · ' + (o.status === 'ABERTA' ? 'aberto' : 'encerrado') + '</div></div>' +
+    '<div style="font-size:13px;color:#9A3412;background:#FFF4EE;border:1px solid #F5B79A;border-radius:8px;padding:10px 12px;line-height:1.5">Sai do sistema: o dia, <b>' + o.qtd + ' lançamento(s)</b>' + (o.qtd && !(o.vinculo === 'CLT') ? ' (' + brl(o.total) + ')' : '') + ', as trocas de veículo e <b>' + o.km.length + ' registro(s) de KM</b>.' +
+    (o.abastecimentos ? '<br>Os ' + o.abastecimentos + ' abastecimento(s) do dia <b>não</b> são apagados.' : '') + '<br>Tudo fica guardado no <b>Log</b> com o seu usuário, e o motorista recebe um aviso.</div>' +
+    (o.status === 'ABERTA' ? '<div style="font-size:12px;color:#5B6773">Se o motorista estiver usando o app agora, ele vai precisar abrir o dia de novo.</div>' : '') +
+    '<div class="g-f"><label for="apdMot">Motivo *</label><textarea id="apdMot" class="g-in" rows="2" style="height:auto;padding:8px 10px" placeholder="Ex.: abriu o dia por engano"></textarea></div>' +
+    '<div style="display:flex;gap:8px"><button class="g-btn out" style="flex:1;justify-content:center" data-a="fecharModal">Cancelar</button><button class="g-btn" style="flex:1;justify-content:center;background:#C2410C;border-color:#C2410C" data-a="diaApagarOk" data-id="' + o.id + '">Apagar dia</button></div>');
+};
+ACOES.diaApagarOk = function (d, el) {
+  var mot = (document.getElementById('apdMot') || {}).value || ''; if (!mot.trim()) return toast('Escreva o motivo.', true);
+  el.disabled = true;
+  call('gExcluirDia', { op_id: d.id, motivo: mot.trim() }).then(function () { fecharModal(); toast('Dia apagado. Está guardado no Log.'); ACOES.diaBuscar(); }).catch(function (e) { el.disabled = false; falha(e); });
 };
 
 /* ---------- Log de alterações (só Master) ---------- */
