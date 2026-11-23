@@ -188,6 +188,23 @@ input::placeholder{color:var(--muted)}
 .cad-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px 14px}
 .cad-sep{grid-column:1/-1;border-top:1px dashed #D5DCE3;padding-top:10px;font-size:13px;font-weight:800}
 table.g.cad-tab td.cad-cut{max-width:200px;overflow:hidden;text-overflow:ellipsis}
+.perfil-limitado [data-a="pConferir"],.perfil-limitado [data-a="confDia"],.perfil-limitado [data-a="desconfDia"],.perfil-limitado [data-a="gNav"][data-t="gmapa"],.perfil-limitado [data-a="gNav"][data-t="gconf"]{display:none!important}
+.km-frota{font-size:15px;color:#0B3D61;min-width:52px}
+.dia-data-hd{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;background:#0B3D61;color:#fff;padding:12px 16px}
+.dia-data-hd b{font-size:16px;letter-spacing:.04em;margin-right:10px}.dia-data-hd span{font-size:13px;color:#C9D6E2}
+.dia-grupo+.dia-grupo{border-top:1px solid #DCE2E8}
+.dia-grupo-hd{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;padding:12px 16px 8px;border-left:4px solid;background:#F7F9FA}
+.dia-grupo-hd b{font-size:14px;letter-spacing:.06em}.dia-grupo-hd span{font-size:12px;color:#5B6773}
+table.g.dia-tab{min-width:920px}.dia-placa{display:flex;flex-wrap:wrap;align-items:center;gap:6px}.dia-placa b{font-size:14px;letter-spacing:.03em}
+@media (max-width:760px){
+  table.g.dia-tab{min-width:0}.dia-tab thead{display:none}
+  .dia-tab tr{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;padding:12px 16px;border-bottom:1px solid #E3E6E9}
+  .dia-tab td{display:block;padding:0;border:0;text-align:left!important}
+  .dia-tab td[data-l]::before{content:attr(data-l);display:block;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#5B6773;margin-bottom:2px}
+  .dia-tab td:first-child,.dia-tab td[data-l="Placa atual"],.dia-tab td.dia-acoes{grid-column:1/-1}
+  .dia-tab td.dia-acoes:empty{display:none}.dia-tab td.dia-acoes>div{justify-content:flex-start}
+}
+.dia-sem{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:10px 16px 14px;font-size:12px;color:#5B6773}.dia-sem>span:first-child{font-weight:700;margin-right:4px}
 .dia-seta{width:40px;padding:0;justify-content:center;font-size:22px;line-height:1}
 .dia-esq-i{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;background:#fff;border:1px solid #F3D39A;border-radius:10px;padding:10px 12px;color:#3E4A55}
 .dia-esq{border:1px solid #E8A33D;background:#FFF8EC;color:#7A4A00;display:flex;flex-direction:column;gap:10px}
@@ -495,9 +512,14 @@ function transporte(nome, token, args) {
     return enviarPost(nome, token, args);
   });
 }
-var APP_VERSAO = '18.11-b';
+var APP_VERSAO = '18.11-c';
 /** Novidades de cada versão: aparecem uma vez, na primeira abertura depois da atualização. */
 var NOVIDADES = [
+  { v: '18.11-c', motorista: [], gestao: [
+      ['Perfis Operacional e Manutenção', 'Novos perfis de usuário (Cadastros → Usuários). Operacional: Produção e Motoristas do dia. Manutenção: Registro de KM e Combustível.'],
+      ['Registro de KM organizado', 'Por veículo, os cavalos vêm na ordem da frota (CV 01 até CV 30) e todos começam recolhidos: toque no cavalo para abrir.'],
+      ['Motoristas do dia por classificação', 'A data em cima; dentro dela Agregados, CLT e Avulsos; dentro de cada um, os motoristas em ordem alfabética com nome completo, CPF e placa atual.']
+    ] },
   { v: '18.11-b', motorista: [
       ['Dia esquecido aberto', 'Se você esquecer de encerrar o dia, o escritório pode encerrar ou apagar esse dia. Você recebe um aviso no app com o motivo.']
     ], gestao: [
@@ -1004,7 +1026,10 @@ function cargaSvg(cheio) {
 
 /* ---------- Navegação ---------- */
 var TELAS = {}, FALAS = {};
-function ir(tela, p) { S.tela = tela; S.p = p || {}; render(); window.scrollTo(0, 0); }
+function ir(tela, p) {
+  if (S.G && S.G.user && TELAS_GESTAO.indexOf(tela) >= 0 && !podeTela(tela)) tela = telaInicialG();   // perfil sem acesso: volta para a tela dele
+  S.tela = tela; S.p = p || {}; render(); window.scrollTo(0, 0);
+}
 function render() {
   var t = TELAS[S.tela];
   if (!t) return;
@@ -1015,7 +1040,8 @@ function render() {
   if (t.depois) t.depois();
   if (S.tela && S.tela.charAt(0) === 'g') setTimeout(resumoFiltros, 0);
   if (OFF.ativo && S.est && S.tela && S.tela.charAt(0) !== 'g') barraOffline();
-  if (S.token && !S._novidades && (S.tela === 'hoje' || S.tela === 'gpainel')) { S._novidades = true; checarNovidades(); }
+  if (S.token && !S._novidades && (S.tela === 'hoje' || TELAS_GESTAO.indexOf(S.tela) >= 0)) { S._novidades = true; checarNovidades(); }
+  document.body.classList.toggle('perfil-limitado', !!(S.G && S.G.user && limitado() && S.tela && S.tela.charAt(0) === 'g'));
   if (ls('rd_voz') === 'auto' && FALAS[S.tela]) falar(typeof FALAS[S.tela] === 'function' ? FALAS[S.tela]() : FALAS[S.tela]);
 }
 var ACOES = ACOES || {};   // o modo offline (mais acima) já registra algumas ações
@@ -2127,7 +2153,7 @@ ACOES.gCriarMaster = function () {
 ACOES.voltarMotorista = function () { location.hash = ''; ir('login'); };
 ACOES.gEntrar = function () {
   call('loginGestao', { usuario: document.getElementById('gu').value, senha: document.getElementById('gs').value }).then(function (r) {
-    S.token = r.token; ls('rd_token', r.token); ls('rd_tipo', 'GESTAO'); S.G.user = r; ir('gpainel'); gPreCarregar();
+    S.token = r.token; ls('rd_token', r.token); ls('rd_tipo', 'GESTAO'); S.G.user = r; ir(telaInicialG()); gPreCarregar();
   }).catch(falha);
 };
 document.addEventListener('keydown', function (e) {
@@ -2151,11 +2177,11 @@ function gLayout(ativo, conteudo) {
     glog: '<path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/>',
     gdia: '<path d="M3 17h2l2-6h9l3 6h2"/><circle cx="7.5" cy="18" r="1.8"/><circle cx="17" cy="18" r="1.8"/><path d="M9 11V7h5l2 4"/>'
   };
-  var b = function (t, n) { return '<button class="' + (ativo === t ? 'on' : '') + '" data-a="gNav" data-t="' + t + '"' + (ativo === t ? ' aria-current="page"' : '') + '><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + IG[t] + '</svg>' + n + '</button>'; };
+  var b = function (t, n) { if (!podeTela(t)) return ''; return '<button class="' + (ativo === t ? 'on' : '') + '" data-a="gNav" data-t="' + t + '"' + (ativo === t ? ' aria-current="page"' : '') + '><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + IG[t] + '</svg>' + n + '</button>'; };
   return '<div class="g-app"><aside class="g-side"><div style="display:flex;flex-direction:column;gap:8px;padding:0 8px"><img src="' + LOGO_NEG + '" alt="Romaneio Digital Mucuripe" style="width:176px;height:auto"></div>' +
     '<nav aria-label="Menu da gestão"><span class="g-sec">OPERAÇÃO</span>' + b('gpainel', 'Produção') + b('gdia', 'Motoristas do dia') + b('gmapa', 'Mapa produtivo') + b('gconf', 'Conferência') + b('gdetalhe', 'Ajustes') + b('gkm', 'Registro de KM') + b('gcomb', 'Combustível') + b('gfech', 'Fechamento') +
-    '<span class="g-sec">ADMINISTRAÇÃO</span>' + b('gcad', 'Cadastros') + b('grel', 'Relatórios') + (u.perfil === 'MASTER' ? b('glog', 'Log de alterações') : '') + '</nav><div style="flex:1"></div>' +
-    '<div style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;background:rgba(255,255,255,.08)"><div style="width:34px;height:34px;border-radius:17px;background:#B6C54C;color:#0B3D61;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px">' + esc(iniciais(u.nome || u.usuario) || 'U') + '</div><div style="flex:1;display:flex;flex-direction:column"><b style="font-size:13px">' + esc(String(u.nome || u.usuario || '').split(' ')[0]) + '</b><span style="font-size:10px;font-weight:800;color:#B6C54C;letter-spacing:1px">PERFIL ' + esc(u.perfil || '') + '</span></div><button class="g-btn sm out" style="background:transparent;color:#fff;border-color:rgba(255,255,255,.4)" data-a="gSair">Sair</button></div></aside>' +
+    (limitado() ? '' : '<span class="g-sec">ADMINISTRAÇÃO</span>' + b('gcad', 'Cadastros') + b('grel', 'Relatórios') + b('glog', 'Log de alterações')) + '</nav><div style="flex:1"></div>' +
+    '<div style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;background:rgba(255,255,255,.08)"><div style="width:34px;height:34px;border-radius:17px;background:#B6C54C;color:#0B3D61;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px">' + esc(iniciais(u.nome || u.usuario) || 'U') + '</div><div style="flex:1;display:flex;flex-direction:column"><b style="font-size:13px">' + esc(String(u.nome || u.usuario || '').split(' ')[0]) + '</b><span style="font-size:10px;font-weight:800;color:#B6C54C;letter-spacing:1px">PERFIL ' + esc((NOME_PERFIL[u.perfil] || u.perfil || '').toUpperCase()) + '</span></div><button class="g-btn sm out" style="background:transparent;color:#fff;border-color:rgba(255,255,255,.4)" data-a="gSair">Sair</button></div></aside>' +
     '<main class="g-main"><div class="g-wrap">' + conteudo + '</div></main></div>';
 }
 ACOES.gNav = function (d, el) {
@@ -2167,18 +2193,27 @@ ACOES.gNav = function (d, el) {
 /** Entrar numa aba pelo menu lateral: começa limpa (quinzena atual, sem motorista, sem planilha, sem filtro). */
 function limparFiltros() {
   limparConferencia();
-  S.G.per = null; S.G.perAntes = null; S.G.pMot = ''; S.G.motId = ''; S.G.kmMot = ''; S.G.kmPlaca = ''; S.G.cMot = '';
+  S.G.per = null; S.G.perAntes = null; S.G.pMot = ''; S.G.motId = ''; S.G.kmMot = ''; S.G.kmPlaca = ''; S.G.kmAb = {}; S.G.cMot = '';
   S.G.vinc = 'TODOS'; S.G.cVinc = 'TODOS'; S.G.pAberto = {}; S.G.pMotAberto = {}; S.G.fAberto = {}; S.G.mapa = null;
   S.G.confVolta = ''; S.G.pcf = null; S.G.confTipo = 'prod'; S.G.det = null;
 }
 ACOES.gSair = function () { call('sair').finally(function () { ls('rd_token', null); S.token = null; ir('glogin'); }); };
 function master() { return S.G.user && S.G.user.perfil === 'MASTER'; }
+/* Perfis com acesso limitado: só estas telas (o servidor também recusa o resto). */
+var TELAS_PERFIL = { MANUTENCAO: ['gkm', 'gcomb'], OPERACIONAL: ['gpainel', 'gdia'] };
+var TELAS_GESTAO = ['gpainel', 'gdia', 'gmapa', 'gconf', 'gdetalhe', 'gkm', 'gcomb', 'gfech', 'gcad', 'grel', 'glog'];
+var NOME_PERFIL = { MASTER: 'Master', GESTAO: 'Gestão', OPERACIONAL: 'Operacional', MANUTENCAO: 'Manutenção' };
+function perfilG() { return S.G.user ? S.G.user.perfil : ''; }
+function limitado() { return !!TELAS_PERFIL[perfilG()]; }
+function podeTela(t) { var l = TELAS_PERFIL[perfilG()]; if (t === 'glog') return master(); return !l || l.indexOf(t) >= 0; }
+function telaInicialG() { var l = TELAS_PERFIL[perfilG()]; return l ? l[0] : 'gpainel'; }
 function gPeriodoPadrao() { if (!S.G.per) { var q = quinzenaAtual(); S.G.per = periodoQ(q.ano, q.mes, q.q); } return S.G.per; }
 function gMotoristasCache() { return S.G.mots ? Promise.resolve(S.G.mots) : call('gMotoristas', {}, true).then(function (l) { S.G.mots = l; return l; }); }
 function gVeiculosCache() { return S.G.veis ? Promise.resolve(S.G.veis) : call('gVeiculos', {}, true).then(function (l) { S.G.veis = l; return l; }); }
 /** Logo depois do login, busca por trás as listas que as telas usam. */
 function gPreCarregar() {
   gMotoristasCache().catch(function () { }); gVeiculosCache().catch(function () { });
+  if (!podeTela('gmapa')) return;
   // já busca por trás as telas mais usadas: quando abrir, aparecem na hora
   var p = gPeriodoPadrao(), nada = function () { };
   setTimeout(function () { callRapido('gProducaoDias', { de: p.de, ate: p.ate, vinculo: S.G.vinc || 'TODOS' }, nada, nada); callRapido('gMapa', { de: p.de, ate: p.ate, todos: false }, nada, nada); }, 1500);
@@ -3383,12 +3418,12 @@ function desenharUsu(l) {
   (function () {
     document.getElementById('cadBox').innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start"><section class="g-card" style="flex:0 1 380px;min-width:300px;display:flex;flex-direction:column;gap:12px"><b style="font-size:16px">Usuário da gestão</b>' +
       '<div class="g-f"><label for="uUser">Usuário *</label><input id="uUser" class="g-in" style="text-transform:uppercase" placeholder="000.000.000-00 ou nome" data-i="mascUsuario"></div><div class="g-f"><label for="uNome">Nome</label><input id="uNome" class="g-in"></div>' +
-      '<div class="g-f"><label for="uPerfil">Perfil</label><select id="uPerfil" class="g-in"><option value="GESTAO">GESTÃO – busca e baixa tabelas</option><option value="MASTER">MASTER – vê tudo e ajusta valores</option></select></div>' +
+      '<div class="g-f"><label for="uPerfil">Perfil</label><select id="uPerfil" class="g-in"><option value="GESTAO">GESTÃO – busca e baixa tabelas</option><option value="MASTER">MASTER – vê tudo e ajusta valores</option><option value="OPERACIONAL">OPERACIONAL – Produção e Motoristas do dia</option><option value="MANUTENCAO">MANUTENÇÃO – Registro de KM e Combustível</option></select></div>' +
       '<div class="g-f"><label for="uEmail">E-mail (para recuperar a senha)</label><input id="uEmail" class="g-in" type="email"></div>' +
       '<div class="g-f"><label for="uSenha">Senha (mín. 6) – vazio mantém a atual</label><input id="uSenha" class="g-in" type="password"></div><button class="g-btn" style="justify-content:center" data-a="cadSalvarUsu">Salvar usuário</button></section>' +
       '<section class="g-tablebox" style="flex:2 1 420px"><div class="hd">' + segAtivos('usu', l) + '</div><div class="g-scroll"><table class="g"><thead><tr><th>Usuário</th><th>Nome</th><th>E-mail</th><th>Perfil</th><th></th></tr></thead><tbody>' +
       (soDoFiltro('usu', l).length ? '' : linhaVazia(5, 'usu')) +
-      soDoFiltro('usu', l).map(function (u) { return '<tr><td><b>' + esc(u.usuario) + '</b></td><td>' + esc(u.nome) + '</td><td>' + (u.email ? esc(u.email) : '<span style="color:#8A5300">sem e-mail</span>') + '</td><td><span class="g-chip" style="background:' + (u.perfil === 'MASTER' ? '#0B3D61;color:#fff' : '#E6EAEE;color:#3E4A55') + '">' + u.perfil + '</span>' + (S.G.user && S.G.user.usuario === u.usuario ? ' <span class="g-chip" style="background:#F1F4D6;color:#4A5200">VOCÊ</span>' : '') + '</td><td style="white-space:nowrap;text-align:right"><button class="g-btn sm out" data-a="usuEditar" data-u="' + esc(u.usuario) + '" data-n="' + esc(u.nome) + '" data-e="' + esc(u.email || '') + '" data-p="' + u.perfil + '">Editar</button> ' +
+      soDoFiltro('usu', l).map(function (u) { return '<tr><td><b>' + esc(u.usuario) + '</b></td><td>' + esc(u.nome) + '</td><td>' + (u.email ? esc(u.email) : '<span style="color:#8A5300">sem e-mail</span>') + '</td><td><span class="g-chip" style="background:' + (u.perfil === 'MASTER' ? '#0B3D61;color:#fff' : u.perfil === 'OPERACIONAL' ? '#E3F0FA;color:#145A90' : u.perfil === 'MANUTENCAO' ? '#FFF1D6;color:#8A5300' : '#E6EAEE;color:#3E4A55') + '">' + (NOME_PERFIL[u.perfil] || u.perfil).toUpperCase() + '</span>' + (S.G.user && S.G.user.usuario === u.usuario ? ' <span class="g-chip" style="background:#F1F4D6;color:#4A5200">VOCÊ</span>' : '') + '</td><td style="white-space:nowrap;text-align:right"><button class="g-btn sm out" data-a="usuEditar" data-u="' + esc(u.usuario) + '" data-n="' + esc(u.nome) + '" data-e="' + esc(u.email || '') + '" data-p="' + u.perfil + '">Editar</button> ' +
         (u.ativo ? (S.G.user && S.G.user.usuario === u.usuario ? '' : '<button class="g-btn sm out" style="border-color:#C2410C;color:#C2410C" data-a="usuAtivar" data-u="' + esc(u.usuario) + '" data-on="0">Desativar</button>') : '<button class="g-btn sm lime" data-a="usuAtivar" data-u="' + esc(u.usuario) + '" data-on="1">Reativar</button>') + '</td></tr>'; }).join('') + '</tbody></table></div></section></div>';
   })();
 }
@@ -3475,10 +3510,13 @@ function desenharKm() {
   var l = S.G.kmLista, por = S.G.kmPor;
   var grupos = {}, ordem = [];
   l = l.slice().sort(function (a, b) { var x = (b.data_operacional || '') + (b.registrado_em || ''), y = (a.data_operacional || '') + (a.registrado_em || ''); return x < y ? -1 : x > y ? 1 : 0; });   // mais recente em cima
-  l.forEach(function (k) { var g = por === 'placa' ? k.placa : k.motorista; if (!grupos[g]) { grupos[g] = []; ordem.push(g); } grupos[g].push(k); });
-  ordem.sort();
-  S.G.kmFech = S.G.kmFech || {};
-  var fechado = function (g) { return !!S.G.kmFech[por + '|' + g]; };
+  var info = {};
+  l.forEach(function (k) { var g = por === 'placa' ? k.placa : k.motorista; if (!grupos[g]) { grupos[g] = []; ordem.push(g); info[g] = k; } grupos[g].push(k); });
+  // por veículo: cavalos da casa na ordem da frota (CV 01, CV 02 … CV 30); sem frota (agregados) no fim, pela placa
+  var numFrota = function (g) { var m = String((info[g] || {}).frota || '').match(/\d+/); return m ? +m[0] : 9999; };
+  if (por === 'placa') ordem.sort(function (a, b) { return numFrota(a) - numFrota(b) || (a < b ? -1 : a > b ? 1 : 0); }); else ordem.sort();
+  S.G.kmAb = S.G.kmAb || {};
+  var fechado = function (g) { return !S.G.kmAb[por + '|' + g]; };   // tudo começa recolhido: abre só o que precisar
   var todosFech = ordem.length && ordem.every(fechado);
   var rod = l.reduce(function (s, k) { return s + (k.momento === 'ENCERRAMENTO' && k.rodado > 0 ? k.rodado : 0); }, 0);
   var alertas = l.filter(function (k) { return k.alertas.length; }).length, alt = l.filter(function (k) { return k.alterado; }).length;
@@ -3490,7 +3528,7 @@ function desenharKm() {
       var it = grupos[g], tot = it.reduce(function (s, k) { return s + (k.momento === 'ENCERRAMENTO' && k.rodado > 0 ? k.rodado : 0); }, 0);
       var veic = por === 'placa' ? (S.G.veis || []).filter(function (v) { return v.placa === g; })[0] : null;
       var f = fechado(g);
-      return '<section class="g-tablebox km-grupo' + (f ? ' fechado' : '') + '" style="margin-bottom:' + (f ? 8 : 16) + 'px"><div class="hd km-hd" data-a="kmGrupo" data-g="' + esc(g) + '" role="button" tabindex="0" aria-expanded="' + !f + '"><div style="display:flex;align-items:center;gap:10px"><span class="km-seta">' + I.abaixo + '</span>' + (por === 'placa' ? '<span class="g-chip" style="background:#0B3D61;color:#fff;font-size:12px;letter-spacing:1px">' + esc(g) + '</span><span style="font-size:13px;color:#5B6773">' + esc(veic ? [veic.frota, veic.descricao].filter(Boolean).join(' · ') : '') + '</span>' : '<b>' + esc(g) + '</b>') + '</div><b>' + it.length + ' registro(s) · ' + fmtKm(tot) + ' km rodados</b></div>' +
+      return '<section class="g-tablebox km-grupo' + (f ? ' fechado' : '') + '" style="margin-bottom:' + (f ? 8 : 16) + 'px"><div class="hd km-hd" data-a="kmGrupo" data-g="' + esc(g) + '" role="button" tabindex="0" aria-expanded="' + !f + '"><div style="display:flex;align-items:center;gap:10px"><span class="km-seta">' + I.abaixo + '</span>' + (por === 'placa' ? '<b class="km-frota">' + esc(info[g].frota || (veic && veic.frota) || 'Sem frota') + '</b><span class="g-chip" style="background:#0B3D61;color:#fff;font-size:12px;letter-spacing:1px">' + esc(g) + '</span><span style="font-size:13px;color:#5B6773">' + esc(info[g].descricao || (veic && veic.descricao) || '') + '</span>' : '<b>' + esc(g) + '</b>') + '</div><b>' + it.length + ' registro(s) · ' + fmtKm(tot) + ' km rodados</b></div>' +
         (f ? '' : '<div class="g-scroll"><table class="g" style="min-width:960px"><thead><tr><th>Dia</th><th>Foto tirada em</th><th>Momento</th><th>' + (por === 'placa' ? 'Motorista' : 'Veículo') + '</th><th class="n">KM</th><th class="n">Rodado</th><th>Foto</th><th>Alertas</th><th></th></tr></thead><tbody>' +
         it.map(function (k) {
           return '<tr class="' + (k.alterado ? 'aj' : k.alertas.length ? 'dif' : '') + '"><td>' + dBrA(k.data_operacional) + '</td><td>' + esc(k.registrado_em.slice(8, 10) + '/' + k.registrado_em.slice(5, 7) + ' ' + k.registrado_em.slice(11)) + '</td>' +
@@ -3503,10 +3541,10 @@ function desenharKm() {
         }).join('') + '</tbody></table></div>') + '</section>';
     }).join('') : '<div class="g-card" style="text-align:center;color:#5B6773">Nenhum registro de KM nesse filtro.</div>');
 }
-ACOES.kmGrupo = function (d) { S.G.kmFech = S.G.kmFech || {}; var k = S.G.kmPor + '|' + d.g; S.G.kmFech[k] = !S.G.kmFech[k]; desenharKm(); };
+ACOES.kmGrupo = function (d) { S.G.kmAb = S.G.kmAb || {}; var k = S.G.kmPor + '|' + d.g; S.G.kmAb[k] = !S.G.kmAb[k]; desenharKm(); };
 ACOES.kmTodos = function (d) {
-  S.G.kmFech = S.G.kmFech || {};
-  (S.G.kmLista || []).forEach(function (k) { S.G.kmFech[S.G.kmPor + '|' + (S.G.kmPor === 'placa' ? k.placa : k.motorista)] = d.v === 'recolher'; });
+  S.G.kmAb = S.G.kmAb || {};
+  (S.G.kmLista || []).forEach(function (k) { S.G.kmAb[S.G.kmPor + '|' + (S.G.kmPor === 'placa' ? k.placa : k.motorista)] = d.v === 'abrir'; });
   desenharKm();
 };
 function kmPorId(id) { return (S.G.kmLista || []).filter(function (k) { return k.id === id; })[0]; }
@@ -3704,18 +3742,37 @@ function desenharDia() {
       '<section class="g-tablebox"><div class="hd"><b>Agregados no cavalo próprio</b></div><div style="padding:10px 14px;display:flex;flex-wrap:wrap;gap:8px">' +
       (r.motoristas.filter(function (o) { return o.veiculos.some(function (v) { return v.tipo === 'PROPRIO'; }); }).map(function (o) { return '<span class="dia-pill"><b>' + esc(o.nome) + '</b> · ' + esc(o.veiculos.filter(function (v) { return v.tipo === 'PROPRIO'; })[0].placa) + ' · ' + (o.status === 'ABERTA' ? 'aberto' : 'encerrado') + '</span>'; }).join('') || '<span style="color:#9AA5AF">Nenhum agregado rodou no próprio cavalo neste dia.</span>') + '</div></section>';
   } else {
-    corpo = !r.motoristas.length ? '<section class="g-card" style="text-align:center;color:#5B6773">Ninguém abriu o dia em ' + dBrA(r.data) + '.</section>' :
-      '<section class="g-tablebox"><div class="hd"><b>' + r.motoristas.length + ' motorista(s) em ' + dBrA(r.data) + '</b><span style="font-size:12px;color:#5B6773">veículo e horário de cada um (com as trocas)</span></div><div class="g-scroll"><table class="g" style="min-width:980px"><thead><tr><th>Motorista</th><th>Veículo(s)</th><th>Situação</th><th class="n">Produção</th><th>KM</th><th></th></tr></thead><tbody>' +
-      (r.motoristas.length ? r.motoristas.map(function (o) {
-        return '<tr><td><b>' + esc(o.nome) + '</b><div style="margin-top:3px">' + chipVinc(o.vinculo) + '</div></td><td>' + o.veiculos.map(function (v) { return veicTxt(v, r.data); }).join('') + '</td>' +
-          '<td>' + (o.status === 'ABERTA' ? '<span class="g-chip" style="background:#E3F0FA;color:#145A90">ABERTO</span><div style="font-size:12px;color:#5B6773;margin-top:3px">desde ' + quandoDia(o.aberta_em, r.data) + '</div>'
-            : '<span class="g-chip" style="background:#EEF1F4;color:#3E4A55">ENCERRADO</span><div style="font-size:12px;color:#5B6773;margin-top:3px">' + quandoDia(o.aberta_em, r.data) + ' → ' + quandoDia(o.encerrada_em, r.data) + '</div>') + '</td>' +
-          '<td class="n">' + prodTxt(o) + '</td><td>' + kmTxt(o) + '</td><td>' + botoesDia(o) + '</td></tr>';
-      }).join('') : '<tr><td colspan="6" style="text-align:center;color:#5B6773;padding:20px">Ninguém abriu o dia em ' + dBrA(r.data) + '.</td></tr>') + '</tbody></table></div></section>';
+    // data > classificação (agregado, CLT, avulso) > motoristas em ordem alfabética, com nome completo, CPF e placa atual
+    var DSEM = ['DOMINGO', 'SEGUNDA-FEIRA', 'TERÇA-FEIRA', 'QUARTA-FEIRA', 'QUINTA-FEIRA', 'SEXTA-FEIRA', 'SÁBADO'];
+    var pd = r.data.split('-'), nomeDia = DSEM[new Date(+pd[0], +pd[1] - 1, +pd[2]).getDay()];
+    var alfa = function (a, b) { return a.nome < b.nome ? -1 : a.nome > b.nome ? 1 : 0; };
+    var GRUPOS = [['AGREGADO', 'AGREGADOS'], ['CLT', 'CLT'], ['AVULSO', 'AVULSOS']];
+    corpo = '<section class="g-tablebox dia-data"><div class="dia-data-hd"><div><b>' + nomeDia + '</b><span>' + dBrA(r.data) + (r.data === r.hoje ? ' · hoje' : '') + '</span></div><span>' + r.motoristas.length + ' com dia · ' + r.semDia.length + ' sem abertura</span></div>' +
+      GRUPOS.map(function (gr) {
+        var ms = r.motoristas.filter(function (o) { return (o.vinculo || 'AVULSO') === gr[0]; }).sort(alfa);
+        var sd = r.semDia.filter(function (m) { return (m.vinculo || 'AVULSO') === gr[0]; }).sort(alfa);
+        if (!ms.length && !sd.length) return '';
+        var cor = VINC_COR[gr[0]];
+        return '<div class="dia-grupo"><div class="dia-grupo-hd" style="border-left-color:' + cor[1] + '"><b style="color:' + cor[1] + '">' + gr[1] + '</b><span>' + ms.length + ' com dia aberto ou encerrado' + (sd.length ? ' · ' + sd.length + ' sem abertura' : '') + '</span></div>' +
+          (ms.length ? '<div class="g-scroll"><table class="g dia-tab"><thead><tr><th>Nome completo</th><th>CPF</th><th>Placa atual</th><th>Situação</th><th class="n">Produção</th><th>KM</th><th></th></tr></thead><tbody>' +
+            ms.map(function (o) {
+              var atual = o.veiculos.filter(function (v) { return v.placa === o.veiculo_atual; }).pop() || o.veiculos[o.veiculos.length - 1] || { placa: o.veiculo_atual };
+              var antes = o.veiculos.filter(function (v) { return v !== atual; });
+              return '<tr><td data-l="Nome completo"><b>' + esc(o.nome) + '</b></td><td data-l="CPF" style="white-space:nowrap">' + esc(o.cpf || '—') + '</td>' +
+                '<td data-l="Placa atual"><div class="dia-placa"><b>' + esc(atual.placa || '—') + '</b>' + (atual.tipo === 'PROPRIO' ? '<span class="dia-tag prop">cavalo próprio</span>' : atual.frota ? '<span class="dia-tag">' + esc(atual.frota) + '</span>' : '') +
+                  (atual.pagamento && atual.pagamento !== o.vinculo ? '<span class="dia-tag">pago como ' + atual.pagamento.toLowerCase() + '</span>' : '') + '</div>' +
+                  '<div class="dia-h">' + quandoDia(atual.inicio, r.data) + ' → ' + (atual.fim ? quandoDia(atual.fim, r.data) : 'agora') + '</div>' +
+                  (antes.length ? '<div class="dia-h">antes: ' + antes.map(function (v) { return esc(v.placa) + (v.frota ? ' (' + esc(v.frota) + ')' : '') + ' ' + quandoDia(v.inicio, r.data) + '–' + quandoDia(v.fim, r.data); }).join(' · ') + '</div>' : '') + '</td>' +
+                '<td data-l="Situação">' + (o.status === 'ABERTA' ? '<span class="g-chip" style="background:#E3F0FA;color:#145A90">ABERTO</span><div class="dia-h">desde ' + quandoDia(o.aberta_em, r.data) + '</div>'
+                  : '<span class="g-chip" style="background:#EEF1F4;color:#3E4A55">ENCERRADO</span><div class="dia-h">' + quandoDia(o.aberta_em, r.data) + ' → ' + quandoDia(o.encerrada_em, r.data) + '</div>') + '</td>' +
+                '<td class="n" data-l="Produção">' + prodTxt(o) + '</td><td data-l="KM">' + kmTxt(o) + '</td><td class="dia-acoes">' + botoesDia(o) + '</td></tr>';
+            }).join('') + '</tbody></table></div>' : '') +
+          (sd.length ? '<div class="dia-sem"><span>Sem abertura:</span>' + sd.map(function (m) { return '<span class="dia-pill" title="CPF ' + esc(m.cpf || '') + '">' + esc(m.nome) + '</span>'; }).join('') + '</div>' : '') + '</div>';
+      }).join('') + (r.motoristas.length || r.semDia.length ? '' : '<div style="padding:20px;text-align:center;color:#5B6773">Nenhum motorista ativo.</div>') + '</section>';
   }
   var sem = '<section class="g-tablebox"><div class="hd"><b>Sem abertura neste dia · ' + r.semDia.length + '</b><span style="font-size:12px;color:#5B6773">motoristas ativos que não abriram o dia</span></div><div style="padding:10px 14px;display:flex;flex-wrap:wrap;gap:8px">' +
     (r.semDia.map(function (m) { return '<span class="dia-pill">' + esc(m.nome) + ' ' + chipVinc(m.vinculo) + '</span>'; }).join('') || '<span style="color:#9AA5AF">Todos os ativos abriram o dia.</span>') + '</div></section>';
-  box.innerHTML = esq + kpis + corpo + sem;
+  box.innerHTML = esq + kpis + corpo + (S.G.diaVis === 'vei' ? sem : '');
 }
 ACOES.diaEncerrar = function (d) {
   var o = S.G.diaOps[d.id]; if (!o) return;
@@ -3919,7 +3976,7 @@ if (window.matchMedia) { try { window.matchMedia('(prefers-color-scheme: dark)')
   // motorista sem internet: abre com o que está guardado no celular
   if (!gestao && OFF.ativo && jsonLs('rd_est')) { S.est = jsonLs('rd_est'); S.est.hoje = hojeIso(); contarFila(); ir('hoje'); }
   call('quemSou').then(function (r) {
-    if (r.tipo === 'GESTAO') { S.G.user = r; ir('gpainel'); gPreCarregar(); } else carregarEstado(S.est ? S.tela : undefined);
+    if (r.tipo === 'GESTAO') { S.G.user = r; ir(telaInicialG()); gPreCarregar(); } else carregarEstado(S.est ? S.tela : undefined);
   }).catch(function (e) { if (e.rede && S.est) return; ir(gestao ? 'glogin' : 'login'); });
 })();
 </script>
