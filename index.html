@@ -521,9 +521,14 @@ function transporte(nome, token, args) {
     return enviarPost(nome, token, args);
   });
 }
-var APP_VERSAO = '23.11-a';
+var APP_VERSAO = '24.11-a';
 /** Novidades de cada versão: aparecem uma vez, na primeira abertura depois da atualização. */
 var NOVIDADES = [
+  { v: '24.11-a', motorista: [
+      ['Envio mais rápido', 'Quando muitos motoristas lançam ao mesmo tempo, o app espera alguns segundos e tenta de novo sozinho, sem mostrar erro.']
+    ], gestao: [
+      ['Erro de bloqueio corrigido', 'A mensagem "Tempo limite do bloqueio" não deve mais aparecer: o servidor segura a vez de gravar por bem menos tempo e, se estiver ocupado, o app tenta de novo sozinho.']
+    ] },
   { v: '23.11-a', motorista: [
       ['Produção lançada pelo escritório', 'Se você esquecer de lançar a produção de um dia, o escritório pode lançar por você. Você recebe um aviso no app com cada lançamento incluído.']
     ], gestao: [
@@ -638,13 +643,21 @@ function enviarPost(nome, token, args) {
     .then(function (r) { clearTimeout(limite); if (!r.ok) throw erroRede('O servidor não respondeu (' + r.status + '). Tente de novo.'); return r.text(); },
       function () { clearTimeout(limite); throw erroRede(navigator.onLine === false ? 'Sem internet.' : 'Não consegui falar com o Apps Script. Confira a internet. Se a internet estiver ok, confira se a implantação está como "Qualquer pessoa". [versão ' + APP_VERSAO + ']'); });
 }
-function call(nome, args, quieto) {
-  if (!quieto) carregando(true);
+/** Servidor ocupado (muita gente gravando ao mesmo tempo): o app espera um pouco e tenta de novo sozinho. */
+function ocupado(msg) { return /^OCUPADO|bloqueio|lock timeout|too many simultaneous/i.test(String(msg || '')); }
+function call(nome, args, quieto, tentativa) {
+  tentativa = tentativa || 0;
+  if (!quieto && !tentativa) carregando(true);
   return transporte(nome, S.token, args || {}).then(function (r) {
+    var j; try { j = JSON.parse(r); } catch (e) { if (!quieto) carregando(false); throw new Error('Resposta inválida do servidor.'); }
+    if (!j.ok && ocupado(j.erro) && tentativa < 4) {   // tenta de novo em 2, 4, 6 e 8 segundos
+      if (!quieto && tentativa === 0) toast('Muita gente gravando agora. Tentando de novo…');
+      return new Promise(function (ok) { setTimeout(ok, 2000 * (tentativa + 1)); }).then(function () { return call(nome, args, quieto, tentativa + 1); });
+    }
     if (!quieto) carregando(false);
-    var j; try { j = JSON.parse(r); } catch (e) { throw new Error('Resposta inválida do servidor.'); }
     if (j.ok) return j.data;
     if (j.erro === 'SESSAO') { sairLocal(); throw new Error('Sua sessão expirou. Entre de novo.'); }
+    if (ocupado(j.erro)) { var eo = new Error('O sistema está muito ocupado agora. Espere um pouco e tente de novo.'); eo.rede = true; throw eo; }   // na fila do celular: tenta de novo depois, sem marcar erro
     throw new Error(j.erro);
   }, function (e) { if (!quieto) carregando(false); throw e; });
 }
