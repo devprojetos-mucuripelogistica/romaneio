@@ -527,9 +527,12 @@ function transporte(nome, token, args) {
     return enviarPost(nome, token, args);
   });
 }
-var APP_VERSAO = '25.11-a';
+var APP_VERSAO = '25.11-b';
 /** Novidades de cada versão: aparecem uma vez, na primeira abertura depois da atualização. */
 var NOVIDADES = [
+  { v: '25.11-b', motorista: [], gestao: [
+      ['Importar produção corrigido', 'O botão Escolher planilha dentro do Lançar produção agora abre a janela para escolher o arquivo.']
+    ] },
   { v: '25.11-a', motorista: [
       ['CLT sem valor', 'Quem é CLT não vê mais a pergunta de valor em nenhum lançamento.', { so: 'CLT' }]
     ], gestao: [
@@ -1091,6 +1094,8 @@ document.addEventListener('click', function (e) {
   var el = e.target.closest('[data-a]');
   if (!el) return;
   var fn = ACOES[el.getAttribute('data-a')];
+  // clique em algo DENTRO da janela (botão de arquivo, caixa de marcar…) não pode ser bloqueado pelo fundo da janela
+  if (el.getAttribute('data-a') === 'fecharModalFundo' && e.target !== el) return;
   if (fn) { e.preventDefault(); fn(el.dataset, el, e); }
 });
 document.addEventListener('input', function (e) {
