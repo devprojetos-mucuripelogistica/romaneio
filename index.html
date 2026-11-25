@@ -214,6 +214,12 @@ table.g.dia-tab{min-width:920px}.dia-placa{display:flex;flex-wrap:wrap;align-ite
 .lp-pe{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;position:sticky;bottom:-18px;background:#fff;padding:10px 0 4px;border-top:1px solid #DCE2E8}
 .dia-pill-b{border:1px dashed #9AA5AF;cursor:pointer;font:inherit;color:inherit}.dia-pill-b b{font-size:11px;color:#145A90;margin-left:2px}
 @media (max-width:760px){.lp-cab{grid-template-columns:1fr 1fr}.lp-cab .g-f{grid-column:span 2!important}.lp-grid{grid-template-columns:1fr 1fr}.lp-grid .g-f{grid-column:auto!important}}
+.lp-imp{display:flex;align-items:center;gap:12px;flex-wrap:wrap;border:1.5px dashed #9AB3C8;background:#F3F8FC;border-radius:12px;padding:12px 14px}
+.ex-caixa{border:2px solid #8FA02A}.ex-caixa>.hd{background:#F1F4D6}
+.ex-sn{display:inline-flex;border:1px solid #C9D2DA;border-radius:8px;overflow:hidden}.ex-sn button{border:0;background:#fff;padding:7px 14px;font:inherit;font-size:12px;font-weight:800;cursor:pointer;color:#5B6773}
+.ex-sn button+button{border-left:1px solid #C9D2DA}.ex-sn button.on.s{background:#3F8F1F;color:#fff}.ex-sn button.on.n{background:#C2410C;color:#fff}
+tr.ex-sim td{background:#F2F9EC}tr.ex-nao td{background:#FFF4EE}
+.ex-pe{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 16px;border-top:1px solid #DCE2E8}
 .dia-seta{width:40px;padding:0;justify-content:center;font-size:22px;line-height:1}
 .dia-esq-i{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;background:#fff;border:1px solid #F3D39A;border-radius:10px;padding:10px 12px;color:#3E4A55}
 .dia-esq{border:1px solid #E8A33D;background:#FFF8EC;color:#7A4A00;display:flex;flex-direction:column;gap:10px}
@@ -521,9 +527,18 @@ function transporte(nome, token, args) {
     return enviarPost(nome, token, args);
   });
 }
-var APP_VERSAO = '24.11-a';
+var APP_VERSAO = '25.11-a';
 /** Novidades de cada versão: aparecem uma vez, na primeira abertura depois da atualização. */
 var NOVIDADES = [
+  { v: '25.11-a', motorista: [
+      ['CLT sem valor', 'Quem é CLT não vê mais a pergunta de valor em nenhum lançamento.', { so: 'CLT' }]
+    ], gestao: [
+      ['Verificação express', 'Nova tela em Operação: suba a planilha do dia com a produção de todos os motoristas. Quem bate com o app vai para a caixa de verificação, e você marca SIM (confirma a produção do dia) ou NÃO.'],
+      ['Importar produção (Master)', 'Ao lado de + Lançar produção: suba a planilha detalhada do sistema de um motorista e as linhas viram os lançamentos do dia escolhido, para conferir e lançar.'],
+      ['Ordem na janela do dia', 'Na janela de lançamentos do dia (Mapa e Produção), o botão ⇅ alterna entre mais antigo e mais novo em cima. A escolha fica guardada.'],
+      ['Ocultar revisados', 'No Mapa produtivo, na Produção e na Verificação express, o botão Ocultar revisados esconde quem já teve a produção conferida e confirmada.'],
+      ['Aba Ajustes removida', 'Para corrigir um lançamento, abra o dia (Mapa ou Produção) e use Ajustar na linha. O histórico das correções está no Log de alterações.']
+    ] },
   { v: '24.11-a', motorista: [
       ['Envio mais rápido', 'Quando muitos motoristas lançam ao mesmo tempo, o app espera alguns segundos e tenta de novo sozinho, sem mostrar erro.']
     ], gestao: [
@@ -1298,7 +1313,7 @@ function totalDia() { return S.est.lancamentos.reduce(function (s, l) { return s
 /* CLT não é remunerado por viagem: não digita valor e o app não mostra R$ nos lançamentos dele. */
 function semValorPag(p) { return p === 'CLT'; }
 function semValorMot() { var op = S.est.operacao; return semValorPag(op ? op.pagamento_atual : S.est.motorista.vinculo); }
-function wizSemValor() { return S.W.categoria !== 'ABAST' && semValorPag(S.W.pag); }
+function wizSemValor() { return S.W.categoria !== 'ABAST' && (semValorPag(S.W.pag) || (S.est && S.est.motorista && S.est.motorista.vinculo === 'CLT')); }   // CLT nunca digita valor
 function valorLanc(l) { return semValorPag(l.pagamento) ? '<span style="font-size:11px;font-weight:800;color:var(--muted)">CLT</span>' : brl(l.valor_final); }
 function itemHtml(l) {
   var ic = l.categoria === 'CONTEINER' ? '<div class="ico-sq" style="width:38px;height:38px;border-radius:10px;background:#0B3D61;color:#fff">' + I.cont + '</div>'
@@ -2200,6 +2215,7 @@ function gLayout(ativo, conteudo) {
     gfech: '<path d="M4 4h16v16H4z"/><path d="M8 9h8M8 13h8M8 17h5"/><path d="M15 17l1.5 1.5L20 15"/>',
     gconf: '<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>',
     gdetalhe: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
+    gexpress: '<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',
     gkm: '<circle cx="12" cy="13" r="8"/><path d="M12 13l4-3M12 5v1M5 13h1M18 13h1"/>',
     gcomb: '<path d="M4 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16"/><path d="M3 21h12M7 8h4"/><path d="M14 10h2a2 2 0 0 1 2 2v4a1.5 1.5 0 0 0 3 0V8l-3-3"/>',
     gcad: '<circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0M19 8v6M16 11h6"/>',
@@ -2209,7 +2225,7 @@ function gLayout(ativo, conteudo) {
   };
   var b = function (t, n) { if (!podeTela(t)) return ''; return '<button class="' + (ativo === t ? 'on' : '') + '" data-a="gNav" data-t="' + t + '"' + (ativo === t ? ' aria-current="page"' : '') + '><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + IG[t] + '</svg>' + n + '</button>'; };
   return '<div class="g-app"><aside class="g-side"><div style="display:flex;flex-direction:column;gap:8px;padding:0 8px"><img src="' + LOGO_NEG + '" alt="Romaneio Digital Mucuripe" style="width:176px;height:auto"></div>' +
-    '<nav aria-label="Menu da gestão"><span class="g-sec">OPERAÇÃO</span>' + b('gpainel', 'Produção') + b('gdia', 'Motoristas do dia') + b('gmapa', 'Mapa produtivo') + b('gconf', 'Conferência') + b('gdetalhe', 'Ajustes') + b('gkm', 'Registro de KM') + b('gcomb', 'Combustível') + b('gfech', 'Fechamento') +
+    '<nav aria-label="Menu da gestão"><span class="g-sec">OPERAÇÃO</span>' + b('gpainel', 'Produção') + b('gdia', 'Motoristas do dia') + b('gmapa', 'Mapa produtivo') + b('gconf', 'Conferência') + b('gexpress', 'Verificação express') + b('gkm', 'Registro de KM') + b('gcomb', 'Combustível') + b('gfech', 'Fechamento') +
     (limitado() ? '' : '<span class="g-sec">ADMINISTRAÇÃO</span>' + b('gcad', 'Cadastros') + b('grel', 'Relatórios') + b('glog', 'Log de alterações')) + '</nav><div style="flex:1"></div>' +
     '<div style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;background:rgba(255,255,255,.08)"><div style="width:34px;height:34px;border-radius:17px;background:#B6C54C;color:#0B3D61;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px">' + esc(iniciais(u.nome || u.usuario) || 'U') + '</div><div style="flex:1;display:flex;flex-direction:column"><b style="font-size:13px">' + esc(String(u.nome || u.usuario || '').split(' ')[0]) + '</b><span style="font-size:10px;font-weight:800;color:#B6C54C;letter-spacing:1px">PERFIL ' + esc((NOME_PERFIL[u.perfil] || u.perfil || '').toUpperCase()) + '</span></div><button class="g-btn sm out" style="background:transparent;color:#fff;border-color:rgba(255,255,255,.4)" data-a="gSair">Sair</button></div></aside>' +
     '<main class="g-main"><div class="g-wrap">' + conteudo + '</div></main></div>';
@@ -2234,7 +2250,7 @@ var EXTRAS_REGRA = { MANOBRA: ['AVULSO', 'AGREGADO', 'CLT'], 'HORA PARADA': ['AV
 var EXTRAS_PADRAO = Object.keys(EXTRAS_REGRA), EXTRAS_TRAJETO = ['BATENDO'];
 /* Perfis com acesso limitado: só estas telas (o servidor também recusa o resto). */
 var TELAS_PERFIL = { MANUTENCAO: ['gkm', 'gcomb'], OPERACIONAL: ['gpainel', 'gdia'] };
-var TELAS_GESTAO = ['gpainel', 'gdia', 'gmapa', 'gconf', 'gdetalhe', 'gkm', 'gcomb', 'gfech', 'gcad', 'grel', 'glog'];
+var TELAS_GESTAO = ['gpainel', 'gdia', 'gmapa', 'gconf', 'gexpress', 'gdetalhe', 'gkm', 'gcomb', 'gfech', 'gcad', 'grel', 'glog'];
 var NOME_PERFIL = { MASTER: 'Master', GESTAO: 'Gestão', OPERACIONAL: 'Operacional', MANUTENCAO: 'Manutenção' };
 function perfilG() { return S.G.user ? S.G.user.perfil : ''; }
 function limitado() { return !!TELAS_PERFIL[perfilG()]; }
@@ -2395,7 +2411,7 @@ ACOES.gBuscar = function () {
   S.G.pMot = mid; S.G.pAberto = S.G.pAberto || {};
   var vb = document.getElementById('pVincBox'); if (vb) vb.style.display = mid ? 'none' : '';
   if (mid) return buscarPainelMotorista(mid, p);
-  document.getElementById('pBtns').innerHTML = (master() ? '<button class="g-btn out" data-a="lancProd">+ Lançar produção</button>' : '') + menuExportar('<button class="g-btn out" data-a="gRelRapido" data-f="xlsx">' + I.baixar + ' Excel geral</button><button class="g-btn" data-a="gRelRapido" data-f="html">' + I.cheia + ' Relatório geral (tela cheia / PDF)</button>');
+  document.getElementById('pBtns').innerHTML = (master() ? '<button class="g-btn out" data-a="lancProd">+ Lançar produção</button><button class="g-btn out" data-a="lancProd" data-imp="1">' + I.baixar.replace('<svg', '<svg style="transform:rotate(180deg)"') + ' Importar produção</button>' : '') + menuExportar('<button class="g-btn out" data-a="gRelRapido" data-f="xlsx">' + I.baixar + ' Excel geral</button><button class="g-btn" data-a="gRelRapido" data-f="html">' + I.cheia + ' Relatório geral (tela cheia / PDF)</button>');
   callRapido('gProducaoDias', { de: p.de, ate: p.ate, vinculo: S.G.vinc }, function (r) {
     S.G.pDias = r;
     var t = r.totais;
@@ -2407,7 +2423,7 @@ function desenharPainelDias() {
   var r = S.G.pDias, p = S.G.per, box = document.getElementById('pRes'); if (!box || !r) return;
   var todosAbertos = r.dias.length && r.dias.every(function (d) { return S.G.pAberto[d.data]; });
   box.innerHTML = '<section class="g-tablebox"><div class="hd"><b>' + dBrA(p.de) + ' a ' + dBrA(p.ate) + ' · ' + r.dias.length + ' dia(s)' + (r.arquivadoAntes && p.de < r.arquivadoAntes ? ' · inclui meses do Histórico' : '') + '</b>' +
-    (r.dias.length ? '<button class="g-btn sm out" data-a="pTodos">' + (todosAbertos ? 'Recolher todos' : 'Abrir todos os dias') + '</button>' : '') + '</div>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap">' + botaoOcRev() + (r.dias.length ? '<button class="g-btn sm out" data-a="pTodos">' + (todosAbertos ? 'Recolher todos' : 'Abrir todos os dias') + '</button>' : '') + '</div></div>' +
     '<div class="g-scroll"><table class="g" style="min-width:960px"><thead><tr><th style="width:34px"></th><th>Dia</th><th class="n">Motoristas</th><th class="n">Batendo</th><th class="n">Cheio</th><th class="n">Vazio</th><th class="n">Lançamentos</th><th class="n">Valor</th><th>Ajustes</th><th>Ações</th></tr></thead><tbody>' +
     (r.dias.length ? r.dias.map(function (d) {
       var ab = S.G.pAberto[d.data];
@@ -2415,7 +2431,7 @@ function desenharPainelDias() {
         '<td class="n"><b>' + d.qtdMotoristas + '</b><div style="font-size:10.5px;font-weight:700;color:' + (d.conferidos === d.qtdMotoristas ? '#3F8F1F' : '#8A5300') + '">' + d.conferidos + ' conferido(s)</div></td><td class="n">' + cv(d.batendo) + '</td><td class="n">' + cv(d.cheio) + '</td><td class="n">' + cv(d.vazio) + '</td><td class="n">' + d.total[0] + '</td><td class="n"><b>' + br(d.total[1]) + '</b></td>' +
         '<td>' + (d.ajustes ? '<span class="g-chip" style="background:#E8A33D;color:#3D2600">' + d.ajustes + '</span>' : '–') + '</td><td><span style="font-size:12px;color:#145A90;font-weight:700">' + (ab ? 'Fechar' : 'Ver motoristas') + '</span></td></tr>';
       if (!ab) return linha;
-      return linha + d.motoristas.map(function (g) {
+      return linha + d.motoristas.filter(function (g) { return !(ocultarRev() && g.conferido === 'OK'); }).map(function (g) {
         return '<tr style="background:#FAFBFC"><td></td><td style="padding-left:22px"><b>' + esc(g.nome) + '</b> ' + chipVinc(g.vinculo) + (g.cadastro && g.cadastro !== g.vinculo ? ' <span class="g-chip" style="background:#FFF1A8;color:#5C4A00">CADASTRO ' + g.cadastro + '</span>' : '') + (g.aberto ? ' <span class="g-chip" style="background:#D2EEFB;color:#0F5675">DIA ABERTO</span>' : '') + ' ' + chipConf(g.conferido, g.confPor) + '</td><td></td>' +
           '<td class="n">' + cv(g.batendo) + '</td><td class="n">' + cv(g.cheio) + '</td><td class="n">' + cv(g.vazio) + '</td><td class="n">' + g.total[0] + '</td><td class="n"><b>' + br(g.total[1]) + '</b></td>' +
           '<td>' + (g.ajustes ? '<span class="g-chip" style="background:#E8A33D;color:#3D2600">' + g.ajustes + '</span>' : '–') + '</td>' +
@@ -2435,17 +2451,20 @@ ACOES.pVerDia = function (d) {
     if (!dia) return toast('Nenhum lançamento nesse dia.', true);
     var linhas = [], tot = 0, aberto = false;
     r.dias.forEach(function (x) { x.linhas.forEach(function (l) { regLanc(l); linhas.push(l); }); tot += x.total; if (x.aberto) aberto = true; });
-    var junto = { linhas: linhas.sort(function (a, b) { return a.inicio < b.inicio ? 1 : -1; }), aberto: aberto };   // mais recente em cima
+    var antigo = ls('rd_ordem_g') !== 'novo';   // padrão: mais antigo em cima (igual ao app do motorista); botão inverte e fica guardado
+    var junto = { linhas: linhas.sort(function (a, b) { return (a.inicio < b.inicio ? -1 : 1) * (antigo ? 1 : -1); }), aberto: aberto };
+    S.G.pVerArgs = { id: d.id, d: d.d };
     var conf = !master() ? chipConf(dia.conferido, dia.confPor)
       : dia.conferido === 'OK' ? chipConf('OK', dia.confPor) + ' <span style="font-size:11px;color:#5B6773">' + esc(dia.confPor) + '</span> <button class="g-btn sm out" data-a="desconfDia" data-id="' + d.id + '" data-d="' + d.d + '">Desfazer</button>'
       : aberto ? '<span style="font-size:12px;color:#5B6773">Dia em aberto: confirme depois que o motorista encerrar.</span>'
       : (dia.conferido === 'ALTERADO' ? chipConf('ALTERADO', dia.confPor) + ' ' : '') + '<button class="g-btn sm lime" data-a="confDia" data-id="' + d.id + '" data-d="' + d.d + '">' + I.ok + ' Confirmar produção conferida</button>';
-    if (master() && !aberto) conf = '<button class="g-btn sm out" data-a="corrigirDia" data-id="' + d.id + '" data-d="' + d.d + '">' + I.lapis + ' Corrigir</button> ' + conf;
     if (!aberto) conf = '<button class="g-btn sm lime" data-a="pConferir" data-id="' + d.id + '" data-d="' + d.d + '">' + I.conferir + ' Conferência</button> ' + conf;
+    conf = '<button class="g-btn sm out" data-a="ordemDia" title="Inverter a ordem dos lançamentos">⇅ ' + (antigo ? 'Mais antigo em cima' : 'Mais novo em cima') + '</button> ' + conf;
     abrirModal('<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div><b style="font-size:17px">' + esc(r.motorista.nome) + '</b><div style="font-size:12px;color:#5B6773">' + dow(dia.data) + ' ' + dBrA(dia.data) + ' · ' + esc(dia.placas) + ' · ' + linhas.length + ' lançamento(s) · <b>' + brl(tot) + '</b></div></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">' + conf + '<button class="g-btn sm out" data-a="fecharModal">Fechar</button></div></div>' +
       '<div class="g-scroll" style="max-height:60vh">' + tabelaLancs(junto, { compacta: true }) + '</div>', 'larga');
   }).catch(falha);
 };
+ACOES.ordemDia = function () { ls('rd_ordem_g', ls('rd_ordem_g') === 'novo' ? 'antigo' : 'novo'); if (S.G.pVerArgs) ACOES.pVerDia(S.G.pVerArgs); };
 /** Tabela de lançamentos de um dia (usada em Ajustes de valor, no painel e na janela do dia). */
 function tabelaLancs(d, o) {
   o = o || {};
@@ -2459,7 +2478,7 @@ function tabelaLancs(d, o) {
 }
 /** Motorista escolhido: toda a produção dele, dia a dia, em sequência. */
 function buscarPainelMotorista(mid, p) {
-  document.getElementById('pBtns').innerHTML = (master() ? '<button class="g-btn out" data-a="lancProd" data-id="' + mid + '">+ Lançar produção</button>' : '') + '<button class="g-btn lime" data-a="pConferir" data-id="' + mid + '">' + I.conferir + ' Conferir</button>' + menuExportar('<button class="g-btn out" data-a="gIndiv" data-id="' + mid + '" data-f="xlsx">' + I.baixar + ' Excel</button><button class="g-btn out" data-a="gIndiv" data-id="' + mid + '" data-f="pdf">' + I.baixar + ' PDF</button>');
+  document.getElementById('pBtns').innerHTML = (master() ? '<button class="g-btn out" data-a="lancProd" data-id="' + mid + '">+ Lançar produção</button><button class="g-btn out" data-a="lancProd" data-imp="1" data-id="' + mid + '">Importar produção</button>' : '') + '<button class="g-btn lime" data-a="pConferir" data-id="' + mid + '">' + I.conferir + ' Conferir</button>' + menuExportar('<button class="g-btn out" data-a="gIndiv" data-id="' + mid + '" data-f="xlsx">' + I.baixar + ' Excel</button><button class="g-btn out" data-a="gIndiv" data-id="' + mid + '" data-f="pdf">' + I.baixar + ' PDF</button>');
   callRapido('gDetalhe', { motorista_id: mid, de: p.de, ate: p.ate }, function (r) {
     S.G.extras = r.extras; S.G.extrasTraj = r.extrasComTrajeto;
     S.G.pDet = r; S.G.pMotAberto = S.G.pMotAberto || {};
@@ -2561,7 +2580,8 @@ ACOES.gAjustar = function (d) {
     '<div id="ajTraj" style="display:' + (traj ? 'contents' : 'none') + '">' + campo('ajOri', 'Origem (de onde saiu)', l.origem, ' style="text-transform:uppercase"') + campo('ajDes', 'Destino (para onde foi)', l.destino, ' style="text-transform:uppercase"') + '</div>' +
     (c ? seg('Tamanho', ['20', '40'], l.tamanho) + seg('Carga', ['CHEIO', 'VAZIO'], l.carga) : '') +
     campo('ajIni', rh[0], hh(l.inicio), ' type="time"') + campo('ajFim', rh[1], hh(l.fim), ' type="time"') +
-    campo('ajV', 'Valor (R$)', br(l.valor_final), ' inputmode="decimal"') + '<div class="g-f"><span class="l">Lançado pelo motorista</span><div style="height:40px;display:flex;align-items:center;font-size:14px;color:#3E4A55">' + brl(l.valor_lancado) + '</div></div>' +
+    (l.pagamento === 'CLT' ? '<div class="g-f" style="grid-column:1/-1"><span class="l">Valor</span><div style="height:40px;display:flex;align-items:center;font-size:13px;color:#5B6773">Pago como CLT: sem valor por viagem.</div></div>'
+      : campo('ajV', 'Valor (R$)', br(l.valor_final), ' inputmode="decimal"') + '<div class="g-f"><span class="l">Lançado pelo motorista</span><div style="height:40px;display:flex;align-items:center;font-size:14px;color:#3E4A55">' + brl(l.valor_lancado) + '</div></div>') +
     '</div><div id="ajHoraInfo" style="font-size:12px;color:#8A5300"></div>' +
     '<div class="g-f"><label for="ajO">Observação para o motorista</label><textarea id="ajO" class="g-in" rows="2" style="height:auto;padding:8px 10px"></textarea></div>' +
     '<div style="font-size:12px;color:#8A5300;background:#FFF6E6;border-radius:8px;padding:8px 10px">O lançamento fica marcado em laranja e o motorista recebe um aviso no app com <b>tudo o que mudou</b> (antes → depois).</div>' +
@@ -2573,7 +2593,7 @@ ACOES.ajTipo = function (d, el) { var t = document.getElementById('ajTraj'); if 
 ACOES.gSalvarAj = function () {
   var l = S.G.lancs[S.G.ajId], v = function (id) { var e = document.getElementById(id); return e ? e.value.trim() : undefined; };
   var segV = function (n) { var b = document.querySelector('[data-seg="' + n + '"] button.on'); return b ? b.dataset.v : undefined; };
-  var campos = { ini: v('ajIni'), fim: v('ajFim'), valor: v('ajV') };
+  var campos = { ini: v('ajIni'), fim: v('ajFim') }; if (document.getElementById('ajV')) campos.valor = v('ajV');
   if (!campos.ini || !campos.fim) return toast('Preencha os dois horários.', true);
   if (campos.fim === campos.ini) return toast('A chegada/fim precisa ser depois da saída/início.', true);
   if (campos.fim < campos.ini && !confirm('O horário final está antes do inicial. Ele terminou depois da meia-noite (dia seguinte)?')) return;
@@ -2590,6 +2610,9 @@ ACOES.gSalvarAj = function () {
 };
 
 /* ---------- Mapa produtivo (motorista x dia) ---------- */
+function ocultarRev() { return ls('rd_oc_rev') === '1'; }
+function botaoOcRev() { var on = ocultarRev(); return '<button class="g-btn ' + (on ? '' : 'out') + ' oc-rev" data-a="ocRev" aria-pressed="' + on + '" title="Esconder quem já teve a produção conferida e confirmada">' + (on ? '✓ ' : '') + 'Ocultar revisados</button>'; }
+ACOES.ocRev = function () { ls('rd_oc_rev', ocultarRev() ? '0' : '1'); document.querySelectorAll('.oc-rev').forEach(function (b) { b.outerHTML = botaoOcRev(); }); if (S.tela === 'gmapa') desenharMapa(); else if (S.tela === 'gpainel' && S.G.pDias) desenharPainelDias(); else if (S.tela === 'gexpress') desenharExpress(); };
 function mapaEstado() {
   if (!S.G.mapa) { var q = quinzenaAtual(), p = periodoQ(q.ano, q.mes, q.q); S.G.mapa = { modo: 'q', q: q, de: p.de, ate: p.ate, todos: false, busca: '' }; }
   return S.G.mapa;
@@ -2606,7 +2629,7 @@ TELAS.gmapa = function () {
     barraFiltros('mp', '<div class="g-f wide fsem"><span class="l">Filtrar por</span><div class="g-seg"><button class="' + (M.modo === 'q' ? 'on' : '') + '" data-a="mpModo" data-v="q">Quinzena</button><button class="' + (M.modo === 'p' ? 'on' : '') + '" data-a="mpModo" data-v="p">Dia x a y</button></div></div>' + filtro +
     '<label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#3E4A55;height:40px"><input type="checkbox" id="mpTodos" data-a="mpTodos"' + (M.todos ? ' checked' : '') + ' style="width:18px;height:18px"> Mostrar ativos sem produção</label>' +
     (M.modo === 'q' ? '<span class="fpop-q" hidden>' + (q.q === 1 ? '1ª' : '2ª') + ' quinzena · ' + MESES[q.mes - 1] + ' ' + q.ano + '</span>' : ''),
-    '<input id="mpBusca" class="g-in fbusca" placeholder="Procurar motorista" aria-label="Procurar motorista" value="' + esc(M.busca) + '" data-i="mpBusca">' +
+    botaoOcRev() + '<input id="mpBusca" class="g-in fbusca" placeholder="Procurar motorista" aria-label="Procurar motorista" value="' + esc(M.busca) + '" data-i="mpBusca">' +
     menuExportar('<button class="g-btn out" data-a="mpRel" data-f="xlsx">' + I.baixar + ' Excel</button><button class="g-btn out" data-a="mpRel" data-f="pdf">' + I.baixar + ' PDF</button><button class="g-btn" data-a="mpRel" data-f="html">' + I.cheia + ' Tela cheia</button>')) +
     '<section class="g-kpis" id="mpKpis"></section>' +
     '<div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center"><span class="leg"><i style="background:#8FD16A"></i>✓ Conferido e confirmado</span><span class="leg"><i style="background:#E3F2D3"></i>Produziu (falta conferir)</span><span class="leg"><i style="background:#F8C08A"></i>Alterado depois de conferir</span><span class="leg"><i style="background:#FFF1A8"></i>Rodou em outra modalidade</span><span class="leg"><i style="background:#D2EEFB"></i>Dia ainda aberto</span><span class="leg"><i style="background:#FBE7E0"></i>Não trabalhou</span><span class="leg"><i style="background:#F1F3F5"></i>Domingo sem produção</span></div>' +
@@ -2644,7 +2667,8 @@ function desenharMapa() {
     '<div class="g-kpi navy"><span>Valor produzido no período</span><b>' + brl(r.total) + '</b><span>' + r.grupos.map(function (g) { return g.vinculo.toLowerCase() + ' ' + brl(g.total); }).join(' · ') + '</span></div>';
   var cab = '<tr><th class="nº">Nº</th><th class="nm">Motorista</th>' + r.dias.map(function (d) { return '<th class="' + (dom(d) ? 'dom' : '') + '">' + d.slice(8) + '/' + d.slice(5, 7) + '<br><span style="font-weight:600">' + dow(d) + '</span></th>'; }).join('') + '<th>Dias</th><th>Total</th></tr>';
   var linhas = r.grupos.map(function (g) {
-    var ms = g.motoristas.filter(function (m) { return !busca || semAc(m.nome).indexOf(busca) >= 0; });
+    var revisado = function (m) { var ks = Object.keys(m.dias); return ks.length && ks.every(function (d) { return m.dias[d].conf === 'OK'; }); };
+    var ms = g.motoristas.filter(function (m) { return (!busca || semAc(m.nome).indexOf(busca) >= 0) && !(ocultarRev() && revisado(m)); });
     if (!ms.length) return '';
     return '<tr class="grp"><td colspan="2" class="nm">' + g.vinculo + (g.vinculo === 'CLT' ? '' : 'S') + ' · ' + ms.length + ' motorista(s)</td><td colspan="' + (nDias + 2) + '"></td></tr>' +
       ms.map(function (m, i) {
@@ -3204,12 +3228,13 @@ ACOES.cIncluir = function (d) {
     '<div id="inExtra" class="g-f" style="grid-column:1/-1;display:' + (cont ? 'none' : 'flex') + '"><label for="inTipo">Custo extra</label><select id="inTipo" class="g-in">' + extras.map(function (x) { return '<option' + (x === tipo ? ' selected' : '') + '>' + x + '</option>'; }).join('') + '</select></div>' +
     campo('inOri', 'Origem', s0.origem, ' style="text-transform:uppercase"') + campo('inDes', 'Destino', s0.destino, ' style="text-transform:uppercase"') +
     campo('inIni', 'Início / saída', hIni, ' type="time"') + campo('inFim', 'Fim / chegada', hFim, ' type="time"') +
-    campo('inV', 'Valor (R$)', s0.valor ? br(s0.valor) : '', ' inputmode="decimal"') +
+    '<div id="inVBox" style="display:' + (pagPad === 'CLT' ? 'none' : 'contents') + '">' + campo('inV', 'Valor (R$)', s0.valor ? br(s0.valor) : '', ' inputmode="decimal"') + '</div>' +
     '<div class="g-f"><label for="inPag">Pago como</label><select id="inPag" class="g-in"><option value="">Igual ao dia (' + esc(pagPad) + ' se não abriu)</option>' + ['AVULSO', 'AGREGADO', 'CLT'].map(function (x) { return '<option>' + x + '</option>'; }).join('') + '</select></div>' +
     campo('inPlaca', 'Placa (opcional)', '', ' style="text-transform:uppercase" placeholder="usa a do dia"') + '<div></div></div>' +
     '<div class="g-f"><label for="inObs">Observação para o motorista</label><textarea id="inObs" class="g-in" rows="2" style="height:auto;padding:8px 10px" placeholder="Ex.: estava no sistema e não foi lançada no app"></textarea></div>' +
     '<div style="font-size:12px;color:#5B6773;background:#F3F6F8;border-radius:8px;padding:8px 10px">O motorista recebe um aviso no app. A inclusão fica no <b>Log</b> com o seu usuário. Dia sem abertura no app ganha um dia encerrado criado pelo escritório. Dia ainda aberto no app não recebe inclusão.</div>' +
     '<div style="display:flex;gap:8px"><button class="g-btn out" style="flex:1;justify-content:center" data-a="fecharModal">Cancelar</button><button class="g-btn" style="flex:1;justify-content:center" data-a="cIncluirOk">Incluir</button></div>');
+  var inPag = document.getElementById('inPag'); if (inPag) inPag.addEventListener('change', function () { var clt = inPag.value === 'CLT' || (!inPag.value && pagPad === 'CLT'); document.getElementById('inVBox').style.display = clt ? 'none' : 'contents'; });
   document.querySelectorAll('[data-seg="Tipo"] button').forEach(function (b) { b.addEventListener('click', function () { var ct = b.dataset.v === 'CONTÊINER'; document.getElementById('inCont').style.display = ct ? 'contents' : 'none'; document.getElementById('inExtra').style.display = ct ? 'none' : 'flex'; }); });
 };
 ACOES.cIncluirOk = function (d, el) {
@@ -3718,7 +3743,7 @@ TELAS.gdia = function () {
   var seg = [['mot', 'Por motorista'], ['vei', 'Por veículo']].map(function (o) { return '<button class="' + (S.G.diaVis === o[0] ? 'on' : '') + '" data-a="diaVis" data-v="' + o[0] + '">' + o[1] + '</button>'; }).join('');
   return gLayout('gdia', '<div><h1 class="g-h1">MOTORISTAS DO DIA</h1><div class="g-sub">Em qual veículo está cada motorista (agregado ou avulso), quem não abriu o dia e os dias que ficaram abertos.' + (master() ? ' O Master pode encerrar ou apagar um dia.' : '') + '</div></div>' +
     '<section class="g-card" style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap"><div class="g-f"><label for="dData">Dia</label><div style="display:flex;gap:6px"><button class="g-btn out dia-seta" data-a="diaMudar" data-n="-1" aria-label="Dia anterior">‹</button><input id="dData" type="date" class="g-in" value="' + S.G.diaData + '" style="width:170px"><button class="g-btn out dia-seta" data-a="diaMudar" data-n="1" aria-label="Próximo dia">›</button></div></div>' +
-    '<button class="g-btn out" data-a="diaHoje">Hoje</button><button class="g-btn" data-a="diaBuscar">Atualizar</button>' + (master() ? '<button class="g-btn out" data-a="lancProd" data-dia="1">+ Lançar produção</button>' : '') + '<div style="flex:1"></div><div class="g-seg">' + seg + '</div></section>' +
+    '<button class="g-btn out" data-a="diaHoje">Hoje</button><button class="g-btn" data-a="diaBuscar">Atualizar</button>' + (master() ? '<button class="g-btn out" data-a="lancProd" data-dia="1">+ Lançar produção</button><button class="g-btn out" data-a="lancProd" data-dia="1" data-imp="1">Importar produção</button>' : '') + '<div style="flex:1"></div><div class="g-seg">' + seg + '</div></section>' +
     '<div id="diaRes" style="display:flex;flex-direction:column;gap:16px"><div class="g-card" style="text-align:center;color:#5B6773">Carregando…</div></div>');
 };
 TELAS.gdia.depois = function () { ACOES.diaBuscar(); var d = document.getElementById('dData'); if (d) d.addEventListener('change', function () { S.G.diaData = d.value || hojeIso(); ACOES.diaBuscar(); }); };
@@ -3853,7 +3878,7 @@ function lpItemNovo(ant) {
 ACOES.lancProd = function (d) {
   Promise.all([gMotoristasCache(), gVeiculosCache()]).then(function () {
     var dia = d.d || (d.dia ? S.G.diaData : '') || hojeIso();
-    S.G.lp = { mot: d.id || '', data: dia, pag: '', placa: '', obs: '', itens: [lpItemNovo()] };
+    S.G.lp = { mot: d.id || '', data: dia, pag: '', placa: '', obs: '', itens: [lpItemNovo()], importar: !!d.imp, imp: null };
     lpDesenhar();
   }).catch(falha);
 };
@@ -3906,16 +3931,51 @@ function lpDesenhar() {
     '<div class="g-f"><label for="lpPag">Pago como</label><select id="lpPag" class="g-in" data-re="1">' + op('', 'Automático (' + lpPagEfetivoSem() + ')', L.pag) + ['AVULSO', 'AGREGADO', 'CLT'].map(function (x) { return op(x, x, L.pag); }).join('') + '</select></div>' +
     '<div class="g-f" style="grid-column:span 3"><label for="lpObs">Observação para o motorista</label><input id="lpObs" class="g-in" value="' + esc(L.obs) + '" placeholder="Ex.: produção do dia lançada pelo escritório (não foi lançada no app)"></div></div>' +
     '<datalist id="lpLocais">' + Object.keys(locais).map(function (x) { return '<option value="' + esc(x) + '">'; }).join('') + '</datalist>' +
+    (L.importar || L.imp ? '<div class="lp-imp"><div style="flex:1;min-width:220px"><b>Importar planilha do sistema</b><div style="font-size:12px;color:#5B6773">Planilha detalhada do motorista (Data do Movimento, Contêiner, OS, Origem, Destino, Tipo, Valor), .xlsx ou .csv. As linhas viram os lançamentos abaixo para você conferir antes de lançar.</div>' +
+      (L.imp ? '<div style="font-size:12px;margin-top:4px">Arquivo: <b>' + esc(L.imp.arquivo) + '</b>' + (L.imp.dias.length > 1 ? ' · dia da planilha: <select id="lpImpDia" class="g-in" style="height:32px;width:auto;display:inline-block">' + L.imp.dias.map(function (x) { return op(x.data, dBrA(x.data) + ' (' + x.linhas.length + ')', L.imp.dia); }).join('') + '</select>' : ' · ' + dBrA(L.imp.dia) + ' · ' + L.imp.dias[0].linhas.length + ' movimento(s)') + '</div>' : '') +
+      '</div><label class="g-btn ' + (L.imp ? 'out' : '') + '" style="cursor:pointer">' + (L.imp ? 'Trocar planilha' : 'Escolher planilha') + '<input type="file" id="lpArq" accept=".xlsx,.xls,.csv" style="display:none"></label></div>' : '') +
     '<div class="lp-itens">' + L.itens.map(item).join('') + '</div>' +
-    '<button class="g-btn out" style="align-self:flex-start" data-a="lpMais">+ Adicionar viagem ou custo</button>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="g-btn out" data-a="lpMais">+ Adicionar viagem ou custo</button>' + (L.importar || L.imp ? '' : '<button class="g-btn out" data-a="lpImportar">Importar planilha do sistema</button>') + '</div>' +
+    (L.imp ? '<div style="font-size:12px;color:#8A5300;background:#FFF8EC;border-radius:8px;padding:8px 10px">A planilha do sistema só tem o horário do movimento: o <b>fim</b> de cada linha foi preenchido com o horário do movimento seguinte (o último com +30 min) e o <b>tamanho</b> ficou 40 pés. Confira antes de lançar.</div>' : '') +
     '<div style="font-size:12px;color:#5B6773;background:#F3F6F8;border-radius:8px;padding:8px 10px">Fim antes do início = terminou depois da meia-noite. Se o motorista não abriu esse dia, o app cria o dia já encerrado. O motorista recebe um aviso com cada lançamento e tudo fica no <b>Log</b> com o seu usuário.</div>' +
     '<div class="lp-pe"><span id="lpTot"></span><button class="g-btn" data-a="lpSalvar">Lançar produção</button></div>', 'larga');
   lpTotal();
+  var arq = document.getElementById('lpArq'); if (arq) arq.addEventListener('change', function () { if (arq.files[0]) lpLerPlanilha(arq.files[0]); });
+  var sd = document.getElementById('lpImpDia'); if (sd) sd.addEventListener('change', function () { lpLer(); lpUsarDia(sd.value); lpDesenhar(); });
   var lay = document.getElementById('layer');
   lay.querySelectorAll('[data-re]').forEach(function (e) { e.addEventListener('change', function () { lpLer(); if (e.dataset.c === 'categoria') { var b = e.closest('.lp-item'), i = [].indexOf.call(document.querySelectorAll('.lp-item'), b); if (S.G.lp.itens[i].categoria === 'EXTRA') S.G.lp.itens[i].tipo_extra = ''; } lpDesenhar(); }); });
   lay.querySelectorAll('.lp-item [data-c="valor"]').forEach(function (e) { e.addEventListener('input', function () { lpLer(); lpTotal(); }); });
 }
 function lpPagEfetivoSem() { var L = S.G.lp, g = L.pag; L.pag = ''; var r = lpPagEfetivo(); L.pag = g; return r.toLowerCase(); }
+ACOES.lpImportar = function () { lpLer(); S.G.lp.importar = true; lpDesenhar(); };
+function lpLerPlanilha(f) {
+  lpLer();
+  var rd = new FileReader();
+  rd.onload = function () {
+    call('gLerProducaoSistema', { base64: String(rd.result).split(',')[1], arquivo: f.name }).then(function (r) {
+      var L = S.G.lp;
+      var alvo = r.dias.filter(function (x) { return x.data === L.data; })[0] || r.dias.slice().sort(function (a, b) { return b.linhas.length - a.linhas.length; })[0];
+      L.imp = { arquivo: r.arquivo || f.name, dias: r.dias, dia: alvo.data };
+      lpUsarDia(alvo.data); lpDesenhar();
+      toast(alvo.linhas.length + ' movimento(s) de ' + dBrA(alvo.data) + ' carregados. Confira e toque em Lançar produção.');
+    }).catch(falha);
+  };
+  rd.readAsDataURL(f);
+}
+/** Linhas do sistema de um dia → lançamentos do formulário. */
+function lpUsarDia(dia) {
+  var L = S.G.lp, d = L.imp.dias.filter(function (x) { return x.data === dia; })[0]; if (!d) return;
+  L.imp.dia = dia; L.data = dia;
+  var hm = function (h) { return +h.slice(0, 2) * 60 + +h.slice(3); }, fmt = function (n) { n = (n + 1440) % 1440; return pad(Math.floor(n / 60)) + ':' + pad(n % 60); };
+  L.itens = d.linhas.map(function (x, i) {
+    var prox = d.linhas[i + 1], ini = x.hora, fim = prox && hm(prox.hora) > hm(ini) ? prox.hora : fmt(hm(ini) + 30);
+    var t = String(x.tipo || '').toUpperCase(), cont = !t || t === 'CHEIO' || t === 'VAZIO';
+    return { categoria: cont ? 'CONTEINER' : 'EXTRA', conteiner: cont ? x.conteiner : '', tamanho: '40', carga: t === 'VAZIO' ? 'VAZIO' : 'CHEIO', tipo_extra: cont ? '' : (EXTRAS_REGRA[t] ? t : ''),
+      origem: x.origem || '', destino: x.destino || '', local: '', ini: ini, fim: fim, valor: x.valor ? br(x.valor) : '' };
+  });
+  if (!L.itens.length) L.itens = [lpItemNovo()];
+  if (!L.obs) L.obs = 'Produção importada da planilha do sistema';
+}
 ACOES.lpMais = function () { lpLer(); var L = S.G.lp; L.itens.push(lpItemNovo(L.itens[L.itens.length - 1])); lpDesenhar(); var its = document.querySelectorAll('.lp-item'); if (its.length) its[its.length - 1].scrollIntoView({ block: 'nearest' }); };
 ACOES.lpTirar = function (d) { lpLer(); S.G.lp.itens.splice(+d.i, 1); lpDesenhar(); };
 ACOES.lpSalvar = function (d, el) {
@@ -3931,6 +3991,83 @@ ACOES.lpSalvar = function (d, el) {
     fecharModal(); S.G.lp = null;
     toast(r.qtd + ' lançamento(s) incluído(s)' + (r.criouDia ? ' em um dia novo' : '') + '. O motorista foi avisado.');
     if (S.tela === 'gdia') ACOES.diaBuscar(); else ir(S.tela, S.p);
+  }).catch(function (e) { el.disabled = false; falha(e); });
+};
+
+/* ---------- Verificação express: planilha do dia (todos os motoristas) x produção do app ---------- */
+TELAS.gexpress = function () {
+  var X = S.G.ex || (S.G.ex = { data: diaMais(hojeIso(), -1) });
+  return gLayout('gexpress', '<div><h1 class="g-h1">VERIFICAÇÃO EXPRESS</h1><div class="g-sub">Suba a planilha do sistema com a produção do dia de todos os motoristas ("Planilha de Fechamento Motorista Geral"). Quem tiver o total do dia batendo com o app aparece na caixa de verificação para você marcar SIM ou NÃO.</div></div>' +
+    '<section class="g-card" style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap"><div class="g-f"><label for="exData">Dia da planilha</label><input id="exData" type="date" class="g-in" max="' + hojeIso() + '" value="' + X.data + '" style="width:180px"></div>' +
+    '<label class="g-btn" style="cursor:pointer">' + (X.r ? 'Subir outra planilha' : 'Escolher planilha') + '<input type="file" id="exArq" accept=".xlsx,.xls,.csv" style="display:none"></label>' +
+    (X.r ? '<span style="font-size:13px;color:#5B6773">' + esc(X.r.arquivo) + ' · ' + dBrA(X.r.data) + '</span><button class="g-btn out" data-a="exRefazer">Comparar de novo</button>' : '') + '<div style="flex:1"></div>' + botaoOcRev() + '</section>' +
+    '<div id="exRes" style="display:flex;flex-direction:column;gap:16px"></div>');
+};
+TELAS.gexpress.depois = function () {
+  var X = S.G.ex, inp = document.getElementById('exArq'), dt = document.getElementById('exData');
+  dt.addEventListener('change', function () { X.data = dt.value; });
+  inp.addEventListener('change', function () {
+    var f = inp.files[0]; if (!f) return;
+    if (!dt.value) return toast('Escolha o dia da planilha.', true);
+    var m = f.name.match(/(\d{1,2})[-_.](\d{1,2})/);   // arquivo "23-11.xlsx": confere com o dia escolhido
+    if (m && (+m[1] !== +dt.value.slice(8) || +m[2] !== +dt.value.slice(5, 7)) && !confirm('O nome do arquivo (' + f.name + ') parece ser de ' + pad(+m[1]) + '/' + pad(+m[2]) + ', mas o dia escolhido é ' + dBrA(dt.value) + '. Continuar mesmo assim?')) { inp.value = ''; return; }
+    var rd = new FileReader();
+    rd.onload = function () { X.base64 = String(rd.result).split(',')[1]; X.arquivo = f.name; X.data = dt.value; ACOES.exRefazer(); };
+    rd.readAsDataURL(f);
+  });
+  desenharExpress();
+};
+ACOES.exRefazer = function () {
+  var X = S.G.ex; if (!X.base64) return;
+  call('gVerificacaoExpress', { data: X.data, base64: X.base64, arquivo: X.arquivo }).then(function (r) { X.r = r; X.marca = {}; render(); }).catch(falha);
+};
+function desenharExpress() {
+  var X = S.G.ex, box = document.getElementById('exRes'); if (!box) return;
+  if (!X.r) { box.innerHTML = '<div class="g-card" style="text-align:center;color:#5B6773;padding:28px">Escolha o dia e suba a planilha para comparar.</div>'; return; }
+  var r = X.r, t = r.totais, oc = ocultarRev();
+  var podeMarcar = function (it) { return it.status === 'BATE' && !it.app.aberto && it.conferido !== 'OK'; };
+  var bate = r.itens.filter(function (it) { return it.status === 'BATE' && !(oc && it.conferido === 'OK'); });
+  var dif = r.itens.filter(function (it) { return it.status === 'DIFERENTE' && !(oc && it.conferido === 'OK'); });
+  var soSis = r.itens.filter(function (it) { return it.status === 'SO_SISTEMA'; }), soApp = r.itens.filter(function (it) { return it.status === 'SO_APP' && !(oc && it.conferido === 'OK'); });
+  var vinc = function (it) { return chipVinc(it.vinculo); };
+  var qtdTxt = function (q, dif) { return '<span style="font-size:11px;color:' + (dif ? '#C2410C' : '#5B6773') + '">' + q + ' mov.</span>'; };
+  var marcaveis = bate.filter(podeMarcar);
+  var html = '<section class="g-kpis"><div class="g-kpi navy"><span>' + dow(r.data) + ' ' + dBrA(r.data) + '</span><b>' + brl(t.sistema) + '</b><span style="color:#C9D6E2;text-transform:none;letter-spacing:0">no sistema · ' + brl(t.app) + ' no app</span></div>' +
+    '<div class="g-kpi"><span>Batem</span><b style="color:#3F8F1F">' + t.BATE + '</b></div><div class="g-kpi' + (t.DIFERENTE ? ' warn' : '') + '"><span>Valor diferente</span><b>' + t.DIFERENTE + '</b></div>' +
+    '<div class="g-kpi' + (t.SO_SISTEMA + r.semCadastro.length ? ' warn' : '') + '"><span>Só no sistema</span><b>' + (t.SO_SISTEMA + r.semCadastro.length) + '</b></div><div class="g-kpi' + (t.SO_APP ? ' warn' : '') + '"><span>Só no app</span><b>' + t.SO_APP + '</b></div></section>';
+  // caixa de verificação
+  html += '<section class="g-tablebox ex-caixa"><div class="hd"><b>✓ Caixa de verificação · ' + bate.length + ' motorista(s) com o total do dia batendo</b>' +
+    (master() && marcaveis.length ? '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="g-btn sm out" data-a="exTodos" data-v="S">Todos SIM</button><button class="g-btn sm out" data-a="exTodos" data-v="N">Todos NÃO</button><button class="g-btn sm out" data-a="exTodos" data-v="">Limpar</button></div>' : '') + '</div>' +
+    (bate.length ? '<div class="g-scroll"><table class="g" style="min-width:760px"><thead><tr><th>Motorista</th><th class="n">Sistema</th><th class="n">App</th><th>Situação</th><th style="text-align:center">Validar?</th></tr></thead><tbody>' +
+      bate.map(function (it) {
+        var mk = X.marca[it.motorista_id] || '';
+        return '<tr class="' + (mk === 'S' ? 'ex-sim' : mk === 'N' ? 'ex-nao' : '') + '"><td><b>' + esc(it.nome) + '</b> ' + vinc(it) + '</td><td class="n"><b>' + brl(it.sis.total) + '</b><br>' + qtdTxt(it.sis.qtd, it.qtdDiferente) + '</td><td class="n"><b>' + brl(it.app.total) + '</b><br>' + qtdTxt(it.app.qtd, it.qtdDiferente) + '</td>' +
+          '<td>' + (it.conferido === 'OK' ? chipConf('OK', it.confPor) + '<div style="font-size:11px;color:#5B6773">' + esc(it.confPor) + '</div>' : it.app.aberto ? '<span class="g-chip" style="background:#E3F0FA;color:#145A90">DIA ABERTO</span>' : it.qtdDiferente ? '<span style="font-size:12px;color:#C2410C">valor bate, quantidade não</span>' : '<span style="font-size:12px;color:#3F8F1F">bate</span>') +
+          ' <button class="g-btn sm out" data-a="pVerDia" data-id="' + it.motorista_id + '" data-d="' + r.data + '">Ver dia</button></td>' +
+          '<td style="text-align:center;white-space:nowrap">' + (!master() ? '<span style="font-size:12px;color:#5B6773">só o Master</span>' : podeMarcar(it) ? '<div class="ex-sn"><button class="' + (mk === 'S' ? 'on s' : '') + '" data-a="exMarca" data-id="' + it.motorista_id + '" data-v="S">SIM</button><button class="' + (mk === 'N' ? 'on n' : '') + '" data-a="exMarca" data-id="' + it.motorista_id + '" data-v="N">NÃO</button></div>' : '<span style="font-size:12px;color:#5B6773">—</span>') + '</td></tr>';
+      }).join('') + '</tbody></table></div>' : '<div style="padding:18px;text-align:center;color:#5B6773">Nenhum motorista com o total batendo' + (oc ? ' (os já revisados estão ocultos)' : '') + '.</div>') +
+    (master() && marcaveis.length ? '<div class="ex-pe"><span id="exResumo"></span><button class="g-btn lime" data-a="exValidar">' + I.ok + ' Confirmar validação</button></div>' : '') + '</section>';
+  if (dif.length) html += '<section class="g-tablebox"><div class="hd"><b>Valor diferente · ' + dif.length + '</b><span style="font-size:12px;color:#5B6773">confira o dia (Ver dia) ou use a Conferência com a planilha detalhada</span></div><div class="g-scroll"><table class="g" style="min-width:760px"><thead><tr><th>Motorista</th><th class="n">Sistema</th><th class="n">App</th><th class="n">Diferença (app − sistema)</th><th></th></tr></thead><tbody>' +
+    dif.map(function (it) { return '<tr><td><b>' + esc(it.nome) + '</b> ' + vinc(it) + (it.app.aberto ? ' <span class="g-chip" style="background:#E3F0FA;color:#145A90">DIA ABERTO</span>' : '') + '</td><td class="n">' + brl(it.sis.total) + '<br>' + qtdTxt(it.sis.qtd) + '</td><td class="n">' + brl(it.app.total) + '<br>' + qtdTxt(it.app.qtd) + '</td><td class="n"><b style="color:' + (it.diferenca < 0 ? '#C2410C' : '#8A5300') + '">' + (it.diferenca > 0 ? '+' : '') + brl(it.diferenca) + '</b></td><td style="text-align:right"><button class="g-btn sm out" data-a="pVerDia" data-id="' + it.motorista_id + '" data-d="' + r.data + '">Ver dia</button></td></tr>'; }).join('') + '</tbody></table></div></section>';
+  if (soSis.length || r.semCadastro.length) html += '<section class="g-tablebox"><div class="hd"><b>Só no sistema · ' + (soSis.length + r.semCadastro.length) + '</b><span style="font-size:12px;color:#5B6773">está na planilha e não tem produção no app neste dia</span></div><div class="g-scroll"><table class="g" style="min-width:640px"><thead><tr><th>Motorista</th><th class="n">Sistema</th><th></th></tr></thead><tbody>' +
+    soSis.map(function (it) { return '<tr><td><b>' + esc(it.nome) + '</b> ' + vinc(it) + '</td><td class="n">' + brl(it.sis.total) + '<br>' + qtdTxt(it.sis.qtd) + '</td><td style="text-align:right">' + (master() ? '<button class="g-btn sm out" data-a="lancProd" data-imp="1" data-id="' + it.motorista_id + '" data-d="' + r.data + '">Importar produção</button> <button class="g-btn sm out" data-a="lancProd" data-id="' + it.motorista_id + '" data-d="' + r.data + '">+ Lançar</button>' : '') + '</td></tr>'; }).join('') +
+    r.semCadastro.map(function (x) { return '<tr><td><b>' + esc(x.nome) + '</b> <span class="g-chip" style="background:#FDE8DE;color:#9A3412">NÃO ACHEI NO CADASTRO</span></td><td class="n">' + brl(x.total) + '<br>' + qtdTxt(x.qtd) + '</td><td></td></tr>'; }).join('') + '</tbody></table></div></section>';
+  if (soApp.length) html += '<section class="g-tablebox"><div class="hd"><b>Só no app · ' + soApp.length + '</b><span style="font-size:12px;color:#5B6773">tem produção no app e não está na planilha</span></div><div class="g-scroll"><table class="g" style="min-width:640px"><thead><tr><th>Motorista</th><th class="n">App</th><th></th></tr></thead><tbody>' +
+    soApp.map(function (it) { return '<tr><td><b>' + esc(it.nome) + '</b> ' + vinc(it) + '</td><td class="n">' + brl(it.app.total) + '<br>' + qtdTxt(it.app.qtd) + '</td><td style="text-align:right"><button class="g-btn sm out" data-a="pVerDia" data-id="' + it.motorista_id + '" data-d="' + r.data + '">Ver dia</button></td></tr>'; }).join('') + '</tbody></table></div></section>';
+  box.innerHTML = html; exResumo();
+}
+function exResumo() { var X = S.G.ex, el = document.getElementById('exResumo'); if (!el) return; var s = 0, n = 0; Object.keys(X.marca).forEach(function (k) { if (X.marca[k] === 'S') s++; else if (X.marca[k] === 'N') n++; }); el.innerHTML = '<b style="color:#3F8F1F">' + s + ' SIM</b> · <b style="color:#C2410C">' + n + ' NÃO</b>'; }
+ACOES.exMarca = function (d) { var X = S.G.ex; X.marca[d.id] = X.marca[d.id] === d.v ? '' : d.v; desenharExpress(); };
+ACOES.exTodos = function (d) { var X = S.G.ex; X.r.itens.forEach(function (it) { if (it.status === 'BATE' && !it.app.aberto && it.conferido !== 'OK') X.marca[it.motorista_id] = d.v; }); desenharExpress(); };
+ACOES.exValidar = function (d, el) {
+  var X = S.G.ex, sim = [], nao = [];
+  X.r.itens.forEach(function (it) { var m = X.marca[it.motorista_id]; if (m === 'S') sim.push({ motorista_id: it.motorista_id, valor: it.app.total }); else if (m === 'N') nao.push(it.motorista_id); });
+  if (!sim.length && !nao.length) return toast('Marque SIM ou NÃO em pelo menos um motorista.', true);
+  if (!confirm('Validar ' + sim.length + ' motorista(s) como SIM (a produção do dia ' + dBrA(X.r.data) + ' fica confirmada)' + (nao.length ? ' e registrar ' + nao.length + ' como NÃO' : '') + '?')) return;
+  el.disabled = true;
+  call('gValidarExpress', { data: X.r.data, sim: sim, nao: nao }).then(function (r) {
+    toast(r.confirmados + ' validado(s)' + (r.nao ? ' · ' + r.nao + ' NÃO' : '') + (r.pulados.length ? ' · ' + r.pulados.length + ' não confirmado(s): ' + r.pulados.join('; ') : ''), !!r.pulados.length);
+    ACOES.exRefazer();
   }).catch(function (e) { el.disabled = false; falha(e); });
 };
 
