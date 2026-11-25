@@ -527,9 +527,18 @@ function transporte(nome, token, args) {
     return enviarPost(nome, token, args);
   });
 }
-var APP_VERSAO = '25.11-b';
+var APP_VERSAO = '26.11-a';
 /** Novidades de cada versão: aparecem uma vez, na primeira abertura depois da atualização. */
 var NOVIDADES = [
+  { v: '26.11-a', motorista: [
+      ['Abastecimento pelo posto', 'O abastecimento do carro da empresa agora vem direto do relatório do posto. Você não precisa mais lançar abastecimento no app.', { so: ['AVULSO', 'CLT'] }],
+      ['Abastecimento mais rápido', 'O abastecimento é sempre do seu cavalo: só digite os litros e o valor. Não pede mais foto do cupom nem a escolha do veículo.', { so: 'AGREGADO' }]
+    ], gestao: [
+      ['Importar relatório do posto', 'Em Combustível: suba o histórico de consumo do posto (.csv ou .xlsx). Antes de gravar aparece a prévia com o que é novo, o que já foi importado e o que está repetido no próprio arquivo. Só os novos entram, e o mesmo abastecimento nunca entra duas vezes.'],
+      ['Média por carro', 'Nova aba em Combustível: litros e valor do posto x KM rodado registrado no app, por carro e na ordem da frota (CV 01 → CV 30). Mostra km por litro, R$ por km e alertas (abasteceu sem KM, rodou sem abastecimento). Tem relatório em PDF e Excel.'],
+      ['Histórico das importações', 'Aba Importações do posto: cada arquivo importado, por quem e quando. O Master pode desfazer uma importação errada (com motivo, fica no Log).'],
+      ['Só agregados lançam abastecimento', 'Avulsos e CLT não lançam mais abastecimento no app. O Fechamento passa a usar os abastecimentos importados do posto, e a Conferência de combustível (posto x app) compara só a frota agregada.']
+    ] },
   { v: '25.11-b', motorista: [], gestao: [
       ['Importar produção corrigido', 'O botão Escolher planilha dentro do Lançar produção agora abre a janela para escolher o arquivo.']
     ] },
@@ -637,7 +646,7 @@ function checarNovidades() {
   var ordem = function (v) { var m = String(v || '').match(/(\d\d)\.(\d\d)-(\w)/); return m ? m[2] + m[1] + m[3] : ''; };   // versão = dia.mês-letra
   NOVIDADES.forEach(function (n) {
     if (visto ? !(ordem(n.v) > ordem(visto) || n.v === APP_VERSAO) : n.v !== APP_VERSAO) return;   // instalação nova: só a versão atual
-    (gestao ? n.gestao : n.motorista).forEach(function (i) { if (!i[2] || !i[2].so || i[2].so === vinc) itens.push(i); });
+    (gestao ? n.gestao : n.motorista).forEach(function (i) { if (!i[2] || !i[2].so || [].concat(i[2].so).indexOf(vinc) >= 0) itens.push(i); });
   });
   if (!itens.length) return;
   setTimeout(function () {
@@ -779,9 +788,8 @@ var LOCAL = {
   },
   excluirLancamento: function (e, a) { e.lancamentos = e.lancamentos.filter(function (l) { return l.id !== a.id; }); return e; },
   salvarAbastecimento: function (e, a) {
-    var m = e.motorista, op = e.operacao, placa, pag, data, opId = '';
-    if (op && !a.placa) { placa = op.veiculo_atual; pag = op.pagamento_atual; data = op.data_operacional; opId = op.id; }
-    else { placa = a.placa || m.placa_propria; pag = pagPara(m, placa); if (op && op.veiculo_atual === placa) { data = op.data_operacional; opId = op.id; } else data = a.quando.slice(0, 10); }
+    var m = e.motorista, op = e.operacao, placa = String(a.placa || m.placa_propria || '').toUpperCase(), pag = 'AGREGADO', data = a.quando.slice(0, 10), opId = '';
+    if (op && String(op.veiculo_atual).toUpperCase() === placa) { data = op.data_operacional; opId = op.id; }
     e.abastecimentos = (e.abastecimentos || []).concat([{ id: a.cid, operacao_id: opId, motorista_id: m.id, data_operacional: data, placa: placa, pagamento: pag, litros: +a.litros, valor: +a.valor,
       preco: +a.litros > 0 ? Math.round(a.valor / a.litros * 1000) / 1000 : 0, foto_id: a.foto_id || '', registrado_em: a.quando, pendente: true }]);
     return e;
@@ -1109,9 +1117,12 @@ function cab(titulo, opts) {
   var sino = opts.sino ? '<button class="ic-btn" data-a="nav" data-t="avisos" aria-label="Avisos">' + I.sino + (S.est && S.est.avisosNaoLidos ? '<span class="badge">' + S.est.avisosNaoLidos + '</span>' : '') + '</button>' : '';
   return '<header class="m-head">' + esq + '<img class="hd-logo" src="' + LOGO_NEG + '" alt="Romaneio Digital Mucuripe">' + '<h1>' + esc(titulo) + '</h1>' + sino + '<button class="ic-btn" data-a="falar" aria-label="Ouvir as instruções">' + I.voz + '</button></header>';
 }
+/** Só o agregado lança abastecimento (sempre do próprio cavalo). Avulso e CLT: vem do relatório do posto. */
+function lancaAbast() { var m = S.est && S.est.motorista; return !!(m && m.vinculo === 'AGREGADO' && m.placa_propria); }
 function tabs(on) {
   var b = function (t, ic, n) { return '<button class="' + (on === t ? 'on' : '') + '" data-a="nav" data-t="' + t + '">' + ic + '<span>' + n + '</span></button>'; };
-  return '<nav class="tabs">' + b('hoje', I.casa, 'Hoje') + b('producao', I.cal, 'Produção') + b('combustivel', I.bomba, 'Combustível') + b('desempenho', I.graf, 'Desempenho') + b('perfil', I.user, 'Perfil') + '</nav>';
+  var comb = lancaAbast();
+  return '<nav class="tabs"' + (comb ? '' : ' style="grid-template-columns:repeat(4,minmax(0,1fr))"') + '>' + b('hoje', I.casa, 'Hoje') + b('producao', I.cal, 'Produção') + (comb ? b('combustivel', I.bomba, 'Combustível') : '') + b('desempenho', I.graf, 'Desempenho') + b('perfil', I.user, 'Perfil') + '</nav>';
 }
 ACOES.nav = function (d) {
   if (d.t === 'abrir' && S.tela === 'hoje') { S.modoFolha = null; S.K = null; }
@@ -1422,11 +1433,11 @@ function telaInicioSemOperacao() {
     '<div class="card" style="display:flex;align-items:center;gap:12px"><div style="width:48px;height:48px;border-radius:24px;background:#0B3D61;color:#B6C54C;display:flex;align-items:center;justify-content:center;font-weight:800">' + esc(iniciais(m.nome)) + '</div>' +
     '<div style="display:flex;flex-direction:column;gap:3px"><b style="font-size:17px">Olá, ' + esc(nome) + '</b><span style="font-size:13px;color:var(--muted)">' + dow(e.hoje) + ' · ' + dBrA(e.hoje) + '</span></div></div>' +
     '<div class="card" style="display:flex;flex-direction:column;gap:6px"><span style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;color:var(--muted)"><span style="width:8px;height:8px;border-radius:4px;background:var(--muted)"></span>NENHUMA OPERAÇÃO ABERTA</span>' +
-    '<span style="font-size:14px;color:var(--ink2);line-height:1.45">Para lançar viagens e custos extras, primeiro abra a operação do dia. <b>Abastecimento pode ser lançado a qualquer hora.</b></span></div>' +
+    '<span style="font-size:14px;color:var(--ink2);line-height:1.45">Para lançar viagens e custos extras, primeiro abra a operação do dia.' + (lancaAbast() ? ' <b>Abastecimento pode ser lançado a qualquer hora.</b>' : '') + '</span></div>' +
     (u ? '<div class="card" style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div style="display:flex;flex-direction:column;gap:2px"><span class="lbl">Folha encerrada hoje</span><b style="font-size:17px">' + dow(u.data_operacional) + ' · ' + dBr(u.data_operacional) + '</b><span style="font-size:12px;color:var(--muted)">' + hh(u.aberta_em) + ' até ' + hh(u.encerrada_em) + ' · ' + u.qtd + ' lançamento(s)</span></div><b style="font-size:17px">' + (S.est.motorista.vinculo === 'CLT' ? '' : brl(u.total)) + '</b></div>' : '') +
     '<div class="row2"><button class="opt col" style="min-height:96px;gap:6px" data-a="nav" data-t="producao">' + I.cal + '<b style="font-size:13px">MINHA PRODUÇÃO</b></button>' +
     '<button class="opt col" style="min-height:96px;gap:6px" data-a="nav" data-t="desempenho">' + I.graf + '<b style="font-size:13px">DESEMPENHO</b></button></div>' +
-    '<button class="btn out" style="border-color:#E8A33D;color:var(--warnText)" data-a="iniciarWiz" data-c="ABAST">' + I.bomba + ' LANÇAR ABASTECIMENTO</button>' +
+    (lancaAbast() ? '<button class="btn out" style="border-color:#E8A33D;color:var(--warnText)" data-a="iniciarWiz" data-c="ABAST">' + I.bomba + ' LANÇAR ABASTECIMENTO</button>' : '') +
     '</main><div class="m-foot"><button class="btn" data-a="nav" data-t="abrir">' + I.seta + ' ABRIR OPERAÇÃO</button></div>' + tabs('hoje') + '</div>';
 }
 ACOES.verAbast = function (d) {
@@ -1482,6 +1493,11 @@ var PASSOS = { CONTEINER: ['num', 'origem', 'destino', 'tam', 'carga', 'hora', '
 ACOES.iniciarWiz = function (d) {
   var agora = new Date(), hm = pad(agora.getHours()) + ':' + pad(agora.getMinutes());
   S.W = { categoria: d.c, i: 0, conteiner: '', foto_id: '', origem: '', destino: '', tamanho: '', carga: '', tipo_extra: '', ini: hm, fim: '', cents: '', litros: '', thumb: '', placa: '', meiaNoite: false, pag: S.est.operacao ? S.est.operacao.pagamento_atual : S.est.motorista.vinculo };
+  if (d.c === 'ABAST') {   // só agregado, sempre no próprio cavalo
+    if (!lancaAbast()) { S.W = null; return toast('O abastecimento do carro da empresa vem direto do relatório do posto. Não precisa lançar.', true); }
+    S.W.placa = String(S.est.motorista.placa_propria).toUpperCase(); S.W.pag = 'AGREGADO';
+    return ir('wiz');
+  }
   if (d.c === 'ABAST' && !S.est.operacao) {
     S.W.escolheVeic = true;
     return callLeitura('veiculosAbast', {}).catch(function (e) {
@@ -1501,13 +1517,14 @@ ACOES.iniciarWiz = function (d) {
 function comTrajeto(t) { return (S.est.extrasComTrajeto || ['BATENDO']).indexOf(t) >= 0; }
 /** Abastecimento: cupom obrigatório, menos para agregado no próprio cavalo. */
 function abastExigeCupom() {
+  if (S.W && S.W.categoria === 'ABAST' && lancaAbast()) return false;   // agregado no próprio cavalo
   var e = S.est;
   if (e.operacao && !S.W.escolheVeic) return e.exigeCupom;
   var m = e.motorista;
   return !(m.vinculo === 'AGREGADO' && S.W.placa && S.W.placa === String(m.placa_propria || '').toUpperCase());
 }
 function listaPassos() {
-  if (S.W.categoria === 'ABAST') return (S.W.escolheVeic ? ['veic'] : []).concat(abastExigeCupom() ? ['cupom'] : []).concat(['litros', 'valor', 'rev']);
+  if (S.W.categoria === 'ABAST') return ['litros', 'valor', 'rev'];
   var l = S.W.categoria === 'EXTRA' && comTrajeto(S.W.tipo_extra) ? ['tipo', 'origem', 'destino', 'hora', 'valor', 'rev'] : PASSOS[S.W.categoria];
   return wizSemValor() ? l.filter(function (p) { return p !== 'valor'; }) : l;
 }
@@ -1727,7 +1744,7 @@ ACOES.fotoCupom = function () {
 ACOES.finalizar = function () {
   var W = S.W;
   if (W.categoria === 'ABAST') {
-    return acao('salvarAbastecimento', { litros: +W.litros / 100, valor: +W.cents / 100, foto_id: abastExigeCupom() ? W.foto_id : '', placa: W.escolheVeic ? W.placa : '' }).then(function (est) {
+    return acao('salvarAbastecimento', { litros: +W.litros / 100, valor: +W.cents / 100, foto_id: '', placa: W.placa }).then(function (est) {
       S.W = null; toast('Abastecimento salvo!'); falar('Abastecimento salvo.'); aplicarEstado(est, 'combustivel');
     }).catch(falha);
   }
@@ -1987,10 +2004,10 @@ TELAS.desempenho.depois = function () {
 TELAS.combustivel = function () {
   var e = S.est, op = e.operacao, ag = e.motorista.vinculo === 'AGREGADO';
   var q = S.p.q || (S.p.q = quinzenaAtual());
-  var dica = op ? (e.exigeCupom ? 'Você vai tirar a foto do cupom, digitar os litros e o valor.' : 'Você vai digitar os litros e o valor.')
-    : 'Pode lançar mesmo sem operação aberta. Você escolhe o veículo que abasteceu.';
-  var topo = '<button class="btn" style="background:#E8A33D;color:#3D2600" data-a="iniciarWiz" data-c="ABAST">' + I.bomba + ' NOVO ABASTECIMENTO</button>' +
-    '<div style="font-size:12px;color:var(--muted);text-align:center">' + dica + '</div>';
+  var dica = 'Abastecimento do seu cavalo (' + esc(String(e.motorista.placa_propria || '').toUpperCase()) + '): você digita os litros e o valor. Pode lançar mesmo sem operação aberta.';
+  var topo = lancaAbast() ? '<button class="btn" style="background:#E8A33D;color:#3D2600" data-a="iniciarWiz" data-c="ABAST">' + I.bomba + ' NOVO ABASTECIMENTO</button>' +
+    '<div style="font-size:12px;color:var(--muted);text-align:center">' + dica + '</div>'
+    : '<div class="info">' + I.info + '<span>O abastecimento do carro da empresa agora vem direto do <b>relatório do posto</b>. Você não precisa lançar no app. Abaixo ficam os que você lançou antes.</span></div>';
   var periodo = '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px"><button class="ic-btn" style="color:var(--ink);border-color:var(--line);background:var(--surface)" data-a="mesComb" data-d="-1" aria-label="Mês anterior">' + I.voltar + '</button><b style="font-size:16px">' + MESES[q.mes - 1] + ' ' + q.ano + '</b><button class="ic-btn" style="color:var(--ink);border-color:var(--line);background:var(--surface);transform:scaleX(-1)" data-a="mesComb" data-d="1" aria-label="Próximo mês">' + I.voltar + '</button></div>' +
     '<div class="seg" style="grid-template-columns:1fr 1fr"><button class="' + (q.q === 1 ? 'on' : '') + '" data-a="qComb" data-q="1">1ª QUINZENA</button><button class="' + (q.q === 2 ? 'on' : '') + '" data-a="qComb" data-q="2">2ª QUINZENA</button></div>';
   return '<div class="m-app">' + cab('COMBUSTÍVEL') + '<main class="m-body">' + topo + periodo + (ag ? '<div id="combAg"></div>' : '') + '<div id="combLista"><div class="empty">Carregando…</div></div></main>' + tabs('combustivel') + '</div>';
@@ -2726,7 +2743,7 @@ function desenharFech() {
   var fechado = f.registro && f.registro.status === 'FECHADO', aba = S.G.fAba || 'prod';
   var acoes = { abertos: '<button class="g-btn sm out" data-a="gNav" data-t="gmapa">Ver no Mapa</button>', confirmados: '<button class="g-btn sm out" data-a="gNav" data-t="gmapa">Conferir no Mapa</button>',
     sistema: '<button class="g-btn sm' + (f.sistema ? ' out' : '') + '" data-a="fArqSistema">' + I.baixar + ' ' + (f.sistema ? 'Trocar arquivo' : 'Enviar arquivo do sistema') + '</button>',
-    bate: '<button class="g-btn sm out" data-a="fAba" data-v="prod">Ver diferenças</button>', posto: '<button class="g-btn sm' + (f.abastecimento.conf ? ' out' : '') + '" data-a="fArqPosto">' + I.baixar + ' ' + (f.abastecimento.conf ? 'Trocar arquivo do posto' : 'Enviar histórico de consumo') + '</button>' };
+    bate: '<button class="g-btn sm out" data-a="fAba" data-v="prod">Ver diferenças</button>', posto: '<button class="g-btn sm' + (f.abastecimento.conf ? ' out' : '') + '" data-a="fArqPosto">' + I.baixar + ' ' + (f.abastecimento.conf ? 'Importar mais do posto' : 'Importar relatório do posto') + '</button>' };
   document.getElementById('fBtns').innerHTML = '<button class="g-btn out" data-a="fExcel">' + I.baixar + ' ' + (fechado ? 'Excel do fechamento' : 'Prévia em Excel') + '</button><button class="g-btn out" data-a="fPdf" data-f="html">' + I.cheia + ' ' + (fechado ? 'Imprimir / PDF' : 'Prévia para imprimir') + '</button>';
   var topo = fechado
     ? '<section class="g-card" style="display:flex;flex-wrap:wrap;align-items:center;gap:14px;border:2px solid #3F8F1F;background:#F1F9EA"><div style="width:44px;height:44px;border-radius:22px;background:#3F8F1F;color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900">✓</div><div style="flex:1"><b style="font-size:17px;color:#2F6A12">' + esc(f.rotulo) + ' FECHADA</b><div style="font-size:13px;color:#3E4A55">Fechada em ' + esc(dBrA(f.registro.fechado_em) + ' às ' + String(f.registro.fechado_em).slice(11, 16)) + ' por ' + esc(f.registro.fechado_por) + '. Total líquido: <b>' + brl(f.totais.liquido) + '</b>' + (f.agora && Math.abs(f.agora.producao - f.totais.producao) > 0.01 ? ' · <b style="color:#C2410C">Atenção: a produção mudou depois do fechamento (' + brl(f.agora.producao) + ')</b>' : '') + '</div></div>' +
@@ -2761,12 +2778,14 @@ function fechProd(f) {
 ACOES.pDoMotFech = function (d) { var p = fechPeriodo(); S.G.per = p; S.G.pMot = d.id; ir('gpainel'); };
 function fechComb(f) {
   var A = f.abastecimento;
-  if (!A.conf) return '<div class="g-card" style="text-align:center;color:#5B6773;display:flex;flex-direction:column;gap:10px;align-items:center">Ainda não há arquivo do posto para essa quinzena.<button class="g-btn" data-a="fArqPosto">' + I.baixar + ' Enviar histórico de consumo</button></div>';
+  if (!A.conf) return '<div class="g-card" style="text-align:center;color:#5B6773;display:flex;flex-direction:column;gap:10px;align-items:center">Ainda não há abastecimento do posto importado nessa quinzena.<button class="g-btn" data-a="fArqPosto">' + I.baixar + ' Importar relatório do posto</button></div>';
   var tab = function (tit, l, desc) {
     var tot = l.reduce(function (a, x) { return a + x.valor; }, 0);
     return '<section class="g-tablebox"><div class="hd"><b>' + tit + ' · ' + l.length + '</b><span style="font-size:12px;color:' + (desc ? '#C2410C' : '#5B6773') + ';font-weight:700">' + brl(tot) + (desc ? ' · descontado do agregado' : ' · não desconta') + '</span></div><div class="g-scroll"><table class="g" style="min-width:900px"><thead><tr><th>Cupom</th><th>Data/hora</th><th>Placa</th><th>Motorista</th><th class="n">Litros</th><th class="n">Valor</th><th>Produto</th><th>Posto</th></tr></thead><tbody>' +
       l.map(function (x) { return '<tr><td>' + esc(x.cupom) + '</td><td>' + dBrA(x.data) + ' ' + esc(x.hora) + '</td><td><b>' + esc(x.placa) + '</b></td><td>' + esc(x.motorista) + '</td><td class="n">' + br(x.litros) + '</td><td class="n"><b>' + br(x.valor) + '</b></td><td style="font-size:12px">' + esc(x.produto) + '</td><td style="font-size:12px">' + esc(x.posto) + '</td></tr>'; }).join('') + '</tbody></table></div></section>';
   };
+  if (A.conf.importado) return '<div class="g-card" style="font-size:13px;color:#3E4A55;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between"><span><b>' + A.conf.qtd + '</b> abastecimento(s) importado(s) do posto, de ' + dBrA(A.conf.de) + ' a ' + dBrA(A.conf.ate) + (A.conf.arquivo ? ' (' + esc(A.conf.arquivo) + ')' : '') + '.<br>Abastecimento no cavalo do agregado (frota agregada) é descontado do agregado. Carro da casa não desconta.</span><button class="g-btn sm out" data-a="fArqPosto">' + I.baixar + ' Importar mais do posto</button></div>' +
+    tab('🚚 Frota agregada', A.agregada, true) + tab('🏠 Carros da casa', A.casa, false);
   return '<div class="g-card" style="font-size:13px;color:#3E4A55">Arquivo: <b>' + esc(A.conf.arquivo) + '</b> (conferência de combustível de ' + dBrA(A.conf.de) + ' a ' + dBrA(A.conf.ate) + ')' + (A.conf.pendentes ? ' · <b style="color:#8A5300">' + A.conf.pendentes + ' divergência(s) sem decisão</b> <button class="g-btn sm out" data-a="fVerConfComb" data-id="' + A.conf.id + '">Abrir conferência</button>' : '') + '<br>Abastecimento no cavalo do agregado (frota agregada) é descontado do agregado. Carro da casa não desconta.</div>' +
     tab('🚚 Frota agregada', A.agregada, true) + tab('🏠 Carros da casa', A.casa, false);
 }
@@ -2808,10 +2827,7 @@ ACOES.fArqSistema = function () {
   fArquivo('.xlsx,.csv', function (b64, nome) { var p = fechPeriodo(); call('gFechSistema', { de: p.de, ate: p.ate, base64: b64, arquivo: nome }).then(function (f) { fAplicar(f); S.G.fAba = 'prod'; desenharFech(); toast('Arquivo do sistema carregado.'); }).catch(falha); });
 };
 ACOES.fArqPosto = function () {
-  fArquivo('.csv,.xlsx,.txt', function (b64, nome) {
-    var p = fechPeriodo();
-    call('gConferirComb', { de: p.de, ate: p.ate, base64: b64, arquivo: nome }).then(function () { return call('gFechamento', p); }).then(function (f) { fAplicar(f); toast('Arquivo do posto carregado.'); }).catch(falha);
-  });
+  postoImportar(function () { var p = fechPeriodo(); return call('gFechamento', p).then(function (f) { fAplicar(f); S.G.fAba = 'comb'; desenharFech(); }); });
 };
 ACOES.fFechar = function () {
   var f = S.G.fech; if (!f.pode) return;
@@ -2977,7 +2993,7 @@ TELAS.gconf = function () {
       '<div class="g-f"><span class="l">Planilha do sistema (.xlsx ou .csv)</span><span id="cArqBox">' + botaoArquivo('cArquivo', 'cArqBtn', S.G.arqNome, 'cLimpar') + '</span></div>' +
       '<div><button class="g-btn" data-a="cComparar">Comparar</button></div></section>';
   return gLayout('gconf', '<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px"><div><h1 class="g-h1">CONFERÊNCIA</h1><div class="g-sub">' +
-    (comb ? 'Abastecimentos do posto comparados com o que os motoristas lançaram no app.' : 'Romaneio do motorista comparado com a planilha do sistema da Mucuripe.') + '</div>' + seg + '</div>' +
+    (comb ? 'Abastecimentos do posto no cavalo dos agregados comparados com o que eles lançaram no app. (Avulsos e CLT não lançam mais: o abastecimento deles é importado em Combustível.)' : 'Romaneio do motorista comparado com a planilha do sistema da Mucuripe.') + '</div>' + seg + '</div>' +
     '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">' + (S.G.confVolta ? '<button class="g-btn out" data-a="cVoltar">' + I.voltar.replace(/24/g, '16') + ' Voltar ' + ({ gmapa: 'ao Mapa', gpainel: 'à Produção', gdetalhe: 'aos Ajustes' }[S.G.confVolta] || '') + '</button>' : '') + '<span id="cBtns"></span><button class="g-btn out" data-a="cHistorico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></svg> Histórico de conferências</button></div></div>' +
     form + '<div id="cRes"></div>');
 };
@@ -3496,21 +3512,132 @@ ACOES.cadSalvarUsu = function () { call('gSalvarUsuario', { usuario: document.ge
 /* ---------- Combustível (gestão) ---------- */
 TELAS.gcomb = function () {
   S.G.cVinc = S.G.cVinc || 'TODOS';
+  var aba = S.G.cAba || 'media';
   var seg = ['TODOS', 'AVULSO', 'CLT', 'AGREGADO'].map(function (v) { return '<button class="' + (S.G.cVinc === v ? 'on' : '') + '" data-a="cVinc" data-v="' + v + '">' + v + '</button>'; }).join('');
-  return gLayout('gcomb', '<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px"><div><h1 class="g-h1">COMBUSTÍVEL</h1><div class="g-sub">Abastecimentos lançados pelos motoristas. Avulsos e CLT: consumo x abastecimento (km por litro). Agregados: consumo x produção.</div></div>' +
-    '</div>' +
-    barraFiltros('cb', periodoCampos('cb') + '<div class="g-f"><label for="cbMotQ">Motorista</label><span id="cbMotBox">' + selMotorista('cbMot', S.G.cMot).replace('Escolha o motorista…', 'Todos os motoristas') + '</span></div>' +
-    '<div class="g-f wide"><span class="l">Vínculo (pago como)</span><div class="g-seg">' + seg + '</div></div><div><button class="g-btn fpop-ok" data-a="cBuscar">Buscar</button></div>',
-    menuExportar('<button class="g-btn out" data-a="cRel" data-f="xlsx">' + I.baixar + ' Excel</button><button class="g-btn" data-a="cRel" data-f="html">' + I.cheia + ' Relatório (tela cheia / PDF)</button>')) + '<div id="cbRes"><div class="g-card">Carregando…</div></div>');
+  var abas = '<div class="g-tabs" style="overflow-x:auto;white-space:nowrap">' + [['media', 'Média por carro'], ['posto', 'Importações do posto'], ['app', 'Lançados pelos agregados']].map(function (x) { return '<button class="' + (aba === x[0] ? 'on' : '') + '" data-a="cAba" data-v="' + x[0] + '">' + x[1] + '</button>'; }).join('') + '</div>';
+  var sub = aba === 'media' ? 'Litros e valor do relatório do posto x KM rodado registrado no app, por carro. A média (km/litro) aparece quando o carro tem os dois no período.'
+    : aba === 'posto' ? 'Cada relatório do posto importado. Um abastecimento nunca entra duas vezes: o que já está no sistema é ignorado na importação.'
+    : 'Abastecimentos lançados no app (agora só os agregados lançam, no próprio cavalo). Agregados: consumo x produção.';
+  var filtros = aba === 'app'
+    ? periodoCampos('cb') + '<div class="g-f"><label for="cbMotQ">Motorista</label><span id="cbMotBox">' + selMotorista('cbMot', S.G.cMot).replace('Escolha o motorista…', 'Todos os motoristas') + '</span></div>' +
+      '<div class="g-f wide"><span class="l">Vínculo (pago como)</span><div class="g-seg">' + seg + '</div></div><div><button class="g-btn fpop-ok" data-a="cBuscar">Buscar</button></div>'
+    : periodoCampos('cb') + '<div><button class="g-btn fpop-ok" data-a="cBuscar">Buscar</button></div>';
+  var exp = aba === 'app' ? menuExportar('<button class="g-btn out" data-a="cRel" data-f="xlsx">' + I.baixar + ' Excel</button><button class="g-btn" data-a="cRel" data-f="html">' + I.cheia + ' Relatório (tela cheia / PDF)</button>')
+    : aba === 'media' ? menuExportar('<button class="g-btn out" data-a="mcRel" data-f="xlsx">' + I.baixar + ' Excel</button><button class="g-btn" data-a="mcRel" data-f="html">' + I.cheia + ' Relatório (tela cheia / PDF)</button>') : '';
+  return gLayout('gcomb', '<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px"><div><h1 class="g-h1">COMBUSTÍVEL</h1><div class="g-sub">' + sub + '</div></div>' +
+    '<button class="g-btn lime" data-a="cImportar">' + I.baixar + ' Importar relatório do posto</button></div>' + abas +
+    barraFiltros('cb', filtros, exp) + '<div id="cbRes"><div class="g-card">Carregando…</div></div>');
 };
 TELAS.gcomb.depois = function () {
-  gMotoristasCache().then(function () { var b = document.getElementById('cbMotBox'); if (b) b.innerHTML = selMotorista('cbMot', S.G.cMot).replace('Escolha o motorista…', 'Todos os motoristas'); });
+  if ((S.G.cAba || 'media') === 'app') gMotoristasCache().then(function () { var b = document.getElementById('cbMotBox'); if (b) b.innerHTML = selMotorista('cbMot', S.G.cMot).replace('Escolha o motorista…', 'Todos os motoristas'); });
   ACOES.cBuscar();
 };
+ACOES.cAba = function (d) { lerPeriodo('cb'); var m = document.getElementById('cbMot'); if (m) S.G.cMot = m.value; S.G.cAba = d.v; render(); };
+ACOES.cImportar = function () { postoImportar(function () { ACOES.cBuscar(); }); };
+ACOES.mcRel = function (d) { var p = lerPeriodo('cb'); gerarRelatorio({ tipo: 'mediacarros', de: p.de, ate: p.ate, formato: d.f }); };
+
+/* ---------- Importar relatório do posto (prévia → confirma; nunca duplica) ---------- */
+var POSTO_ST = { NOVO: ['NOVO', '#E6F4DC', '#2F6A12'], JA_IMPORTADO: ['JÁ IMPORTADO', '#EEF1F4', '#5B6773'], REPETIDO_ARQUIVO: ['REPETIDO NO ARQUIVO', '#FFF1D6', '#8A5300'] };
+var TIPO_CARRO = { CASA: ['CASA', '#E8F2FA', '#145A90'], AGREGADA: ['FROTA AGREGADA', '#F1F4D6', '#4A5200'], NAO_CADASTRADA: ['SEM CADASTRO', '#FDE8E8', '#B42318'] };
+function chipT(m, v) { var c = m[v] || [v, '#EEF1F4', '#3E4A55']; return '<span class="g-chip" style="background:' + c[1] + ';color:' + c[2] + '">' + c[0] + '</span>'; }
+function postoImportar(depois) {
+  fArquivo('.csv,.xlsx,.txt', function (b64, nome) {
+    call('gPostoPrevia', { base64: b64, arquivo: nome }).then(function (pv) { S.G.postoPv = { b64: b64, nome: nome, pv: pv, so: pv.totais.novas ? 'novos' : 'todos', depois: depois }; desenharPostoPv(); }).catch(falha);
+  });
+}
+function desenharPostoPv() {
+  var P = S.G.postoPv; if (!P) return;
+  var pv = P.pv, t = pv.totais;
+  var lin = pv.linhas.filter(function (l) { return P.so === 'todos' || l.status === 'NOVO'; });
+  var seg = '<div class="g-seg"><button class="' + (P.so === 'novos' ? 'on' : '') + '" data-a="ppSo" data-v="novos">Só novos (' + t.novas + ')</button><button class="' + (P.so === 'todos' ? 'on' : '') + '" data-a="ppSo" data-v="todos">Todos (' + t.linhas + ')</button></div>';
+  abrirModal('<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div><b style="font-size:17px">Importar relatório do posto</b><div style="font-size:12px;color:#5B6773">' + esc(pv.arquivo) + ' · confira antes de gravar</div></div><button class="g-btn sm out" data-a="ppCancelar">Cancelar</button></div>' +
+    (pv.mesmoArquivo ? '<div class="g-card" style="border:1px solid #E8A33D;background:#FFF7E8;font-size:13px;color:#8A5300"><b>Este mesmo arquivo já foi importado</b> em ' + esc(dBrA(String(pv.mesmoArquivo.criado_em).slice(0, 10)) + ' às ' + String(pv.mesmoArquivo.criado_em).slice(11, 16)) + ' por ' + esc(pv.mesmoArquivo.usuario) + '. O que já está no sistema não entra de novo.</div>' : '') +
+    '<section class="g-kpis"><div class="g-kpi navy"><span>Novos (vão entrar)</span><b>' + t.novas + '</b><span style="color:#C9D6E2;text-transform:none;letter-spacing:0">' + (t.novas ? br(t.litros) + ' L · ' + brl(t.valor) + ' · ' + dBrA(t.de) + ' a ' + dBrA(t.ate) : 'nada novo') + '</span></div>' +
+    '<div class="g-kpi"><span>Já importados</span><b>' + t.ja + '</b><span style="text-transform:none;letter-spacing:0">ignorados</span></div><div class="g-kpi warn"><span>Repetidos no arquivo</span><b>' + t.repetidas + '</b><span style="text-transform:none;letter-spacing:0">entram uma vez só</span></div></section>' +
+    (pv.semCadastro.length ? '<div style="font-size:12px;color:#B42318">Placas que não estão em Cadastros → Veículos (entram assim mesmo, como "sem cadastro"): <b>' + pv.semCadastro.map(esc).join(', ') + '</b></div>' : '') +
+    seg + '<div class="g-scroll" style="max-height:44vh;overflow:auto;border:1px solid #DCE2E8;border-radius:10px"><table class="g" style="min-width:980px"><thead><tr><th>Situação</th><th>Data/hora</th><th>Placa</th><th>Tipo</th><th>Motorista</th><th class="n">Litros</th><th class="n">Valor</th><th>Posto · cupom</th></tr></thead><tbody>' +
+    (lin.length ? lin.map(function (l) {
+      return '<tr' + (l.status === 'NOVO' ? '' : ' style="opacity:.7"') + '><td>' + chipT(POSTO_ST, l.status) + (l.jaEm ? '<div style="font-size:10px;color:#5B6773">' + esc(l.jaEm) + '</div>' : '') + '</td><td>' + dBrA(l.data) + ' ' + esc(String(l.hora).slice(0, 5)) + '</td><td><b>' + esc(l.placa) + '</b>' + (l.frota ? '<div style="font-size:11px;color:#5B6773">' + esc(l.frota) + '</div>' : '') + '</td><td>' + chipT(TIPO_CARRO, l.tipo) + '</td>' +
+        '<td>' + esc(l.motorista_app || l.motorista) + '</td><td class="n">' + br(l.litros) + '</td><td class="n"><b>' + br(l.valor) + '</b>' + (l.avisos.length ? '<div style="font-size:10px;color:#B42318">' + l.avisos.map(esc).join(', ') + '</div>' : '') + '</td><td style="font-size:12px">' + esc(l.posto) + (l.cupom ? ' · ' + esc(l.cupom) : '') + '</td></tr>';
+    }).join('') : '<tr><td colspan="8" style="text-align:center;color:#5B6773;padding:20px">Nenhum abastecimento novo neste arquivo.</td></tr>') + '</tbody></table></div>' +
+    '<div style="display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap"><button class="g-btn out" data-a="ppCancelar">Cancelar</button><button class="g-btn lime" id="ppOk" data-a="ppImportar"' + (t.novas ? '' : ' disabled style="opacity:.45;cursor:not-allowed"') + '>' + I.ok + ' Importar ' + t.novas + ' novo(s)</button></div>', 'larga');
+}
+ACOES.ppSo = function (d) { if (S.G.postoPv) { S.G.postoPv.so = d.v; desenharPostoPv(); } };
+ACOES.ppCancelar = function () { S.G.postoPv = null; fecharModal(); };
+ACOES.ppImportar = function (d, el) {
+  var P = S.G.postoPv; if (!P || !P.pv.totais.novas || (el && el.disabled)) return;
+  if (el) el.disabled = true;   // clique duplo não manda duas vezes (o servidor também confere)
+  call('gPostoImportar', { base64: P.b64, arquivo: P.nome }).then(function (r) {
+    S.G.postoPv = null; fecharModal();
+    toast(r.novas + ' abastecimento(s) importado(s).' + (r.ja + r.repetidas ? ' ' + (r.ja + r.repetidas) + ' repetido(s) ignorado(s).' : ''));
+    if (P.depois) P.depois(r);
+  }).catch(function (e) { if (el) el.disabled = false; falha(e); });
+};
+ACOES.pdDesfazer = function (d) {
+  var i = (S.G.postoImps || []).filter(function (x) { return x.id === d.id; })[0]; if (!i) return;
+  abrirModal('<b style="font-size:17px">Desfazer importação</b><div style="font-size:14px;line-height:1.5;color:#3E4A55">Arquivo <b>' + esc(i.arquivo) + '</b>, importado em ' + esc(dBrA(String(i.criado_em).slice(0, 10)) + ' ' + String(i.criado_em).slice(11, 16)) + ' por ' + esc(i.usuario) + '.<br>Os <b>' + i.noSistema + '</b> abastecimento(s) que ele trouxe serão apagados. Depois dá para importar o arquivo certo. Fica tudo no <b>Log</b>.</div>' +
+    '<div class="g-f"><label for="pdMotivo">Motivo</label><input id="pdMotivo" class="g-in" placeholder="Ex.: arquivo do mês errado"></div>' +
+    '<div style="display:flex;justify-content:flex-end;gap:10px"><button class="g-btn out" data-a="fecharModal">Voltar</button><button class="g-btn" style="background:#B42318" data-a="pdConfirmar" data-id="' + esc(i.id) + '">Desfazer importação</button></div>');
+};
+ACOES.pdConfirmar = function (d) {
+  var m = (document.getElementById('pdMotivo') || {}).value || '';
+  if (!m.trim()) return toast('Escreva o motivo.', true);
+  call('gPostoDesfazer', { id: d.id, motivo: m }).then(function (r) { fecharModal(); toast('Importação desfeita: ' + r.apagados + ' abastecimento(s) apagado(s).'); ACOES.cBuscar(); }).catch(falha);
+};
+function desenharImportacoes(r) {
+  var box = document.getElementById('cbRes'); if (!box) return;
+  S.G.postoImps = r.importacoes;
+  var at = r.importacoes.filter(function (i) { return i.status === 'ATIVA'; });
+  box.innerHTML = '<section class="g-kpis" style="margin-bottom:16px"><div class="g-kpi navy"><span>Último abastecimento importado</span><b>' + (r.ultimoAbastecimento ? dBrA(r.ultimoAbastecimento) : '–') + '</b></div>' +
+    '<div class="g-kpi"><span>Importações</span><b>' + at.length + '</b><span style="text-transform:none;letter-spacing:0">' + (r.importacoes.length - at.length ? (r.importacoes.length - at.length) + ' desfeita(s)' : '') + '</span></div>' +
+    '<div class="g-kpi"><span>Abastecimentos no sistema</span><b>' + at.reduce(function (s0, i) { return s0 + i.noSistema; }, 0) + '</b></div></section>' +
+    '<section class="g-tablebox"><div class="hd"><b>Relatórios do posto importados</b><span style="font-size:12px;color:#5B6773">o mais novo em cima</span></div><div class="g-scroll"><table class="g" style="min-width:980px"><thead><tr><th>Importado em</th><th>Arquivo</th><th>Abastecimentos de</th><th class="n">Novos</th><th class="n">Repetidos ignorados</th><th class="n">Litros</th><th class="n">Valor</th><th>Por</th><th>Situação</th><th></th></tr></thead><tbody>' +
+    (r.importacoes.length ? r.importacoes.map(function (i) {
+      var desf = i.status !== 'ATIVA';
+      return '<tr' + (desf ? ' style="opacity:.6"' : '') + '><td>' + esc(dBrA(String(i.criado_em).slice(0, 10)) + ' ' + String(i.criado_em).slice(11, 16)) + '</td><td><b>' + esc(i.arquivo) + '</b></td><td>' + dBrA(i.de) + ' a ' + dBrA(i.ate) + '</td><td class="n"><b>' + i.novas + '</b></td><td class="n">' + i.repetidas + '</td><td class="n">' + br(i.litros) + '</td><td class="n">' + br(i.valor) + '</td><td>' + esc(i.usuario) + '</td>' +
+        '<td>' + (desf ? '<span class="g-chip" style="background:#FDE8E8;color:#B42318">DESFEITA</span><div style="font-size:11px;color:#5B6773">' + esc(i.desfeita_por + ' · ' + i.motivo) + '</div>' : '<span class="g-chip" style="background:#E6F4DC;color:#2F6A12">ATIVA</span>') + '</td>' +
+        '<td>' + (!desf && master() ? '<button class="g-btn sm out" style="border-color:#B42318;color:#B42318" data-a="pdDesfazer" data-id="' + esc(i.id) + '">Desfazer</button>' : '') + '</td></tr>';
+    }).join('') : '<tr><td colspan="10" style="text-align:center;color:#5B6773;padding:22px">Nenhum relatório do posto importado ainda. Use o botão <b>Importar relatório do posto</b>.</td></tr>') + '</tbody></table></div></section>';
+}
+function desenharMedia(r) {
+  var box = document.getElementById('cbRes'); if (!box) return;
+  S.G.mcAb = S.G.mcAb || {};
+  var t = r.totais, n2 = function (v) { return v === null || v === undefined ? '–' : v.toFixed(2).replace('.', ','); };
+  var grupos = [['CASA', '🏠 Carros da casa'], ['AGREGADA', '🚚 Frota agregada (o agregado não registra KM)'], ['NAO_CADASTRADA', 'Placas sem cadastro no app']];
+  var tabela = function (g) {
+    var l = r.carros.filter(function (c) { return c.tipo === g[0]; }); if (!l.length) return '';
+    var tl = l.reduce(function (s0, c) { return s0 + c.litros; }, 0), tv = l.reduce(function (s0, c) { return s0 + c.valor; }, 0);
+    var kg = 'g|' + g[0], fech = S.G.mcAb[kg] === undefined ? g[0] === 'NAO_CADASTRADA' : !S.G.mcAb[kg];   // sem cadastro começa recolhido
+    return '<section class="g-tablebox" style="margin-bottom:' + (fech ? 8 : 16) + 'px"><div class="hd" style="cursor:pointer" data-a="mcAbrir" data-p="' + kg + '" data-fech="' + (fech ? 1 : 0) + '"><b><span class="km-seta" style="display:inline-block;vertical-align:middle;transform:rotate(' + (fech ? -90 : 0) + 'deg)">' + I.abaixo + '</span> ' + g[1] + ' · ' + l.length + '</b><span style="font-size:12px;color:#5B6773">' + br(tl) + ' L · ' + brl(tv) + '</span></div>' + (fech ? '</section>' : '<div class="g-scroll"><table class="g" style="min-width:1000px"><thead><tr><th></th><th>Frota</th><th>Placa</th><th>Motoristas</th><th class="n">Abast.</th><th class="n">Litros</th><th class="n">Valor</th><th class="n">KM rodado</th><th class="n">km/litro</th><th class="n">R$/km</th><th>Alertas</th></tr></thead><tbody>' +
+      l.map(function (c) {
+        var ab = !!S.G.mcAb[c.placa];
+        return '<tr style="cursor:pointer" data-a="mcAbrir" data-p="' + esc(c.placa) + '"><td><span class="km-seta" style="display:inline-block;transform:rotate(' + (ab ? 0 : -90) + 'deg)">' + I.abaixo + '</span></td><td><b>' + esc(c.frota || '–') + '</b></td><td><span class="g-chip" style="background:#0B3D61;color:#fff;letter-spacing:1px">' + esc(c.placa) + '</span>' + (c.descricao ? '<div style="font-size:11px;color:#5B6773">' + esc(c.descricao) + '</div>' : '') + '</td>' +
+          '<td style="font-size:12px;max-width:220px;white-space:normal">' + esc(c.motoristas.join(', ')) + '</td><td class="n">' + c.qtd + '</td><td class="n">' + br(c.litros) + '</td><td class="n">' + br(c.valor) + '</td><td class="n">' + (c.km ? fmtKm(c.km) : '–') + '</td>' +
+          '<td class="n"><b style="font-size:15px;color:#0B3D61">' + n2(c.kmL) + '</b></td><td class="n">' + n2(c.rsKm) + '</td><td style="font-size:11px;color:#8A5300;max-width:220px;white-space:normal">' + c.alertas.map(esc).join('<br>') + '</td></tr>' +
+          (ab ? '<tr><td colspan="11" style="background:#F7F9FB;padding:10px 14px"><div style="display:flex;flex-wrap:wrap;gap:16px">' +
+            '<div style="flex:1 1 380px"><b style="font-size:12px">Abastecimentos do posto</b><table class="g" style="margin-top:4px"><thead><tr><th>Dia</th><th>Motorista</th><th class="n">Litros</th><th class="n">R$/L</th><th class="n">Valor</th><th>Posto</th></tr></thead><tbody>' +
+            (c.abastecimentos.length ? c.abastecimentos.map(function (x) { return '<tr><td>' + dBrA(x.data) + ' ' + esc(x.hora) + '</td><td>' + esc(x.motorista) + '</td><td class="n">' + br(x.litros) + '</td><td class="n">' + x.preco.toFixed(3).replace('.', ',') + '</td><td class="n">' + br(x.valor) + '</td><td style="font-size:11px">' + esc(x.posto) + '</td></tr>'; }).join('') : '<tr><td colspan="6" style="color:#5B6773">Nenhum no período.</td></tr>') + '</tbody></table></div>' +
+            '<div style="flex:1 1 300px"><b style="font-size:12px">KM rodado no app</b><table class="g" style="margin-top:4px"><thead><tr><th>Dia</th><th>Motorista</th><th class="n">KM final</th><th class="n">Rodado</th></tr></thead><tbody>' +
+            (c.kms.length ? c.kms.map(function (k) { return '<tr><td>' + dBrA(k.data) + '</td><td>' + esc(k.motorista) + '</td><td class="n">' + fmtKm(k.km) + '</td><td class="n"><b>' + fmtKm(k.rodado) + '</b>' + (k.alertas && k.alertas.length ? ' <span title="' + esc(k.alertas.join('; ')) + '" style="color:#8A5300">⚠</span>' : '') + '</td></tr>'; }).join('') : '<tr><td colspan="4" style="color:#5B6773">Nenhum no período.</td></tr>') + '</tbody></table></div></div></td></tr>' : '');
+      }).join('') + '</tbody></table></div></section>');
+  };
+  var limMc = r.ate < hojeIso() ? r.ate : hojeIso();
+  box.innerHTML = (r.ultimoImportado && r.ultimoImportado < limMc ? '<div class="g-card" style="font-size:13px;color:#8A5300;margin-bottom:12px">O último abastecimento importado do posto é de <b>' + dBrA(r.ultimoImportado) + '</b>. Depois disso o período não tem litros: importe o relatório mais novo para a média ficar certa.</div>' : '') +
+    (!r.ultimoImportado ? '<div class="g-card" style="font-size:13px;color:#3E4A55;margin-bottom:12px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between"><span>Nenhum relatório do posto importado ainda. Sem ele não há litros para calcular a média.</span><button class="g-btn" data-a="cImportar">' + I.baixar + ' Importar relatório do posto</button></div>' : '') +
+    '<section class="g-kpis" style="margin-bottom:16px"><div class="g-kpi navy"><span>Média da frota</span><b>' + (t.kmL ? n2(t.kmL) + ' km/L' : '–') + '</b><span style="color:#C9D6E2;text-transform:none;letter-spacing:0">' + (t.rsKm ? 'R$ ' + n2(t.rsKm) + ' por km' : 'carros com litros e KM') + '</span></div>' +
+    '<div class="g-kpi"><span>Litros do posto</span><b>' + br(t.litros) + '</b><span style="text-transform:none;letter-spacing:0">' + brl(t.valor) + '</span></div><div class="g-kpi"><span>KM rodado (app)</span><b>' + fmtKm(t.km) + '</b><span style="text-transform:none;letter-spacing:0">' + t.carros + ' carro(s)</span></div>' +
+    '<div class="g-kpi warn"><span>Alertas (carros da casa)</span><b>' + (t.semKm + t.semAbast) + '</b><span style="text-transform:none;letter-spacing:0">' + t.semKm + ' abasteceu sem KM · ' + t.semAbast + ' rodou sem abastecimento' + (t.semCadastro ? ' · ' + t.semCadastro + ' placa(s) sem cadastro' : '') + '</span></div></section>' +
+    (r.carros.length ? grupos.map(tabela).join('') : '<div class="g-card" style="text-align:center;color:#5B6773">Nada nesse período.</div>') +
+    '<div style="font-size:12px;color:#5B6773;margin-top:4px">KM rodado = soma dos KM do painel registrados no app (abertura até encerramento ou troca de veículo). km/litro = KM rodado ÷ litros do posto no período. Toque no carro para ver os abastecimentos e os KM.</div>';
+}
+ACOES.mcAbrir = function (d) { S.G.mcAb = S.G.mcAb || {}; S.G.mcAb[d.p] = d.fech !== undefined ? d.fech === '1' : !S.G.mcAb[d.p]; if (S.G.mcR) desenharMedia(S.G.mcR); };
 ACOES.cVinc = function (d) { S.G.cVinc = d.v; document.querySelectorAll('[data-a="cVinc"]').forEach(function (b) { b.classList.toggle('on', b.dataset.v === d.v); }); ACOES.cBuscar(); };
 function filtroComb() { var p = lerPeriodo('cb'), m = document.getElementById('cbMot'); S.G.cMot = m ? m.value : S.G.cMot; return { de: p.de, ate: p.ate, vinculo: S.G.cVinc, motorista_id: S.G.cMot || '' }; }
 ACOES.cRel = function (d) { var f = filtroComb(); f.tipo = 'combustivel'; f.formato = d.f; gerarRelatorio(f); };
 ACOES.cBuscar = function () {
+  var aba = S.G.cAba || 'media';
+  if (aba === 'media') { var pm = lerPeriodo('cb'); return call('gMediaCarros', { de: pm.de, ate: pm.ate }, true).then(function (r) { S.G.mcR = r; desenharMedia(r); }).catch(falha); }
+  if (aba === 'posto') return call('gPostoImportacoes', {}, true).then(desenharImportacoes).catch(falha);
   var f = filtroComb();
   call('gCombustivel', f, true).then(function (r) {
     var box = document.getElementById('cbRes'); if (!box) return;
@@ -4134,9 +4261,10 @@ TELAS.grel = function () {
     rd('geral', 'Relatório geral', 'Todos os motoristas no período, um por linha, com Batendo, Cheio, Vazio e Valor total. Mesmo modelo do relatório da ModallPort.') +
     rd('individual', 'Relatório individual', 'Um motorista: todas as operações dia a dia, com subtotal por dia, resumo por tipo e total do período.') +
     rd('mapa', 'Mapa produtivo', 'Todos os motoristas x cada dia do período, separados em CLT, agregado e avulso: quem trabalhou, quem faltou e o total. Mesmo modelo da planilha de controle.') +
+    rd('mediacarros', 'Média por carro', 'Litros e valor do relatório do posto x KM rodado no app, por carro (ordem da frota): km por litro, R$ por km e alertas.') +
     rd('combustivel', 'Combustível por motorista', 'Avulsos e CLT: consumo x abastecimento (litros, valor, KM rodado, km por litro e R$ por km). Agregados: consumo x produção (quanto do produzido foi para combustível e o líquido).') + '</div></section>' +
     '<section class="g-card" style="display:flex;flex-direction:column;gap:12px"><b>2. Filtros</b><div class="g-grid">' + periodoCampos('r') +
-    (R.tipo === 'mapa' ? '' : R.tipo !== 'individual' ? '<div class="g-f wide"><span class="l">Vínculo</span><div class="g-seg">' + vs + '</div></div>' : '<div class="g-f"><label for="rMot">Motorista</label><span id="rMotBox">' + selMotorista('rMot', S.G.motId) + '</span></div>') + '</div></section>' +
+    (R.tipo === 'mapa' || R.tipo === 'mediacarros' ? '' : R.tipo !== 'individual' ? '<div class="g-f wide"><span class="l">Vínculo</span><div class="g-seg">' + vs + '</div></div>' : '<div class="g-f"><label for="rMot">Motorista</label><span id="rMotBox">' + selMotorista('rMot', S.G.motId) + '</span></div>') + '</div></section>' +
     '<section class="g-card" style="display:flex;flex-direction:column;gap:12px"><b>3. Formato</b><div style="display:flex;flex-wrap:wrap;gap:10px">' + fm('pdf', 'PDF · para imprimir') + fm('xlsx', 'EXCEL · para conferir') + '</div>' +
     '<div style="display:flex;flex-wrap:wrap;gap:10px"><button class="g-btn out" data-a="relGerar" data-modo="html">' + I.cheia + ' Ver em tela cheia</button><button class="g-btn" data-a="relGerar" data-modo="baixar">' + I.baixar + ' Baixar</button></div></section>');
 };
